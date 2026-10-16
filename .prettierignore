@@ -3,5 +3,8 @@ node_modules
 dist
 .artifacts
 coverage
+output/playwright
+.playwright-cli
+.angular
 LICENSE
 packages/*/LICENSE

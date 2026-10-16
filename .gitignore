@@ -3,6 +3,8 @@ dist/
 coverage/
 .artifacts/
 .angular/
+output/playwright/
+.playwright-cli/
 *.tsbuildinfo
 *.tgz
 .env
