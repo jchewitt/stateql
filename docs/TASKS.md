@@ -1,6 +1,6 @@
 # StateQL task breakdown
 
-Complete each chunk with its focused tests, independent agent review, and a passing `pnpm check`. Keep later package APIs internal until a concrete use case exercises them. The current delivery includes the repository foundation and Apollo comparison baseline. StateQL's own runtime is not implemented yet.
+Complete each chunk with its focused tests, independent agent review, and a passing `pnpm check`. Keep later package APIs internal until a concrete use case exercises them. The current delivery includes the repository foundation, Apollo comparison baseline, and typed operation planner. StateQL's own runtime is not implemented yet.
 
 ## F0 Repository foundation
 
@@ -29,13 +29,13 @@ Exit: two consumers update correctly from a narrow request; reordering fixtures 
 
 ## P2 Typed definitions and GraphQL operation generation
 
-Depends on P1's schema.
+Depends on P1's schema. Implemented; see the [planner guide](PLANNER.md).
 
-- [ ] P2.1 Implement the smallest schema-generation path needed for typed nested selections and ancestor arguments.
-- [ ] P2.2 Define immutable select/extend behavior, reject incompatible overrides, and test inferred result types.
-- [ ] P2.3 Derive canonical addresses from scope/path/arguments; resolve an alias to the same canonical field.
-- [ ] P2.4 Generate variable-based GraphQL operations from a selected subtree; include required item identity/context.
-- [ ] P2.5 Validate documents against the fixture schema; reject unsupported schema features explicitly.
+- [x] P2.1 Implement the smallest schema-generation path needed for typed nested selections and ancestor arguments.
+- [x] P2.2 Define immutable select/extend behavior, reject incompatible overrides, and test inferred result types.
+- [x] P2.3 Derive canonical addresses from scope/path/arguments; resolve an alias to the same canonical field.
+- [x] P2.4 Generate variable-based GraphQL operations from a selected subtree; include required item identity/context.
+- [x] P2.5 Validate documents against the fixture schema; reject unsupported schema features explicitly.
 
 Exit: changing an invalidation target needs no separately maintained query or mapping; type tests reject unknown fields and invalid arguments.
 

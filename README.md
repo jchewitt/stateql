@@ -4,7 +4,7 @@
 
 GraphQL-first state management built around composable definitions and selective field refresh.
 
-**Status: working Apollo baseline.** The local billing GraphQL API and Angular demonstration are implemented. StateQL's own query engine and Angular adapter are still planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces the work of coordinating selections, shared state, and targeted refreshes.
+**Status: working Apollo baseline and StateQL operation planner.** Typed schema definitions now generate full and selective GraphQL requests with the same canonical state address. Shared caching, response application, and StateQL's Angular adapter are still planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces the work of coordinating selections, shared state, and targeted refreshes.
 
 The intended behavior is illustrated below; this is a design example, not a currently available API:
 
@@ -47,15 +47,17 @@ pnpm test:browser
 
 ## Workspace
 
-| Location            | Current role                                                           |
-| ------------------- | ---------------------------------------------------------------------- |
-| `packages/core`     | Buildable ESM/declaration package with portable observation interfaces |
-| `packages/graphql`  | Reserved source boundary; implementation follows the baseline          |
-| `packages/angular`  | Reserved Angular adapter; signals and lifecycle integration planned    |
-| `apps/billing-api`  | Local GraphQL billing fixture and deterministic controls               |
-| `apps/billing-demo` | Angular/Apollo baseline with two consumers and request inspector       |
-| `examples`          | Future plain TypeScript usage                                          |
-| `scripts`, `tests`  | Package/release checks and Angular browser scenarios                   |
+Run `pnpm demo:planner` after `pnpm check` to inspect generated full and narrow requests. The [planner guide](docs/PLANNER.md) covers schema generation, composition, addresses, and current limitations.
+
+| Location                 | Current role                                                              |
+| ------------------------ | ------------------------------------------------------------------------- |
+| `packages/core`          | Portable observation contracts, canonical addresses, immutable selections |
+| `packages/graphql`       | Private typed schema generator and validated operation planner            |
+| `packages/angular`       | Reserved Angular adapter; signals and lifecycle integration planned       |
+| `apps/billing-api`       | Local GraphQL billing fixture and deterministic controls                  |
+| `apps/billing-demo`      | Angular/Apollo baseline with two consumers and request inspector          |
+| `examples/query-planner` | Runnable plain TypeScript operation planning example                      |
+| `scripts`, `tests`       | Package/release checks and Angular browser scenarios                      |
 
 Core has no runtime, UI-framework, GraphQL, or platform dependency. The initial package identifier `@jchewitt/stateql-core` is provisional until npm scope ownership is confirmed. It is not a claim that the npm scope has been reserved.
 

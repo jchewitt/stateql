@@ -1,7 +1,7 @@
 # StateQL GraphQL source
 
-Reserved module for the schema-informed definition builder, operation generator, response decoder, and default HTTP transport. Implementation starts after the Apollo baseline.
+Private prototype implementing schema-generated TypeScript definitions, immutable selection composition, argument validation/coercion, canonical addressing, and GraphQL AST generation. Operations include required ancestors, variables, and configured identity fields, and are validated against the supplied schema.
 
-It consumes the same canonical selections as the state runtime. It does not own a cache or framework subscriptions. Start with explicit supported schema features and validate generated documents against the fixture schema.
+It consumes portable selections from core. Response decoding, transport, shared state, and subscriptions are future milestones. See the [planner guide](../../docs/PLANNER.md) for executable usage and explicit feature limits.
 
-No package manifest or empty npm package is created until this module has an implementation. The source interface remains internal during the proof of concept.
+The package remains private while the source interface is exercised by the proof of concept. Package checks install its actual tarball alongside core into an isolated consumer; this does not enable npm publishing.

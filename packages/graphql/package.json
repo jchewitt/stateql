@@ -1,0 +1,41 @@
+{
+  "name": "@jchewitt/stateql-graphql",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Experimental StateQL schema generation and operation planner.",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./codegen": {
+      "types": "./dist/codegen.d.ts",
+      "import": "./dist/codegen.js"
+    }
+  },
+  "scripts": {
+    "build": "node ../../scripts/build-package.mjs graphql",
+    "prepack": "pnpm --silent run build",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test": "tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@jchewitt/stateql-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "graphql": "^16.14.2"
+  },
+  "devDependencies": {
+    "graphql": "16.14.2",
+    "tsx": "4.23.15",
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3"
+  }
+}

@@ -60,6 +60,51 @@ assert.equal(
   readFileSync(join(root, 'packages/core/LICENSE'), 'utf8'),
 );
 
+const graphqlOutput = join(root, 'packages/graphql/dist');
+mkdirSync(graphqlOutput, { recursive: true });
+writeFileSync(
+  join(graphqlOutput, '__stale-build-probe.js'),
+  'export const obsolete = true;\n',
+);
+// pnpm resolves workspace dependencies in the packed manifest. Its lifecycle
+// banner precedes the final JSON object, even with the silent reporter.
+const packOutput = execFileSync(
+  process.execPath,
+  [manager, 'pack', '--json', '--pack-destination', artifacts],
+  {
+    cwd: join(root, 'packages/graphql'),
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'inherit'],
+  },
+);
+const jsonStart = packOutput.search(/^\{/m);
+assert.ok(jsonStart >= 0, 'pnpm pack must return package metadata.');
+const graphqlPacked = JSON.parse(packOutput.slice(jsonStart));
+const graphqlFiles = graphqlPacked.files.map(({ path }) => path);
+for (const expected of [
+  'dist/index.js',
+  'dist/index.d.ts',
+  'dist/codegen.js',
+  'dist/codegen.d.ts',
+  'LICENSE',
+  'README.md',
+])
+  assert.ok(
+    graphqlFiles.includes(expected),
+    `Missing GraphQL package file: ${expected}`,
+  );
+assert.ok(!graphqlFiles.includes('dist/__stale-build-probe.js'));
+assert.ok(
+  graphqlFiles.every((path) =>
+    /^(dist\/|package\.json$|README\.md$|LICENSE$)/.test(path),
+  ),
+);
+assert.equal(
+  readFileSync(join(root, 'LICENSE'), 'utf8'),
+  readFileSync(join(root, 'packages/graphql/LICENSE'), 'utf8'),
+);
+assert.equal(dirname(graphqlPacked.filename), artifacts);
+
 // Outside the repository so Node/TypeScript cannot resolve undeclared workspace dependencies.
 const tempRoot = realpathSync(tmpdir());
 const consumer = realpathSync(mkdtempSync(join(tempRoot, 'stateql-consumer-')));
@@ -81,12 +126,25 @@ try {
       '--no-fund',
       '--no-package-lock',
       join(artifacts, packed.filename),
+      graphqlPacked.filename,
+      'graphql@16.14.2',
     ],
     consumer,
   );
   execFileSync(
     process.execPath,
-    ['--input-type=module', '-e', "await import('@jchewitt/stateql-core')"],
+    [
+      '--input-type=module',
+      '-e',
+      `
+      const { createSchema } = await import('@jchewitt/stateql-graphql');
+      const { generateSchemaModule } = await import('@jchewitt/stateql-graphql/codegen');
+      const sdl = 'type Query { item: Item! } type Item { id: ID! name: String }';
+      const bound = createSchema(sdl).field('item').select({ name: true }).bind({}, { source: 'test', scope: 'test' });
+      if (!bound.prepare('name').query.includes('name')) throw new Error('Packed planner failed.');
+      if (!generateSchemaModule(sdl).includes('GeneratedTypes')) throw new Error('Packed code generator failed.');
+    `,
+    ],
     {
       cwd: consumer,
       stdio: 'inherit',
@@ -99,6 +157,19 @@ try {
       'const id: string = reader.getSnapshot().id;\nvoid id;\n' +
       '// @ts-expect-error undeclared fields must not be inferred as any\nreader.getSnapshot().missing;\n',
   );
+  writeFileSync(
+    join(consumer, 'planner.ts'),
+    `
+    import { createSchema, type FieldType, type ObjectRef, type ResultOf } from '@jchewitt/stateql-graphql';
+    type Model = { Query: { item: FieldType<ObjectRef<'Item'>> }; Item: { name: FieldType<string | null> } };
+    const definition = createSchema<Model>('type Query { item: Item! } type Item { name: String }').field('item').select({ name: { as: 'label' } });
+    declare const result: ResultOf<typeof definition>;
+    const label: string | null = result.label;
+    void label;
+    // @ts-expect-error unknown selected field
+    definition.bind({}, { source: 'test', scope: 'test' }).prepare('missing');
+  `,
+  );
   execFileSync(
     process.execPath,
     [
@@ -110,6 +181,7 @@ try {
       '--target',
       'ES2022',
       'consumer.ts',
+      'planner.ts',
     ],
     {
       cwd: consumer,

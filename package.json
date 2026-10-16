@@ -12,12 +12,15 @@
     "build": "pnpm -r --if-present build",
     "typecheck": "tsc --project tsconfig.typecheck.json && tsc --project tsconfig.browser.json && pnpm -r --if-present typecheck",
     "test": "node --test tests/release.test.mjs tests/workspace.test.mjs && pnpm -r --if-present test",
-    "demo": "pnpm --parallel --filter @stateql-demo/* dev",
+    "demo": "pnpm --parallel --filter @stateql-demo/billing-* dev",
+    "demo:planner": "pnpm --filter @stateql-demo/query-planner demo",
+    "generate:billing": "pnpm --filter @jchewitt/stateql-graphql... build && tsx scripts/generate-billing.ts",
+    "generate:check": "tsx scripts/generate-billing.ts --check",
     "test:browser": "playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "pack:check": "node scripts/check-package.mjs",
-    "check": "pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm pack:check",
+    "check": "pnpm format:check && pnpm build && pnpm generate:check && pnpm typecheck && pnpm test && pnpm pack:check",
     "changeset": "changeset",
     "version:packages": "changeset version",
     "release:check": "node scripts/check-release.mjs"
@@ -28,6 +31,7 @@
     "@types/node": "22.20.5",
     "prettier": "3.9.10",
     "semver": "7.7.2",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
     "yaml": "2.8.1"
   }
