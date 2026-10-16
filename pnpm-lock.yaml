@@ -21,8 +21,8 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
       yaml:
-        specifier: 2.8.1
-        version: 2.8.1
+        specifier: 2.9.1
+        version: 2.9.1
 
   packages/core: {}
 
@@ -413,8 +413,8 @@ packages:
     engines: {node: '>= 8'}
     hasBin: true
 
-  yaml@2.8.1:
-    resolution: {integrity: sha512-lcYcMxX2PO9XMGvAJkJ3OsNMw+/7FKes7/hgerGUYWIoWu5j/+YQqcZr5JnPZWzOsEBgMbSbiSTn/dv/69Mkpw==}
+  yaml@2.9.1:
+    resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}
     engines: {node: '>= 14.6'}
     hasBin: true
 
@@ -845,4 +845,4 @@ snapshots:
     dependencies:
       isexe: 2.0.0
 
-  yaml@2.8.1: {}
+  yaml@2.9.1: {}
