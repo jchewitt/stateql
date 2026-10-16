@@ -4,7 +4,7 @@
 
 GraphQL-first state management built around composable definitions and selective field refresh.
 
-**Status: repository foundation.** The query engine and Angular demonstration are not implemented yet. There is no published or production-ready package. The first milestone establishes an idiomatic Apollo baseline before testing whether StateQL reduces the work of coordinating selections, shared state, and targeted refreshes.
+**Status: working Apollo baseline.** The local billing GraphQL API and Angular demonstration are implemented. StateQL's own query engine and Angular adapter are still planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces the work of coordinating selections, shared state, and targeted refreshes.
 
 The intended behavior is illustrated below; this is a design example, not a currently available API:
 
@@ -26,18 +26,36 @@ pnpm install --frozen-lockfile
 pnpm check
 ```
 
-`pnpm check` verifies formatting, strict TypeScript contracts, tooling tests, library compilation, and the actual packed artifact installed into an isolated ESM/TypeScript consumer. Build products and package-check artifacts are ignored by Git.
+`pnpm check` verifies formatting, strict TypeScript contracts and Angular templates, tooling and API/Apollo integration tests, production builds, and the actual packed library artifact installed into an isolated ESM/TypeScript consumer. Build products and package-check artifacts are ignored by Git.
+
+## Run the billing experiment
+
+```sh
+pnpm demo
+```
+
+Open http://127.0.0.1:4200. Click **Change server data**, then **Refresh account IDs**: both views update while amounts and names stay cached. **Refetch full query** updates those remaining fields. Expand a request in the inspector to see the actual document, variables, and response size. Ports 4100 and 4200 must be free.
+
+The [demo guide](docs/DEMO.md) explains tenant isolation, save, failure/recovery, delay, order changes, and the limits of the comparison. The fixture contains synthetic data and local development controls; it is not a production server.
+
+Run the browser regression suite with the demo stopped:
+
+```sh
+pnpm exec playwright install chromium
+pnpm test:browser
+```
 
 ## Workspace
 
-| Location           | Current role                                                           |
-| ------------------ | ---------------------------------------------------------------------- |
-| `packages/core`    | Buildable ESM/declaration package with portable observation interfaces |
-| `packages/graphql` | Reserved source boundary; implementation follows the baseline          |
-| `packages/angular` | Reserved Angular adapter; signals and lifecycle integration planned    |
-| `apps`             | Future shared billing API and Apollo/StateQL demo                      |
-| `examples`         | Future plain TypeScript usage                                          |
-| `scripts`, `tests` | Package verification and release-policy checks                         |
+| Location            | Current role                                                           |
+| ------------------- | ---------------------------------------------------------------------- |
+| `packages/core`     | Buildable ESM/declaration package with portable observation interfaces |
+| `packages/graphql`  | Reserved source boundary; implementation follows the baseline          |
+| `packages/angular`  | Reserved Angular adapter; signals and lifecycle integration planned    |
+| `apps/billing-api`  | Local GraphQL billing fixture and deterministic controls               |
+| `apps/billing-demo` | Angular/Apollo baseline with two consumers and request inspector       |
+| `examples`          | Future plain TypeScript usage                                          |
+| `scripts`, `tests`  | Package/release checks and Angular browser scenarios                   |
 
 Core has no runtime, UI-framework, GraphQL, or platform dependency. The initial package identifier `@jchewitt/stateql-core` is provisional until npm scope ownership is confirmed. It is not a claim that the npm scope has been reserved.
 

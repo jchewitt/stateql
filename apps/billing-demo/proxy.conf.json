@@ -1,0 +1,4 @@
+{
+  "/graphql": { "target": "http://127.0.0.1:4100", "secure": false },
+  "/__fixture/**": { "target": "http://127.0.0.1:4100", "secure": false }
+}

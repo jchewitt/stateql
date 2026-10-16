@@ -1,6 +1,6 @@
 # StateQL task breakdown
 
-Complete each chunk with its focused tests, independent agent review, and a passing `pnpm check`. Keep later package APIs internal until a concrete use case exercises them. The current delivery covers the repository foundation; it does not implement the proof of concept.
+Complete each chunk with its focused tests, independent agent review, and a passing `pnpm check`. Keep later package APIs internal until a concrete use case exercises them. The current delivery includes the repository foundation and Apollo comparison baseline. StateQL's own runtime is not implemented yet.
 
 ## F0 Repository foundation
 
@@ -17,13 +17,13 @@ Exit: repository is cloneable and locally verifiable; hosted CI passes; release/
 
 ## P1 Shared fixture server and Apollo baseline
 
-Depends on F0. This is the next implementation chunk.
+Depends on F0. Implemented; see the [demo guide](DEMO.md) and automated scenarios.
 
-- [ ] P1.1 Add the minimal Node GraphQL billing server with schema, in-memory fixtures, reset controls, configurable latency, and deterministic failures.
-- [ ] P1.2 Define scoped billing/invoices paths, invoice IDs, a nested user field, and one save mutation.
-- [ ] P1.3 Add an Angular demo with two consumers using idiomatic Apollo and reusable fragments.
-- [ ] P1.4 Implement both normal refetch and a narrow field query that merges through Apollo's cache.
-- [ ] P1.5 Add request inspection and scenario evidence: selected fields, variables, request count, and shared updates.
+- [x] P1.1 Add the minimal Node GraphQL billing server with schema, in-memory fixtures, reset controls, configurable latency, and deterministic failures.
+- [x] P1.2 Define scoped billing/invoices paths, invoice IDs, a nested user field, and one save mutation.
+- [x] P1.3 Add an Angular demo with two consumers using idiomatic Apollo and reusable fragments.
+- [x] P1.4 Implement both normal refetch and a narrow field query that merges through Apollo's cache.
+- [x] P1.5 Add request inspection and scenario evidence: selected fields, variables, request count, and shared updates.
 
 Exit: two consumers update correctly from a narrow request; reordering fixtures and switching accounts do not corrupt data. This establishes the comparison before StateQL is measured.
 
