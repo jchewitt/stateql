@@ -1,0 +1,6 @@
+{
+  "packageDirectory": "packages/core",
+  "packageName": "@jchewitt/stateql-core",
+  "ready": false,
+  "distTag": "next"
+}

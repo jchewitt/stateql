@@ -1,0 +1,30 @@
+{
+  "name": "stateql-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "pnpm@10.18.2",
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "typecheck": "tsc --project tsconfig.typecheck.json",
+    "test": "node --test tests/release.test.mjs tests/workspace.test.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "pack:check": "node scripts/check-package.mjs",
+    "check": "pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm pack:check",
+    "changeset": "changeset",
+    "version:packages": "changeset version",
+    "release:check": "node scripts/check-release.mjs"
+  },
+  "devDependencies": {
+    "@changesets/cli": "2.29.8",
+    "prettier": "3.9.10",
+    "semver": "7.7.2",
+    "typescript": "5.9.3",
+    "yaml": "2.8.1"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "@jchewitt/stateql-core",
+  "version": "0.0.0",
+  "description": "Framework-independent StateQL contracts and shared-state runtime (under development).",
+  "type": "module",
+  "license": "MIT",
+  "author": "Jon Hewitt",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jchewitt/stateql.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/jchewitt/stateql#readme",
+  "bugs": {
+    "url": "https://github.com/jchewitt/stateql/issues"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "next"
+  },
+  "scripts": {
+    "build": "node ../../scripts/build-core.mjs",
+    "prepack": "pnpm --silent run build",
+    "prepublishOnly": "node ../../scripts/check-release.mjs"
+  }
+}
