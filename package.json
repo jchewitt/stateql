@@ -21,7 +21,7 @@
     "release:check": "node scripts/check-release.mjs"
   },
   "devDependencies": {
-    "@changesets/cli": "2.29.8",
+    "@changesets/cli": "3.0.3",
     "prettier": "3.9.10",
     "semver": "7.7.2",
     "typescript": "5.9.3",
