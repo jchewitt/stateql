@@ -11,7 +11,7 @@ Complete each chunk with its focused tests, independent agent review, and a pass
 - [x] F0.5 Add Changesets and an explicitly gated npm prerelease workflow.
 - [x] F0.6 Capture architecture decisions and implementation tasks.
 - [x] F0.7 Complete independent review, fix findings, and pass local checks. See the [review record](reviews/2026-10-16-foundation.md).
-- F0.8 Commit and push the reviewed foundation; the first successful main run in [hosted CI](https://github.com/jchewitt/stateql/actions/workflows/ci.yml) records completion of this final foundation step.
+- [x] F0.8 Commit and push the reviewed foundation; the [first hosted CI run](https://github.com/jchewitt/stateql/actions/runs/38964030997) passed on Linux (Node 22 and 24) and Windows (Node 24).
 
 Exit: repository is cloneable and locally verifiable; hosted CI passes; release/account prerequisites are documented.
 

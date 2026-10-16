@@ -16,4 +16,6 @@ The independent agent re-reviewed all three fixes and reported no actionable blo
 
 Local `pnpm check` passed: formatting, strict TypeScript and negative type assertions, 16 tooling tests, clean ESM/declaration compilation, package allowlist/license checks, and external consumer import/type checking.
 
-Hosted results are recorded in [GitHub Actions](https://github.com/jchewitt/stateql/actions/workflows/ci.yml) after push. npm scope ownership, package creation, and trusted-publisher account configuration remain prerequisites for the first actual release. No package was published during repository setup.
+The [first hosted CI run](https://github.com/jchewitt/stateql/actions/runs/38964030997) passed all three jobs: Linux with Node 22 and 24, and Windows with Node 24. GitHub reported deprecated Node 20 action runtimes; a follow-up updates the pinned actions to verified Node 24 releases. Subsequent results are recorded in [GitHub Actions](https://github.com/jchewitt/stateql/actions/workflows/ci.yml).
+
+npm scope ownership, package creation, and trusted-publisher account configuration remain prerequisites for the first actual release. No package was published during repository setup.
