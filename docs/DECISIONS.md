@@ -25,3 +25,7 @@ The GitHub repository belongs to verified personal account `jchewitt`. npm authe
 ## D006 Review before commit
 
 Every commit requires independent agent review and resolution of actionable findings. CI is complementary verification, not a substitute for the review. Future feature work uses branches and pull requests; the initial reviewed foundation is the bootstrap commit on `main`.
+
+## D007 Planner prototype boundary
+
+Generate TypeScript schema types and embedded SDL together. Keep canonical addresses and immutable resolved selections in core; schema coercion, AST construction, validation, and identity injection belong in the GraphQL package. Keep that package private until the runtime exercises its interface. The supported schema subset and item-projection type contract are explicit in `PLANNER.md`; unsupported features fail rather than silently approximate their behavior. Source/scope are explicit binding inputs until a runtime client owns them.

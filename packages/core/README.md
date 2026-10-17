@@ -2,7 +2,7 @@
 
 Experimental foundation for StateQL's framework-independent runtime.
 
-This scaffold currently exports only `StoreReader`, `Unsubscribe`, and `Disposable` TypeScript contracts. The query engine, cache, and invalidation API are not implemented. There is no supported npm release yet.
+Exports `StoreReader`, `Unsubscribe`, and `Disposable` contracts plus portable canonical addresses and immutable selection composition. Resource addresses include source, scope, canonical path, and arguments; selections and aliases do not change resource identity. Field addresses include canonical field arguments and optional record identity. The cache and invalidation runtime are not implemented. There is no supported npm release yet.
 
 The observation interface has no Angular, React, RxJS, GraphQL, DOM, or Node dependencies. Runtime snapshots must be immutable; TypeScript callers supply an immutable snapshot type. Framework adapters will subscribe to this same runtime rather than maintain a separate cache.
 
