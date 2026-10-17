@@ -9,7 +9,9 @@ import {
   type InputObject,
   type ResolvedField,
   type ResourceScope,
+  type AcquisitionSource,
 } from '@jchewitt/stateql-core';
+import { decodeAcquisition, validateAcquisition } from './decoder.js';
 import { compileOperation, type PreparedOperation } from './operation.js';
 import {
   containsList,
@@ -197,6 +199,35 @@ export class BoundDefinition<R> {
       fields,
       this.stateAddress,
     );
+  }
+
+  /** Provisional execution boundary; read coverage is always a validated subset. */
+  asSource(
+    transport: (operation: PreparedOperation) => Promise<unknown>,
+  ): AcquisitionSource {
+    validateAcquisition(this.context, this.path, this.selection);
+    // Validate the initial operation (including list identities) before scheduling work.
+    this.prepare();
+    return Object.freeze({
+      stateAddress: this.stateAddress,
+      selection: this.selection,
+      read: async (fields: readonly ResolvedField[]) => {
+        const selection = narrowFields(this.selection, fields);
+        const operation = compileOperation(
+          this.context,
+          this.path,
+          this.segments,
+          selection,
+          this.stateAddress,
+        );
+        return decodeAcquisition(
+          this.context,
+          this.path,
+          operation,
+          await transport(operation),
+        );
+      },
+    });
   }
 
   address(target: FieldPaths<R>, recordIdentity?: InputObject): string {

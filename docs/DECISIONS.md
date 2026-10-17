@@ -33,3 +33,7 @@ Generate TypeScript schema types and embedded SDL together. Keep canonical addre
 ## D008 Shared storage before execution
 
 Implement P3 in reviewable increments. P3.1 introduces an adapter-facing atomic commit store with explicit membership, canonical field paths, immutable consumer projections, and lifecycle ownership. A later coordinator decides response eligibility, missing-field acquisition, cancellation, and retries; a source decoder translates protocol responses into store changes. Do not interpret the store's explicit membership replacement as permission to replace membership from a narrow response. The store interfaces remain provisional and are documented in `STORE.md`.
+
+## D009 Acquisition before concurrent refresh
+
+P3.2 serializes reads per resource and recomputes missing fields after prior work. GraphQL decoding initially rejects partial errors, unsupported structures, and membership changes explicitly. This permits an executable cache acquisition slice without implying P3.3–P3.6 reconciliation and race semantics are finished. Source reads return decoded records to core; HTTP and response validation remain in the GraphQL package. The eventual concurrent scheduler must preserve current cache reuse and lifecycle behavior.
