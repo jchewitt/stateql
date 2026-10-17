@@ -14,6 +14,7 @@
     "test": "node --test tests/release.test.mjs tests/workspace.test.mjs && pnpm -r --if-present test",
     "demo": "pnpm --parallel --filter @stateql-demo/billing-* dev",
     "demo:planner": "pnpm --filter @stateql-demo/query-planner demo",
+    "demo:store": "pnpm --filter @stateql-demo/query-planner demo:store",
     "generate:billing": "pnpm --filter @jchewitt/stateql-graphql... build && tsx scripts/generate-billing.ts",
     "generate:check": "tsx scripts/generate-billing.ts --check",
     "test:browser": "playwright test",

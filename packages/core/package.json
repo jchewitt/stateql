@@ -34,6 +34,7 @@
     "tag": "next"
   },
   "scripts": {
+    "test": "node --test test/*.test.mjs",
     "build": "node ../../scripts/build-package.mjs core",
     "prepack": "pnpm --silent run build",
     "prepublishOnly": "node ../../scripts/check-release.mjs"

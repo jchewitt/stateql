@@ -1,6 +1,6 @@
 # StateQL task breakdown
 
-Complete each chunk with its focused tests, independent agent review, and a passing `pnpm check`. Keep later package APIs internal until a concrete use case exercises them. The current delivery includes the repository foundation, Apollo comparison baseline, and typed operation planner. StateQL's own runtime is not implemented yet.
+Complete each chunk with its focused tests, independent agent review, and a passing `pnpm check`. Keep later package APIs internal until a concrete use case exercises them. The current delivery includes the repository foundation, Apollo comparison baseline, typed operation planner, and the first shared-store runtime chunk.
 
 ## F0 Repository foundation
 
@@ -43,7 +43,7 @@ Exit: changing an invalidation target needs no separately maintained query or ma
 
 Depends on P2.
 
-- [ ] P3.1 Implement shared records, consumer projections, stable snapshots, subscriptions, and disposal.
+- [x] P3.1 Implement shared records, consumer projections, stable snapshots, subscriptions, and disposal. See the [store guide](STORE.md); execution and reconciliation remain below.
 - [ ] P3.2 Implement cache hit/miss and missing-field acquisition across compatible views.
 - [ ] P3.3 Implement field/branch invalidation and requested/fetched/committed coverage.
 - [ ] P3.4 Implement identity-based list patching separately from membership replacement.
