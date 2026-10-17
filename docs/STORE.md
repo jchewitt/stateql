@@ -50,6 +50,6 @@ Inactive data remains available until explicit `evict(address)` or store disposa
 
 ## Remaining runtime work
 
-P3.2–P3.8 still need automatic missing-field acquisition, GraphQL response decoding, requested/fetched/committed coverage, identity-based reconciliation of incoming lists, error/null propagation from the protocol, stale response protection, cancellation, retries, and alternate-source demonstrations. This store does not decide which server response is current or whether a partial list response should replace membership. The coordinator/decoder must make those decisions before calling `commit`.
+P3.2 now adds [automatic acquisition](ACQUISITION.md) with strict GraphQL decoding. P3.3–P3.8 still need explicit refresh coverage, broader list reconciliation, partial-error/null propagation from the protocol, stale response protection, cancellation, retries, and alternate-source demonstrations. This store does not decide which server response is current or whether a partial list response should replace membership. The coordinator/decoder must make those decisions before calling `commit`.
 
 P4 will connect the completed runtime to Angular and forms. P5 then compares application wiring, correctness, requests, payloads, planning cost, and bundle size against the existing Apollo baseline. P3.1 alone is not enough to make that comparison.

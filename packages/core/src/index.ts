@@ -1,5 +1,13 @@
 export type { Disposable, StoreReader, Unsubscribe } from './store-reader.js';
 export { StateStore } from './state-store.js';
+export { AcquisitionClient } from './acquisition.js';
+export type {
+  AcquisitionSource,
+  AcquiredRecord,
+  AcquiredField,
+  QueryHandle,
+  QuerySnapshot,
+} from './acquisition.js';
 export type {
   RecordIdentity,
   FieldPath,

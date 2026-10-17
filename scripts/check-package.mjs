@@ -137,7 +137,7 @@ try {
       '--input-type=module',
       '-e',
       `
-      const { createSchema } = await import('@jchewitt/stateql-graphql');
+      const { createSchema, createGraphQLClient } = await import('@jchewitt/stateql-graphql');
       const { StateStore } = await import('@jchewitt/stateql-core');
       const { generateSchemaModule } = await import('@jchewitt/stateql-graphql/codegen');
       const sdl = 'type Query { item: Item! } type Item { id: ID! name: String }';
@@ -152,6 +152,11 @@ try {
       ]);
       if (view.getSnapshot().records?.[0]?.data.name !== 'Packed store') throw new Error('Packed shared store failed.');
       store.dispose();
+      const client = createGraphQLClient({ transport: async () => ({ data: { item: { __typename: 'Item', name: 'Acquired' } } }) });
+      const acquired = client.watch(bound);
+      await acquired.ready;
+      if (acquired.getSnapshot().records?.[0]?.data.name !== 'Acquired') throw new Error('Packed acquisition failed.');
+      client.dispose();
     `,
     ],
     {

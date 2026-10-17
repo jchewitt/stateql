@@ -44,7 +44,7 @@ Exit: changing an invalidation target needs no separately maintained query or ma
 Depends on P2.
 
 - [x] P3.1 Implement shared records, consumer projections, stable snapshots, subscriptions, and disposal. See the [store guide](STORE.md); execution and reconciliation remain below.
-- [ ] P3.2 Implement cache hit/miss and missing-field acquisition across compatible views.
+- [x] P3.2 Implement cache hit/miss and missing-field acquisition across compatible views. See the [acquisition guide](ACQUISITION.md) for the supported subset and remaining reconciliation work.
 - [ ] P3.3 Implement field/branch invalidation and requested/fetched/committed coverage.
 - [ ] P3.4 Implement identity-based list patching separately from membership replacement.
 - [ ] P3.5 Handle omitted fields, successful nulls, structural nulls, and GraphQL partial errors.

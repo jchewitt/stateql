@@ -1,4 +1,6 @@
 export { createSchema } from './definition.js';
+export { createGraphQLClient, httpTransport } from './client.js';
+export type { GraphQLClient, GraphQLTransport } from './client.js';
 export type { Resource, Definition, BoundDefinition } from './definition.js';
 export type {
   FieldType,
