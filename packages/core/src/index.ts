@@ -1,4 +1,14 @@
 export type { Disposable, StoreReader, Unsubscribe } from './store-reader.js';
+export { StateStore } from './state-store.js';
+export type {
+  RecordIdentity,
+  FieldPath,
+  StateChange,
+  FieldStatus,
+  RecordSnapshot,
+  StateSnapshot,
+  StateView,
+} from './state-types.js';
 export {
   snapshotInput,
   canonicalInput,

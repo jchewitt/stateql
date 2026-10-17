@@ -138,11 +138,20 @@ try {
       '-e',
       `
       const { createSchema } = await import('@jchewitt/stateql-graphql');
+      const { StateStore } = await import('@jchewitt/stateql-core');
       const { generateSchemaModule } = await import('@jchewitt/stateql-graphql/codegen');
       const sdl = 'type Query { item: Item! } type Item { id: ID! name: String }';
       const bound = createSchema(sdl).field('item').select({ name: true }).bind({}, { source: 'test', scope: 'test' });
       if (!bound.prepare('name').query.includes('name')) throw new Error('Packed planner failed.');
       if (!generateSchemaModule(sdl).includes('GeneratedTypes')) throw new Error('Packed code generator failed.');
+      const store = new StateStore();
+      const view = store.watch(bound.stateAddress, bound.selection);
+      store.commit(bound.stateAddress, [
+        { kind: 'membership', records: [{ id: '1' }] },
+        { kind: 'write', record: { id: '1' }, path: [{ name: 'name', arguments: {} }], value: 'Packed store' },
+      ]);
+      if (view.getSnapshot().records?.[0]?.data.name !== 'Packed store') throw new Error('Packed shared store failed.');
+      store.dispose();
     `,
     ],
     {

@@ -100,6 +100,9 @@ importers:
 
   examples/query-planner:
     dependencies:
+      '@jchewitt/stateql-core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@jchewitt/stateql-graphql':
         specifier: workspace:*
         version: link:../../packages/graphql
