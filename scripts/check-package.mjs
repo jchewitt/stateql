@@ -156,6 +156,10 @@ try {
       const acquired = client.watch(bound);
       await acquired.ready;
       if (acquired.getSnapshot().records?.[0]?.data.name !== 'Acquired') throw new Error('Packed acquisition failed.');
+      await acquired.invalidate('name', { refetch: 'none' });
+      if (!acquired.getSnapshot().stale) throw new Error('Packed invalidation failed.');
+      await acquired.refresh('name');
+      if (acquired.getSnapshot().stale) throw new Error('Packed refresh failed.');
       client.dispose();
     `,
     ],
@@ -174,7 +178,7 @@ try {
   writeFileSync(
     join(consumer, 'planner.ts'),
     `
-    import { createSchema, type FieldType, type ObjectRef, type ResultOf } from '@jchewitt/stateql-graphql';
+    import { createSchema, createGraphQLClient, type FieldType, type ObjectRef, type ResultOf } from '@jchewitt/stateql-graphql';
     type Model = { Query: { item: FieldType<ObjectRef<'Item'>> }; Item: { name: FieldType<string | null> } };
     const definition = createSchema<Model>('type Query { item: Item! } type Item { name: String }').field('item').select({ name: { as: 'label' } });
     declare const result: ResultOf<typeof definition>;
@@ -182,6 +186,12 @@ try {
     void label;
     // @ts-expect-error unknown selected field
     definition.bind({}, { source: 'test', scope: 'test' }).prepare('missing');
+    const client = createGraphQLClient({ endpoint: 'http://localhost/graphql' });
+    const handle = client.watch(definition.bind({}, { source: 'test', scope: 'test' }));
+    void handle.invalidate('label', { refetch: 'none' });
+    void handle.refresh();
+    // @ts-expect-error canonical source name is not the selected alias
+    void handle.invalidate('name');
   `,
   );
   execFileSync(

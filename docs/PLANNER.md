@@ -47,7 +47,7 @@ Definitions are immutable. `.extend(...)` adds fields and recursively composes n
 
 `{ accountId: { as: 'ledger' } }` changes the projected response key and the refresh path to `ledger`, while `bound.address('ledger')` still addresses canonical `accountId`. Field addresses include field arguments and may include caller-supplied record identity. They are not a global entity-normalization scheme.
 
-`ResultOf<typeof definition>` describes one selected object projection, including nested nullability, arrays, aliases, and optional conditional selections. It does not describe the full HTTP/GraphQL response envelope or resource-path list wrappers. It is a compile-time contract; no response decoder exists yet. Dynamic selections may permit targets in TypeScript that are absent in a particular instance; runtime preparation rejects absent targets.
+`ResultOf<typeof definition>` describes one selected object projection, including nested nullability, arrays, aliases, and optional conditional selections. It does not describe the full HTTP/GraphQL response envelope or resource-path list wrappers. It is a compile-time contract; the [acquisition runtime](ACQUISITION.md) has a strict decoder for its documented subset and currently exposes JSON snapshots. Dynamic selections may permit targets in TypeScript that are absent in a particular instance; runtime preparation and handle operations reject absent targets.
 
 ## Supported boundary
 
@@ -55,6 +55,6 @@ Definitions are immutable. `.extend(...)` adds fields and recursively composes n
 - A query root named `Query`; paths cannot traverse through list items (use nested selections).
 - Object lists require configured non-null scalar/enum identity fields. The billing fixture uses tenant-aware identities.
 - Custom scalars, interfaces/unions, OneOf inputs, custom directives, and selection directives are unsupported. Unsupported schema features fail explicitly.
-- No mutation planner, HTTP executor, response decoder, subscriptions, cache, polling, or Angular StateQL adapter yet. The existing Angular demo remains the Apollo baseline.
+- The planner itself does not execute operations. The [acquisition runtime](ACQUISITION.md) adds HTTP execution, strict decoding, shared caching, subscriptions, and selective refresh. Mutation planning, polling, and the Angular StateQL adapter remain planned; the existing Angular demo remains the Apollo baseline.
 
 The GraphQL package stays private. Release readiness and npm ownership remain unchanged. This milestone demonstrates shared definition/address generation; it does not yet establish an advantage over Apollo's working cache behavior.

@@ -7,6 +7,7 @@ export type {
   AcquiredField,
   QueryHandle,
   QuerySnapshot,
+  InvalidateOptions,
 } from './acquisition.js';
 export type {
   RecordIdentity,

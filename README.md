@@ -4,16 +4,17 @@
 
 GraphQL-first state management built around composable definitions and selective field refresh.
 
-**Status: working Apollo baseline and StateQL automatic acquisition.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client automatically reuses cached fields and fetches missing selections over HTTP. Broader response reconciliation, invalidation scheduling, and StateQL's Angular adapter remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
+**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, and supports field/branch invalidation and refresh. Broader response reconciliation, concurrent scheduling, and StateQL's Angular adapter remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
 
-The intended behavior is illustrated below; this is a design example, not a currently available API:
+With a schema-generated invoice definition and client:
 
 ```ts
-const invoices = client.watch(billing.invoices, variables);
+const invoices = client.watch(billing.invoices.bind(variables, scope));
+await invoices.ready;
 await invoices.invalidate('accountId');
 ```
 
-The generated request should fetch the selected field plus necessary identity/context fields, update existing shared invoice state, and preserve unrelated cached fields. Central definitions, feature extensions, and consumer selections use one model. GraphQL generation and framework bindings remain separate from the shared-state runtime.
+The generated request fetches the selected field plus necessary identity/context fields, updates existing shared invoice state, and preserves unrelated cached fields. Central definitions, feature extensions, and consumer selections use one model. GraphQL generation and framework bindings remain separate from the shared-state runtime. See the [supported subset and reconciliation limits](docs/ACQUISITION.md).
 
 ## Start contributing
 
@@ -51,7 +52,7 @@ Run `pnpm demo:planner` after `pnpm check` to inspect generated full and narrow 
 
 Run `pnpm demo:store` to see shared StateQL records update two differently selected consumers. The [store guide](docs/STORE.md) explains this first runtime chunk and the execution work still ahead.
 
-Run `pnpm demo:acquire` for an actual StateQL HTTP acquisition against an isolated fixture, including shared initial loading and additional-field fetching. The [acquisition guide](docs/ACQUISITION.md) documents the API and supported response subset.
+Run `pnpm demo:acquire` for actual StateQL HTTP requests against an isolated fixture, including shared initial loading, additional-field fetching, and account ID invalidation that preserves cached amounts. The [acquisition guide](docs/ACQUISITION.md) documents the API and supported response subset.
 
 | Location                 | Current role                                                                 |
 | ------------------------ | ---------------------------------------------------------------------------- |

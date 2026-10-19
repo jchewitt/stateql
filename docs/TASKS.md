@@ -45,7 +45,7 @@ Depends on P2.
 
 - [x] P3.1 Implement shared records, consumer projections, stable snapshots, subscriptions, and disposal. See the [store guide](STORE.md); execution and reconciliation remain below.
 - [x] P3.2 Implement cache hit/miss and missing-field acquisition across compatible views. See the [acquisition guide](ACQUISITION.md) for the supported subset and remaining reconciliation work.
-- [ ] P3.3 Implement field/branch invalidation and requested/fetched/committed coverage.
+- [x] P3.3 Implement field/branch invalidation and requested/fetched/committed coverage. See [invalidation semantics](ACQUISITION.md#selective-invalidation-and-refresh); reads remain serialized pending P3.6.
 - [ ] P3.4 Implement identity-based list patching separately from membership replacement.
 - [ ] P3.5 Handle omitted fields, successful nulls, structural nulls, and GraphQL partial errors.
 - [ ] P3.6 Implement in-flight deduplication, field generations, cancellation ownership, and late-response protection.

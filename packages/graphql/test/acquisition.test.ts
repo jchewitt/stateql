@@ -239,6 +239,129 @@ test('default HTTP transport runs against the real billing fixture', async (t) =
   await handle.ready;
   assert.equal(handle.getSnapshot().records?.length, 2);
   assert.equal(handle.getSnapshot().complete, true);
+  api.fixture.advance('A');
+  await handle.invalidate('accountId');
+  assert.equal(
+    handle.getSnapshot().records?.[0]?.data['accountId'],
+    'A-ledger-1-v2',
+  );
+});
+
+test('field invalidation generates a narrow operation and updates aliases without touching siblings or other tenants', async (t) => {
+  const { transport, requests, fixture } = fixtureTransport();
+  const client = createGraphQLClient({ transport });
+  t.after(() => client.dispose());
+  const definition = base.extend({
+    amountCents: true,
+    user: { select: { name: true } },
+  });
+  const full = client.watch(definition.bind(args, scope));
+  const alias = client.watch(
+    resource.select({ accountId: { as: 'ledger' } }).bind(args, scope),
+  );
+  const amount = client.watch(
+    resource.select({ amountCents: true }).bind(args, scope),
+  );
+  const other = client.watch(
+    definition.bind({ billing: { tenantId: 'B' } }, scope),
+  );
+  await Promise.all([full.ready, alias.ready, amount.ready, other.ready]);
+  const amountBefore = amount.getSnapshot(),
+    otherBefore = other.getSnapshot();
+  const address = full.stateAddress;
+  const previousOrder = full
+    .getSnapshot()
+    .records?.map((record) => record.identity);
+  fixture.advance('A');
+  fixture.reverse('A');
+  await alias.invalidate('ledger');
+  assert.equal(full.stateAddress, address);
+  assert.equal(full.stateAddress, alias.stateAddress);
+  assert.equal(
+    full.getSnapshot().records?.[0]?.data['accountId'],
+    'A-ledger-1-v2',
+  );
+  assert.equal(
+    alias.getSnapshot().records?.[0]?.data['ledger'],
+    'A-ledger-1-v2',
+  );
+  assert.equal(amount.getSnapshot(), amountBefore);
+  assert.equal(other.getSnapshot(), otherBefore);
+  assert.deepEqual(
+    full.getSnapshot().records?.map((record) => record.identity),
+    previousOrder,
+  );
+  assert.match(requests.at(-1)!.query, /ledger: accountId/);
+  assert.match(requests.at(-1)!.query, /__typename/);
+  assert.doesNotMatch(requests.at(-1)!.query, /amountCents|user/);
+});
+
+test('nested leaf and branch targets reuse the declared selection without invalidating cached branch extensions', async (t) => {
+  const { transport, requests } = fixtureTransport();
+  const client = createGraphQLClient({ transport });
+  t.after(() => client.dispose());
+  const full = client.watch(
+    resource
+      .select({
+        accountId: true,
+        user: { select: { name: true, tenantId: true } },
+      })
+      .bind(args, scope),
+  );
+  const narrow = client.watch(
+    resource.select({ user: { select: { name: true } } }).bind(args, scope),
+  );
+  const tenant = client.watch(
+    resource.select({ user: { select: { tenantId: true } } }).bind(args, scope),
+  );
+  await Promise.all([full.ready, narrow.ready, tenant.ready]);
+  const before = tenant.getSnapshot();
+  await narrow.invalidate('user', { refetch: 'none' });
+  assert.equal(full.getSnapshot().stale, true);
+  assert.equal(tenant.getSnapshot(), before);
+  await narrow.refresh('user.name');
+  assert.equal(full.getSnapshot().stale, false);
+  assert.equal(tenant.getSnapshot(), before);
+  assert.match(requests.at(-1)!.query, /user/);
+  assert.match(requests.at(-1)!.query, /name/);
+  assert.doesNotMatch(requests.at(-1)!.query, /accountId/);
+  await narrow.invalidate('user');
+  assert.equal(requests.length, 3);
+});
+
+test('failed invalidation keeps cached values stale until an explicit successful retry', async (t) => {
+  const { transport, fixture } = fixtureTransport();
+  let fail = false;
+  const client = createGraphQLClient({
+    transport: async (operation) => {
+      if (fail) throw new Error('offline');
+      return transport(operation);
+    },
+  });
+  t.after(() => client.dispose());
+  const handle = client.watch(
+    base.extend({ amountCents: true }).bind(args, scope),
+  );
+  await handle.ready;
+  fail = true;
+  fixture.advance('A');
+  await assert.rejects(handle.invalidate('accountId'), /offline/);
+  assert.equal(
+    handle.getSnapshot().records?.[0]?.data['accountId'],
+    'A-ledger-1-v1',
+  );
+  assert.equal(handle.getSnapshot().stale, true);
+  assert.equal(handle.getSnapshot().error, 'offline');
+  assert.equal(handle.getSnapshot().fetching, false);
+  fail = false;
+  await handle.ensure();
+  assert.equal(
+    handle.getSnapshot().records?.[0]?.data['accountId'],
+    'A-ledger-1-v2',
+  );
+  assert.equal(handle.getSnapshot().records?.[0]?.data['amountCents'], 12500);
+  assert.equal(handle.getSnapshot().stale, false);
+  assert.equal(handle.getSnapshot().error, undefined);
 });
 
 test('nullable embedded objects and scalar lists decode; unsupported nested object lists fail before transport', async () => {
