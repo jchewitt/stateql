@@ -70,6 +70,11 @@ void handle.invalidate('ledger');
 void handle.invalidate('user.name', { refetch: 'none' });
 void handle.refresh('user');
 void handle.invalidate();
+void handle.refreshList();
+const membershipStale: boolean = handle.getSnapshot().membershipStale;
+void membershipStale;
+// @ts-expect-error list refresh always uses the complete declared selection
+void handle.refreshList('ledger');
 // @ts-expect-error use the selected alias, not the source name
 void handle.invalidate('accountId');
 // @ts-expect-error the parent definition was not widened by its extension

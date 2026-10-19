@@ -208,9 +208,13 @@ export class BoundDefinition<R> {
     validateAcquisition(this.context, this.path, this.selection);
     // Validate the initial operation (including list identities) before scheduling work.
     this.prepare();
+    const last = this.path.at(-1)!;
     return Object.freeze({
       stateAddress: this.stateAddress,
       selection: this.selection,
+      collection: containsList(
+        fieldAt(this.context, last.parentType, last.name),
+      ),
       read: async (fields: readonly ResolvedField[]) => {
         const selection = narrowFields(this.selection, fields);
         const operation = compileOperation(

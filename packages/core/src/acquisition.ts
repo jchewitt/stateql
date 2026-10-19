@@ -8,16 +8,11 @@ import {
   type ResolvedField,
 } from './definition.js';
 import { StateStore } from './state-store.js';
-import {
-  fieldAtPath,
-  hasOmissions,
-  leafPaths,
-  staleChanges,
-} from './acquisition-coverage.js';
+import { leafPaths, staleChanges } from './acquisition-coverage.js';
+import { reconcileAcquisition } from './acquisition-reconciliation.js';
 import type {
   FieldPath,
   RecordIdentity,
-  StateChange,
   StateSnapshot,
   StateView,
 } from './state-types.js';
@@ -41,6 +36,8 @@ export interface AcquiredRecord {
 export interface AcquisitionSource {
   readonly stateAddress: string;
   readonly selection: readonly ResolvedField[];
+  /** Opts into identity-based list reconciliation and explicit membership refresh. */
+  readonly collection?: boolean;
   /** Optional broader read coverage (for example, a whole-resource backend).
    * Must contain the requested fields and remain inside this source's selection.
    * Extra fetched values are validated but never committed as ordinary field writes. */
@@ -68,6 +65,8 @@ export interface QueryHandle<Target extends string = string> extends Omit<
   invalidate(target?: Target, options?: InvalidateOptions): Promise<void>;
   /** Forces a selected read without first marking cached values stale. */
   refresh(target?: Target): Promise<void>;
+  /** Replace list membership/order using this handle's entire declared selection. */
+  refreshList(): Promise<void>;
 }
 interface Scope {
   tail: Promise<void>;
@@ -172,6 +171,7 @@ export class AcquisitionClient {
     const address = source.stateAddress;
     const read = source.read.bind(source);
     const fetchSelection = source.fetchSelection?.bind(source);
+    const collection = source.collection === true;
     const view = this.store.watch(address, selection);
     let scope = this.scopes.get(address);
     if (!scope) {
@@ -188,7 +188,10 @@ export class AcquisitionClient {
       }
     });
     current.handles.add(handle);
-    const enqueue = (requested?: readonly ResolvedField[]): Promise<void> => {
+    const enqueue = (
+      requested?: readonly ResolvedField[],
+      replaceMembership = false,
+    ): Promise<void> => {
       if (this.disposed || !handle.active)
         return Promise.reject(new Error('Query handle is disposed.'));
       const task = current.tail.then(async () => {
@@ -207,7 +210,7 @@ export class AcquisitionClient {
             ? narrowFields(selection, fetchSelection(fields))
             : fields;
           narrowFields(fetched, fields);
-          this.store.setFetching(address, requestId, fields);
+          this.store.setFetching(address, requestId, fields, replaceMembership);
           if (this.disposed || !current.handles.size)
             throw new Error('Acquisition has no active owners.');
           const records = await read(fetched);
@@ -219,58 +222,17 @@ export class AcquisitionClient {
           ) as unknown as readonly AcquiredRecord[];
           if (!Array.isArray(acquired))
             throw new Error('Source must return records.');
-          const known = view.getSnapshot().records;
-          const ids = acquired.map((record) => canonicalInput(record.identity));
-          if (new Set(ids).size !== ids.length)
-            throw new Error('Duplicate acquired identity.');
-          if (known !== undefined) {
-            const existing = new Set(
-              known.map((record) => canonicalInput(record.identity)),
-            );
-            if (
-              existing.size !== ids.length ||
-              ids.some((id) => !existing.has(id))
-            )
-              throw new Error(
-                'Membership changed during field acquisition; explicit list reconciliation is required.',
-              );
-          }
-          const changes: StateChange[] =
-            known === undefined
-              ? [
-                  {
-                    kind: 'membership',
-                    records: acquired.map((record) => record.identity),
-                  },
-                ]
-              : [];
-          for (const record of acquired)
-            for (const field of record.fields) {
-              const fetchedField = fieldAtPath(field.path, fetched);
-              if (
-                (field.kind !== 'write' && field.kind !== 'object') ||
-                !fetchedField ||
-                (field.kind === 'object' && !fetchedField.children.length) ||
-                (field.kind === 'write' &&
-                  fetchedField.children.length &&
-                  field.value !== null)
-              )
-                throw new Error(
-                  'Source returned an invalid write or a write outside fetched coverage.',
-                );
-              if (fieldAtPath(field.path, fields))
-                changes.push({ ...field, record: record.identity });
-            }
-          // Reapply later invalidations atomically with the older response. This
-          // also covers invalidation before the initial membership is known.
-          changes.push(...staleChanges(acquired, current.pendingInvalidations));
-          this.store.commit(address, changes);
-          if (
-            acquired.some((record) =>
-              hasOmissions(record.fields, leafPaths(fields)),
-            )
-          )
-            throw new Error('Source omitted requested fields.');
+          const result = reconcileAcquisition({
+            acquired,
+            known: view.getSnapshot().records,
+            requested: fields,
+            fetched,
+            collection,
+            replaceMembership,
+            pendingInvalidations: current.pendingInvalidations,
+          });
+          this.store.commit(address, result.changes);
+          if (result.incomplete) throw new Error(result.incomplete);
           if (!handle.active) throw new Error('Query handle is disposed.');
         } catch (error) {
           if (handle.active && !this.disposed) {
@@ -298,6 +260,16 @@ export class AcquisitionClient {
     const refresh = (target?: string): Promise<void> => {
       try {
         return enqueue(targetFields(target));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    };
+    const refreshList = (): Promise<void> => {
+      try {
+        const fields = targetFields();
+        if (!collection)
+          throw new Error('refreshList requires a collection source.');
+        return enqueue(fields, true);
       } catch (error) {
         return Promise.reject(error);
       }
@@ -338,6 +310,7 @@ export class AcquisitionClient {
       ensure,
       invalidate,
       refresh,
+      refreshList,
       getSnapshot: () => handle.getSnapshot(),
       subscribe: (listener: () => void) => handle.subscribe(listener),
       dispose: () => {

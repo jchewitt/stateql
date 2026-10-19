@@ -113,13 +113,7 @@ test('initial failure is observable and ensure retries without automatic retry l
 });
 
 test('partial errors, malformed scalars and missing selected fields cannot corrupt an existing view', async () => {
-  for (const mode of [
-    'error',
-    'scalar',
-    'missing',
-    'duplicate',
-    'membership',
-  ]) {
+  for (const mode of ['error', 'scalar', 'missing', 'duplicate']) {
     const { transport } = fixtureTransport();
     let mutate = false;
     const client = createGraphQLClient({
@@ -139,7 +133,6 @@ test('partial errors, malformed scalars and missing selected fields cannot corru
             delete result.data.billing.invoices[0]!['amountCents'];
           if (mode === 'duplicate')
             result.data.billing.invoices.push(result.data.billing.invoices[0]!);
-          if (mode === 'membership') result.data.billing.invoices.pop();
         }
         return result;
       },
