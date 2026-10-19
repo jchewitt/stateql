@@ -15,6 +15,7 @@
     "demo": "pnpm --parallel --filter @stateql-demo/billing-* dev",
     "demo:planner": "pnpm --filter @stateql-demo/query-planner demo",
     "demo:store": "pnpm --filter @stateql-demo/query-planner demo:store",
+    "demo:acquire": "tsx scripts/acquisition-demo.ts",
     "generate:billing": "pnpm --filter @jchewitt/stateql-graphql... build && tsx scripts/generate-billing.ts",
     "generate:check": "tsx scripts/generate-billing.ts --check",
     "test:browser": "playwright test",

@@ -4,7 +4,7 @@
 
 GraphQL-first state management built around composable definitions and selective field refresh.
 
-**Status: working Apollo baseline, StateQL operation planner, and shared record store.** Typed definitions generate full and selective GraphQL requests with the same canonical state address. The store shares records across consumer projections with subscriptions and stable snapshots. Automatic fetching, response reconciliation, and StateQL's Angular adapter remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
+**Status: working Apollo baseline and StateQL automatic acquisition.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client automatically reuses cached fields and fetches missing selections over HTTP. Broader response reconciliation, invalidation scheduling, and StateQL's Angular adapter remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
 
 The intended behavior is illustrated below; this is a design example, not a currently available API:
 
@@ -50,6 +50,8 @@ pnpm test:browser
 Run `pnpm demo:planner` after `pnpm check` to inspect generated full and narrow requests. The [planner guide](docs/PLANNER.md) covers schema generation, composition, addresses, and current limitations.
 
 Run `pnpm demo:store` to see shared StateQL records update two differently selected consumers. The [store guide](docs/STORE.md) explains this first runtime chunk and the execution work still ahead.
+
+Run `pnpm demo:acquire` for an actual StateQL HTTP acquisition against an isolated fixture, including shared initial loading and additional-field fetching. The [acquisition guide](docs/ACQUISITION.md) documents the API and supported response subset.
 
 | Location                 | Current role                                                                 |
 | ------------------------ | ---------------------------------------------------------------------------- |
