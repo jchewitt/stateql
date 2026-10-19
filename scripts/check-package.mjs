@@ -160,6 +160,16 @@ try {
       if (!acquired.getSnapshot().stale) throw new Error('Packed invalidation failed.');
       await acquired.refresh('name');
       if (acquired.getSnapshot().stale) throw new Error('Packed refresh failed.');
+      if (acquired.getSnapshot().membershipStale) throw new Error('Packed membership state failed.');
+      const listDefinition = createSchema('type Query { items: [Item!]! } type Item { id: ID! name: String }', { identities: { Item: ['id'] } }).field('items').select({ name: true }).bind({}, { source: 'test', scope: 'list' });
+      let items = [{ __typename: 'Item', id: '1', name: 'first' }];
+      const lists = createGraphQLClient({ transport: async () => ({ data: { items } }) });
+      const list = lists.watch(listDefinition);
+      await list.ready;
+      items = [{ __typename: 'Item', id: '2', name: 'second' }];
+      await list.refreshList();
+      if (list.getSnapshot().records?.[0]?.identity.id !== '2' || list.getSnapshot().membershipStale) throw new Error('Packed list refresh failed.');
+      lists.dispose();
       client.dispose();
     `,
     ],
@@ -190,6 +200,9 @@ try {
     const handle = client.watch(definition.bind({}, { source: 'test', scope: 'test' }));
     void handle.invalidate('label', { refetch: 'none' });
     void handle.refresh();
+    void handle.refreshList();
+    const membershipStale: boolean = handle.getSnapshot().membershipStale;
+    void membershipStale;
     // @ts-expect-error canonical source name is not the selected alias
     void handle.invalidate('name');
   `,

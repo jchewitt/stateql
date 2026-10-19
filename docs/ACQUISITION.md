@@ -1,6 +1,6 @@
 # Acquisition and selective refresh
 
-P3.2–P3.3 connect the planner to the shared store through a portable acquisition boundary and add selective invalidation/refresh. The GraphQL package offers an HTTP default and an injectable transport for tests or alternate execution environments. Core still imports no GraphQL, framework, HTTP, browser, Node, or timer API.
+P3.2–P3.4 connect the planner to the shared store through a portable acquisition boundary and add selective invalidation/refresh and keyed-list reconciliation. The GraphQL package offers an HTTP default and an injectable transport for tests or alternate execution environments. Core still imports no GraphQL, framework, HTTP, browser, Node, or timer API.
 
 ```ts
 const client = createGraphQLClient({
@@ -18,7 +18,7 @@ client.dispose();
 
 Supply an absolute HTTP(S) URL, for example `http://127.0.0.1:4100/graphql`. Dynamic headers can be supplied with `headers: () => ({ authorization: ... })`; credentials are not placed in cache addresses. A client should belong to one session/authorization context. Dispose it when that context changes. Each client has its own store.
 
-Run `pnpm check` then `pnpm demo:acquire`. This self-contained demo starts the fixture on an ephemeral port, loads two identical consumers, extends one view with `amountCents`, advances server data, and invalidates `accountId`. It prints the actual three HTTP requests and disposes the client/server. The second request fetches only missing amounts plus identity/context; the third fetches account IDs plus identity/context. All three consumers see the updated account IDs while amounts remain cached and the state address stays unchanged.
+Run `pnpm check` then `pnpm demo:acquire`. This self-contained demo starts the fixture on an ephemeral port, loads two identical consumers, extends one view with `amountCents`, advances server data, and invalidates `accountId`. All three consumers see the updated account IDs while amounts remain cached and the state address stays unchanged. It then reverses server order: a field refresh preserves cached order, and an explicit list refresh adopts server order and current amounts. The demo prints all five HTTP requests and disposes the client/server.
 
 ## Selective invalidation and refresh
 
@@ -43,15 +43,33 @@ Reads remain serialized by state address. Explicit refresh/invalidation calls ea
 
 Reads are serialized within each resource address. After earlier work settles, each queued consumer recomputes its missing/stale/error coverage. Identical consumers therefore reuse the first successful acquisition, while extensions only fetch additional fields. Different addresses can progress independently. This deliberately precedes the general concurrent-request/generation scheduler planned in P3.6.
 
-Snapshots currently expose the store's immutable `records`, `complete`, `stale`, and `fetching` plus a handle-level acquisition `error`. That error describes this handle's last failed attempt and is cleared when its next queued read/ensure starts; mark-only invalidation does not clear it. Another handle may fill the shared cache without clearing it. They are JSON projections, not yet schema-inferred application data envelopes. Record identities and aliases are preserved. Known empty membership is reused. Listener failures go to optional `onListenerError`, never into transport retries; without a handler they are ignored. Error reporting callbacks cannot disrupt acquisition.
+Snapshots currently expose the store's immutable `records`, `complete`, `stale`, `membershipStale`, and `fetching` plus a handle-level acquisition `error`. That error describes this handle's last failed attempt and is cleared when its next queued read/ensure starts; mark-only invalidation does not clear it. Another handle may fill the shared cache without clearing it. They are JSON projections, not yet schema-inferred application data envelopes. Record identities and aliases are preserved. Known empty membership is reused. Listener failures go to optional `onListenerError`, never into transport retries; without a handler they are ignored. Error reporting callbacks cannot disrupt acquisition.
 
 Disposing a handle removes its subscriptions and freezes its readable snapshot. Another owner can still use the in-progress acquisition. Client disposal, or having no active owners when a response settles, prevents its commit. A new owner joining before completion can reuse that in-flight read; ownership epochs are deferred to P3.6. Underlying HTTP cancellation, timeouts, timed retention, and general field generations are not implemented in this increment; transports can remain in flight until they settle. Inactive data is retained until client disposal.
 
 ## Decoder and reconciliation boundary
 
-The initial read establishes membership. Subsequent field acquisition merges by configured record identity and preserves order. A different membership set fails without inserting partial records or deleting existing records. Explicit membership refresh/reconciliation follows in P3.4.
+The initial read establishes membership. Subsequent field acquisition merges by configured record identity and preserves order. Keyed collections reconcile added/missing identities as described below. Non-collection sources still reject a changed resource identity; root-object structural replacement remains later work.
 
 The GraphQL decoder validates response shapes, `__typename`, identities, scalar values, selected field presence, and non-null constraints before returning changes. Nullable embedded objects and scalar lists are supported. Omitted fields, any GraphQL errors, malformed identities, null resource/ancestors, and nested object lists fail explicitly. Failed GraphQL decoding commits no partial response; existing values remain available. P3.5 will add protocol-aware partial-error and structural-null reconciliation. The portable core can retain successful writes from a source that omits fields, but reports incomplete acquisition and requests the remaining fields on the next ensure.
+
+## Keyed lists and membership refresh
+
+```ts
+await invoices.refresh('accountId'); // Patch known records; keep membership/order.
+await invoices.refresh(); // Same policy for all fields declared by this view.
+await invoices.refreshList(); // Replace membership/order and refresh this view's fields.
+```
+
+A narrow response may return a reordered subset or new records. Matching records update by identity. Unknown records are ignored; missing records remain cached. Added or missing identities set shared `membershipStale: true`. Merely returning the same members in a different order does not set the flag or reorder the cache. If a known record is missing, its requested fields are marked stale and the operation rejects as incomplete **after** valid matching writes commit. This covers a record disappearing from a filtered list: the cache cannot infer that record's new field value. If the only membership change is added records, the field refresh resolves because all known targets were returned, but membership stays flagged.
+
+`membershipStale` is also true before membership is first acquired. Overall `stale` includes this flag; `complete` only describes whether selected fields of cached members are present without errors. Thus a view can be complete while membership is stale. The flag is sticky until membership replacement. `ensure()` still acquires missing/stale/error fields; it never silently replaces membership, even when the membership flag is set. Call `refreshList()` to resolve it.
+
+`refreshList()` requests the calling handle's entire declared selection, preserving its scope and arguments. A successful response atomically replaces membership and order, clears the membership flag, removes absent records, and admits new records with the requested fields. Retained records preserve unrequested cached siblings. Other views share the new membership immediately; a wider view may be incomplete for newly admitted records and can call `ensure()` to acquire its additional fields. Removed records do not retain hidden values for later reinsertion. List refresh reports fetching to all views of that resource, including views with disjoint field selections.
+
+Malformed identities, duplicate identities/field paths, contradictory field trees, or incomplete whole-list responses reject before changing membership or values. An older list response cannot clear a later field invalidation: those targets remain stale on both retained and newly admitted records. Disposal and serialized queue rules are the same as for field refresh. Each handle retains its own last-attempt error; another handle's list refresh does not clear it.
+
+The provisional source contract opts in with `collection: true`; GraphQL derives this from the resource's schema field. `refreshList()` rejects for non-collection sources. This prototype requires reliable configured identity for GraphQL lists and still rejects unkeyed lists, nested object lists, and pagination merging. Whole-list fallback without identities is not implemented; it must not be approximated with positional identities.
 
 ## Requested, fetched, and committed coverage
 
@@ -61,4 +79,4 @@ Source `read(fetched)` returns decoded records. Every returned field must be val
 
 Only successfully returned requested writes become fresh. The portable core reports omitted requested fields even when old values exist, while retaining successful returned writes; GraphQL remains strict and rejects any omitted selected field before committing. Source callbacks never receive direct access to the store. An HTTP transport receives the prepared operation and returns the GraphQL envelope. GraphQL schema logic stays in the GraphQL package.
 
-This completes P3.2–P3.3 for the explicitly supported subset. P3.4–P3.8 still include membership reconciliation, protocol partial errors, concurrent race handling, cancellation, retry policy, and additional adapter scenarios. Angular integration and the Apollo comparison follow those tasks.
+This completes P3.2–P3.4 for the explicitly supported subset. P3.5–P3.8 still include protocol partial errors, concurrent race handling, cancellation, retry policy, and additional adapter scenarios. Angular integration and the Apollo comparison follow those tasks.

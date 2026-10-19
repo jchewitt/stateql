@@ -43,6 +43,20 @@ try {
     'Detail retains cached amounts:',
     detail.getSnapshot().records?.map((record) => record.data),
   );
+  api.fixture.reverse('A');
+  await detail.refresh('accountId');
+  console.log(
+    'Field refresh retains cached order:',
+    detail.getSnapshot().records?.map((record) => record.identity['id']),
+  );
+  await detail.refreshList();
+  console.log(
+    'List refresh adopts server order and current amounts:',
+    detail.getSnapshot().records?.map((record) => ({
+      id: record.identity['id'],
+      ...record.data,
+    })),
+  );
   const response = await fetch(`${api.url}/__fixture/requests`);
   console.log('Fixture request evidence:', await response.json());
   summary.dispose();

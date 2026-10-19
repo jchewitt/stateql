@@ -7,6 +7,7 @@ import {
   type InputValue,
   type ResolvedField,
 } from './definition.js';
+import { snapshotIdentity as identity } from './state-identity.js';
 import type {
   FieldPath,
   FieldStatus,
@@ -31,8 +32,15 @@ interface StoredRecord {
 }
 interface Resource {
   membership: readonly string[] | undefined;
+  membershipStale: boolean;
   records: Map<string, StoredRecord>;
-  readonly requests: Map<string, readonly (readonly string[])[]>;
+  readonly requests: Map<
+    string,
+    {
+      readonly paths: readonly (readonly string[])[];
+      readonly membership: boolean;
+    }
+  >;
   readonly views: Set<View>;
 }
 
@@ -45,17 +53,6 @@ const token = (field: FieldSegment) =>
   canonicalInput([field.name, field.arguments]);
 const key = (path: readonly string[]) => canonicalInput(path);
 
-function identity(value: RecordIdentity): RecordIdentity {
-  const copied = snapshotInput(value);
-  if (
-    !copied ||
-    typeof copied !== 'object' ||
-    Array.isArray(copied) ||
-    !Object.keys(copied).length
-  )
-    throw new Error('Record identity must be a nonempty object.');
-  return copied as RecordIdentity;
-}
 function pathTokens(path: FieldPath): readonly string[] {
   if (!path.length) throw new Error('A field path is required.');
   return path.map((field) => {
@@ -79,6 +76,7 @@ function leafPaths(
 function emptyResource(): Resource {
   return {
     membership: undefined,
+    membershipStale: true,
     records: new Map(),
     requests: new Map(),
     views: new Set(),
@@ -229,13 +227,17 @@ class View implements StateView {
         statuses!.every(
           (status) => status.present && status.error === undefined,
         ),
+      membershipStale: this.resource.membershipStale,
       stale:
+        this.resource.membershipStale ||
         records === undefined ||
         statuses!.some((status) => status.stale || status.error !== undefined),
-      fetching: [...this.resource.requests.values()].some((paths) =>
-        paths.some((path) =>
-          this.paths.some((selected) => overlaps(path, selected)),
-        ),
+      fetching: [...this.resource.requests.values()].some(
+        (request) =>
+          request.membership ||
+          request.paths.some((path) =>
+            this.paths.some((selected) => overlaps(path, selected)),
+          ),
       ),
     });
   }
@@ -335,6 +337,7 @@ export class StateStore {
         if (new Set(ids).size !== ids.length)
           throw new Error('Duplicate record identity.');
         next.membership = ids;
+        next.membershipStale = false;
         next.records = new Map(
           members.map((member, index) => {
             const id = ids[index]!;
@@ -344,6 +347,10 @@ export class StateStore {
             ];
           }),
         );
+        continue;
+      }
+      if (change.kind === 'membership-stale') {
+        next.membershipStale = true;
         continue;
       }
       const record = next.records.get(canonicalInput(identity(change.record)));
@@ -405,6 +412,7 @@ export class StateStore {
       }
     }
     resource.membership = next.membership;
+    resource.membershipStale = next.membershipStale;
     resource.records = next.records;
     this.publish(resource);
   }
@@ -413,6 +421,7 @@ export class StateStore {
     address: string,
     requestId: string,
     fields?: readonly ResolvedField[],
+    membership = false,
   ): void {
     if (typeof requestId !== 'string' || !requestId)
       throw new Error('Request ID is required.');
@@ -420,7 +429,7 @@ export class StateStore {
     if (fields === undefined) resource.requests.delete(requestId);
     else {
       const paths = leafPaths(validatedSelection(fields));
-      resource.requests.set(requestId, paths);
+      resource.requests.set(requestId, { paths, membership });
     }
     this.publish(resource);
   }

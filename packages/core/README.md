@@ -2,7 +2,7 @@
 
 Experimental foundation for StateQL's framework-independent runtime.
 
-Exports observation contracts, portable canonical addresses, immutable selection composition, a provisional `StateStore`, and `AcquisitionClient`. Acquisition reuses shared fresh fields and asks a source for missing selections. Query handles also support field/branch invalidation, mark-only invalidation, and forced refresh. Broader reconciliation, concurrent refresh scheduling, cancellation, and retries are still planned. There is no supported npm release yet.
+Exports observation contracts, portable canonical addresses, immutable selection composition, a provisional `StateStore`, and `AcquisitionClient`. Acquisition reuses shared fresh fields and asks a source for missing selections. Query handles support field/branch invalidation, mark-only invalidation, forced refresh, and explicit keyed-list membership refresh. Partial-error reconciliation, concurrent refresh scheduling, cancellation, and retries are still planned. There is no supported npm release yet.
 
 The observation interface has no Angular, React, RxJS, GraphQL, DOM, or Node dependencies. Runtime snapshots must be immutable; TypeScript callers supply an immutable snapshot type. Framework adapters will subscribe to this same runtime rather than maintain a separate cache.
 

@@ -4,7 +4,7 @@
 
 GraphQL-first state management built around composable definitions and selective field refresh.
 
-**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, and supports field/branch invalidation and refresh. Broader response reconciliation, concurrent scheduling, and StateQL's Angular adapter remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
+**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, and explicitly reconciles keyed-list membership with `refreshList()`. Partial-error handling, concurrent scheduling, and StateQL's Angular adapter remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
 
 With a schema-generated invoice definition and client:
 
@@ -52,7 +52,7 @@ Run `pnpm demo:planner` after `pnpm check` to inspect generated full and narrow 
 
 Run `pnpm demo:store` to see shared StateQL records update two differently selected consumers. The [store guide](docs/STORE.md) explains this first runtime chunk and the execution work still ahead.
 
-Run `pnpm demo:acquire` for actual StateQL HTTP requests against an isolated fixture, including shared initial loading, additional-field fetching, and account ID invalidation that preserves cached amounts. The [acquisition guide](docs/ACQUISITION.md) documents the API and supported response subset.
+Run `pnpm demo:acquire` for actual StateQL HTTP requests against an isolated fixture, including shared loading, missing-field fetching, account ID invalidation that preserves cached amounts, and explicit list refresh that adopts server order. The [acquisition guide](docs/ACQUISITION.md) documents the API and supported response subset.
 
 | Location                 | Current role                                                                 |
 | ------------------------ | ---------------------------------------------------------------------------- |

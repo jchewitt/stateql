@@ -11,6 +11,7 @@ export type RecordIdentity = InputObject;
 export type FieldPath = readonly FieldSegment[];
 export type StateChange =
   | { readonly kind: 'membership'; readonly records: readonly RecordIdentity[] }
+  | { readonly kind: 'membership-stale' }
   | {
       readonly kind: 'write';
       readonly record: RecordIdentity;
@@ -51,6 +52,8 @@ export interface StateSnapshot {
   /** Undefined means membership has not been acquired; [] is a known empty list. */
   readonly records: readonly RecordSnapshot[] | undefined;
   readonly complete: boolean;
+  /** Unknown membership, or a narrow read detected added/missing records. */
+  readonly membershipStale: boolean;
   readonly stale: boolean;
   readonly fetching: boolean;
 }
