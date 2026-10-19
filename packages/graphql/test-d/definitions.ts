@@ -1,5 +1,6 @@
 import { schema } from '../../../examples/query-planner/src/generated/billing.js';
 import type { ResultOf, Selection } from '../src/index.js';
+import { createGraphQLClient } from '../src/index.js';
 import type { GeneratedTypes } from '../../../examples/query-planner/src/generated/billing.js';
 
 const resource = schema.field('billing').field('invoices');
@@ -63,6 +64,20 @@ const bound = base.bind(
 bound.prepare('ledger');
 bound.prepare('user.name');
 bound.prepare('user');
+const client = createGraphQLClient({ endpoint: 'http://localhost/graphql' });
+const handle = client.watch(bound);
+void handle.invalidate('ledger');
+void handle.invalidate('user.name', { refetch: 'none' });
+void handle.refresh('user');
+void handle.invalidate();
+// @ts-expect-error use the selected alias, not the source name
+void handle.invalidate('accountId');
+// @ts-expect-error the parent definition was not widened by its extension
+void handle.refresh('amountCents');
+// @ts-expect-error unknown nested field
+void handle.invalidate('user.unknown');
+// @ts-expect-error invalid policy
+void handle.invalidate('ledger', { refetch: 'always' });
 // @ts-expect-error unknown selected refresh field
 bound.prepare('amountCents');
 // @ts-expect-error canonical name hidden by alias

@@ -37,3 +37,7 @@ Implement P3 in reviewable increments. P3.1 introduces an adapter-facing atomic 
 ## D009 Acquisition before concurrent refresh
 
 P3.2 serializes reads per resource and recomputes missing fields after prior work. GraphQL decoding initially rejects partial errors, unsupported structures, and membership changes explicitly. This permits an executable cache acquisition slice without implying P3.3–P3.6 reconciliation and race semantics are finished. Source reads return decoded records to core; HTTP and response validation remain in the GraphQL package. The eventual concurrent scheduler must preserve current cache reuse and lifecycle behavior.
+
+## D010 Selective refresh over the serialized coordinator
+
+P3.3 adds field/branch invalidation and refresh using the same canonical selection and state address. GraphQL handle targets are inferred from the bound definition, including aliases. A source may declare broader fetched coverage within its selection; only requested field writes commit, with required ancestor structure. Successful nulls or changed object identity must still discard obsolete descendants. Invalidations arriving during a read are reapplied atomically with that older response, including before initial membership is known. This is protection for the current serialized scheduler, not completion of P3.6 concurrent generations, cancellation, or in-flight refresh deduplication.

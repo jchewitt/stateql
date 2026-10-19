@@ -2,11 +2,18 @@ import {
   canonicalInput,
   freezeFields,
   mergeFields,
+  narrowFields,
   selectFieldPath,
   snapshotInput,
   type ResolvedField,
 } from './definition.js';
 import { StateStore } from './state-store.js';
+import {
+  fieldAtPath,
+  hasOmissions,
+  leafPaths,
+  staleChanges,
+} from './acquisition-coverage.js';
 import type {
   FieldPath,
   RecordIdentity,
@@ -34,21 +41,39 @@ export interface AcquiredRecord {
 export interface AcquisitionSource {
   readonly stateAddress: string;
   readonly selection: readonly ResolvedField[];
+  /** Optional broader read coverage (for example, a whole-resource backend).
+   * Must contain the requested fields and remain inside this source's selection.
+   * Extra fetched values are validated but never committed as ordinary field writes. */
+  fetchSelection?(
+    requested: readonly ResolvedField[],
+  ): readonly ResolvedField[];
   read(selection: readonly ResolvedField[]): Promise<readonly AcquiredRecord[]>;
+}
+export interface InvalidateOptions {
+  readonly refetch?: 'active' | 'none';
 }
 export interface QuerySnapshot extends StateSnapshot {
   readonly error: string | undefined;
 }
-export interface QueryHandle extends Omit<StateView, 'getSnapshot'> {
+export interface QueryHandle<Target extends string = string> extends Omit<
+  StateView,
+  'getSnapshot'
+> {
   getSnapshot(): QuerySnapshot;
   /** Settles after this handle's automatic first acquisition. */
   readonly ready: Promise<void>;
   /** Reuses fresh fields; requests only missing/stale/error fields. Also retries a failed acquisition. */
   ensure(): Promise<void>;
+  /** Marks the selected fields stale immediately. Active handles refetch by default. */
+  invalidate(target?: Target, options?: InvalidateOptions): Promise<void>;
+  /** Forces a selected read without first marking cached values stale. */
+  refresh(target?: Target): Promise<void>;
 }
 interface Scope {
   tail: Promise<void>;
   readonly handles: Set<Handle>;
+  /** Invalidations arriving after the current serialized read began. */
+  pendingInvalidations?: FieldPath[];
 }
 
 function needed(view: StateView): readonly ResolvedField[] {
@@ -64,18 +89,6 @@ function needed(view: StateView): readonly ResolvedField[] {
         );
     }
   return fields;
-}
-function segmentEqual(a: FieldPath[number], b: FieldPath[number]): boolean {
-  return (
-    a.name === b.name &&
-    canonicalInput(a.arguments) === canonicalInput(b.arguments)
-  );
-}
-function covered(path: FieldPath, fields: readonly ResolvedField[]): boolean {
-  const [first, ...rest] = path;
-  if (!first) return false;
-  const match = fields.find((field) => segmentEqual(first, field));
-  return !!match && (!rest.length || covered(rest, match.children));
 }
 
 class Handle {
@@ -142,7 +155,7 @@ class Handle {
   }
 }
 
-/** Serialized initial/missing-field acquisition. Explicit invalidation/concurrent refresh follows later. */
+/** Serialized acquisition and selective refresh over shared canonical state. */
 export class AcquisitionClient {
   private readonly store = new StateStore();
   private readonly scopes = new Map<string, Scope>();
@@ -158,6 +171,7 @@ export class AcquisitionClient {
     const selection = freezeFields(source.selection);
     const address = source.stateAddress;
     const read = source.read.bind(source);
+    const fetchSelection = source.fetchSelection?.bind(source);
     const view = this.store.watch(address, selection);
     let scope = this.scopes.get(address);
     if (!scope) {
@@ -174,20 +188,29 @@ export class AcquisitionClient {
       }
     });
     current.handles.add(handle);
-    const ensure = (): Promise<void> => {
+    const enqueue = (requested?: readonly ResolvedField[]): Promise<void> => {
       if (this.disposed || !handle.active)
         return Promise.reject(new Error('Query handle is disposed.'));
       const task = current.tail.then(async () => {
         if (this.disposed || !handle.active)
           throw new Error('Query handle is disposed.');
-        const fields = needed(view);
+        const fields = requested ?? needed(view);
         handle.error = undefined;
         handle.publish();
         if (!fields.length) return;
         const requestId = String(++this.request);
-        this.store.setFetching(address, requestId, fields);
+        current.pendingInvalidations = [];
         try {
-          const records = await read(fields);
+          // Keep requested, fetched, and commit coverage separate. Only the first
+          // and third coincide today; broader backends may expand the second.
+          const fetched = fetchSelection
+            ? narrowFields(selection, fetchSelection(fields))
+            : fields;
+          narrowFields(fetched, fields);
+          this.store.setFetching(address, requestId, fields);
+          if (this.disposed || !current.handles.size)
+            throw new Error('Acquisition has no active owners.');
+          const records = await read(fetched);
           if (this.disposed || !current.handles.size)
             throw new Error('Acquisition has no active owners.');
           // Snapshot and validate before committing; a source cannot alter data after return.
@@ -223,17 +246,30 @@ export class AcquisitionClient {
               : [];
           for (const record of acquired)
             for (const field of record.fields) {
+              const fetchedField = fieldAtPath(field.path, fetched);
               if (
                 (field.kind !== 'write' && field.kind !== 'object') ||
-                !covered(field.path, fields)
+                !fetchedField ||
+                (field.kind === 'object' && !fetchedField.children.length) ||
+                (field.kind === 'write' &&
+                  fetchedField.children.length &&
+                  field.value !== null)
               )
                 throw new Error(
-                  'Source returned a write outside requested coverage.',
+                  'Source returned an invalid write or a write outside fetched coverage.',
                 );
-              changes.push({ ...field, record: record.identity });
+              if (fieldAtPath(field.path, fields))
+                changes.push({ ...field, record: record.identity });
             }
+          // Reapply later invalidations atomically with the older response. This
+          // also covers invalidation before the initial membership is known.
+          changes.push(...staleChanges(acquired, current.pendingInvalidations));
           this.store.commit(address, changes);
-          if (handle.active && needed(view).length)
+          if (
+            acquired.some((record) =>
+              hasOmissions(record.fields, leafPaths(fields)),
+            )
+          )
             throw new Error('Source omitted requested fields.');
           if (!handle.active) throw new Error('Query handle is disposed.');
         } catch (error) {
@@ -244,11 +280,53 @@ export class AcquisitionClient {
           }
           throw error;
         } finally {
+          delete current.pendingInvalidations;
           if (!this.disposed) this.store.setFetching(address, requestId);
         }
       });
       current.tail = task.catch(() => {});
       return task;
+    };
+    const ensure = (): Promise<void> => enqueue();
+    const targetFields = (target?: string): readonly ResolvedField[] => {
+      if (this.disposed || !handle.active)
+        throw new Error('Query handle is disposed.');
+      return target === undefined
+        ? selection
+        : selectFieldPath(selection, target.split('.'));
+    };
+    const refresh = (target?: string): Promise<void> => {
+      try {
+        return enqueue(targetFields(target));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    };
+    const invalidate = (
+      target?: string,
+      options: InvalidateOptions = {},
+    ): Promise<void> => {
+      try {
+        const fields = targetFields(target);
+        if (
+          options.refetch !== undefined &&
+          options.refetch !== 'active' &&
+          options.refetch !== 'none'
+        )
+          throw new Error('Unknown refetch policy.');
+        const paths = leafPaths(fields);
+        current.pendingInvalidations?.push(...paths);
+        // Reserve queue order before notifying listeners, which may enqueue work.
+        const task =
+          options.refetch === 'none' ? Promise.resolve() : enqueue(fields);
+        this.store.commit(
+          address,
+          staleChanges(view.getSnapshot().records ?? [], paths),
+        );
+        return task;
+      } catch (error) {
+        return Promise.reject(error);
+      }
     };
     const ready = ensure();
     // Automatic acquisition errors remain observable through ready/snapshot without unhandled rejections.
@@ -258,6 +336,8 @@ export class AcquisitionClient {
       selection,
       ready,
       ensure,
+      invalidate,
+      refresh,
       getSnapshot: () => handle.getSnapshot(),
       subscribe: (listener: () => void) => handle.subscribe(listener),
       dispose: () => {

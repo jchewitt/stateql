@@ -4,14 +4,16 @@ import {
   type AcquisitionSource,
 } from '@jchewitt/stateql-core';
 import type { PreparedOperation } from './operation.js';
+import type { FieldPaths } from './types.js';
 
 export type GraphQLTransport = (
   operation: PreparedOperation,
 ) => Promise<unknown>;
 export interface GraphQLClient {
-  watch(definition: {
+  watch<R>(definition: {
+    readonly resultType?: R;
     asSource(transport: GraphQLTransport): AcquisitionSource;
-  }): QueryHandle;
+  }): QueryHandle<FieldPaths<R>>;
   dispose(): void;
 }
 /** Default HTTP setup; headers may be supplied per request for current credentials. */

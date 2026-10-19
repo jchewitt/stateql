@@ -31,6 +31,18 @@ try {
     'Summary snapshot unchanged:',
     summary.getSnapshot() === snapshot,
   );
+  api.fixture.advance('A');
+  const stateAddress = detail.stateAddress;
+  await detail.invalidate('accountId');
+  console.log('State address unchanged:', detail.stateAddress === stateAddress);
+  console.log(
+    'Shared refreshed account IDs:',
+    duplicate.getSnapshot().records?.map((record) => record.data['accountId']),
+  );
+  console.log(
+    'Detail retains cached amounts:',
+    detail.getSnapshot().records?.map((record) => record.data),
+  );
   const response = await fetch(`${api.url}/__fixture/requests`);
   console.log('Fixture request evidence:', await response.json());
   summary.dispose();
