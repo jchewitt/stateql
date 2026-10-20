@@ -1,6 +1,6 @@
 # Experimental npm releases
 
-The workflow is prepared; publishing is not enabled for the scaffold. `release.config.json` has `ready: false`, and version `0.0.0` is rejected. The current package only contains contracts. Do not publish it as a working state-management library.
+The workflow is prepared; publishing is not enabled. `release.config.json` has `ready: false`, and version `0.0.0` is rejected. Core and GraphQL now implement the experimental acquisition runtime, and Angular has its initial observation package. Release acceptance and account setup are still required.
 
 ## Registry setup
 
@@ -23,6 +23,8 @@ The workflow uses Node 24 and npm 11.6.2, above the documented trusted-publishin
 The workflow checks out the tag, verifies its version and ancestry on `origin/main`, and requires HEAD to match GitHub's workflow SHA so npm provenance describes the code actually published. It also requires a clean checkout, runs the full checks, and publishes to `next`. It does not publish on normal pushes or pull requests. Run the preflight locally on the tagged checkout using the `RELEASE_TAG` environment variable and `pnpm release:check`.
 
 The initial workflow releases only core. Add package-specific tagging, dependency ordering, and actual build verification when the GraphQL and Angular packages become releasable. Do not publish empty package shells. Stable `latest` releases require a separate reviewed policy change.
+
+The Angular prototype remains private. Its APF artifact lives in `packages/angular/dist`; package checks pack that generated directory, not its workspace source manifest. Before any future Angular release, update the exact experimental core peer version alongside package versioning and validate the installed artifact again.
 
 ## Failure handling
 

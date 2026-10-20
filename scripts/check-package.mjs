@@ -13,6 +13,7 @@ import { basename, dirname, isAbsolute, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import { checkAngularPackage } from './check-angular-package.mjs';
 
 const root = realpathSync(fileURLToPath(new URL('../', import.meta.url)));
 const artifacts = join(root, '.artifacts', randomUUID());
@@ -341,3 +342,10 @@ try {
   assert.ok(basename(consumer).startsWith('stateql-consumer-'));
   rmSync(consumer, { recursive: true, force: true });
 }
+
+checkAngularPackage({
+  root,
+  artifacts,
+  coreTarball: join(artifacts, packed.filename),
+  npm,
+});
