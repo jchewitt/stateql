@@ -1,15 +1,17 @@
 import {
   canonicalInput,
   freezeFields,
-  mergeFields,
-  narrowFields,
   selectFieldPath,
-  snapshotInput,
   type ResolvedField,
 } from './definition.js';
 import { StateStore } from './state-store.js';
-import { leafPaths, staleChanges } from './acquisition-coverage.js';
-import { reconcileAcquisition } from './acquisition-reconciliation.js';
+import { leafPaths } from './acquisition-coverage.js';
+import { AcquisitionScheduler } from './acquisition-scheduler.js';
+import {
+  Cancellation,
+  cancellable,
+  type CancellationSignal,
+} from './cancellation.js';
 import type {
   FieldPath,
   RecordIdentity,
@@ -44,6 +46,9 @@ export interface AcquiredNull {
   readonly error?: string;
 }
 export type AcquisitionResult = readonly AcquiredRecord[] | AcquiredNull;
+export interface AcquisitionContext {
+  readonly signal: CancellationSignal;
+}
 /** Provisional source boundary: decode protocol responses before returning records. */
 export interface AcquisitionSource {
   readonly stateAddress: string;
@@ -56,7 +61,12 @@ export interface AcquisitionSource {
   fetchSelection?(
     requested: readonly ResolvedField[],
   ): readonly ResolvedField[];
-  read(selection: readonly ResolvedField[]): Promise<AcquisitionResult>;
+  /** Optional wire-request identity; commit coverage is also included in deduplication. */
+  fingerprint?(selection: readonly ResolvedField[]): string;
+  read(
+    selection: readonly ResolvedField[],
+    context: AcquisitionContext,
+  ): Promise<AcquisitionResult>;
 }
 export interface InvalidateOptions {
   readonly refetch?: 'active' | 'none';
@@ -80,31 +90,10 @@ export interface QueryHandle<Target extends string = string> extends Omit<
   /** Replace list membership/order using this handle's entire declared selection. */
   refreshList(): Promise<void>;
 }
-interface Scope {
-  tail: Promise<void>;
-  readonly handles: Set<Handle>;
-  /** Invalidations arriving after the current serialized read began. */
-  pendingInvalidations?: FieldPath[];
-}
-
-function needed(view: StateView): readonly ResolvedField[] {
-  const snapshot = view.getSnapshot();
-  if (snapshot.records === undefined) return view.selection;
-  if (snapshot.records === null) return snapshot.stale ? view.selection : [];
-  let fields: readonly ResolvedField[] = [];
-  for (const record of snapshot.records)
-    for (const status of record.fields) {
-      if (!status.present || status.stale || status.error !== undefined)
-        fields = mergeFields(
-          fields,
-          selectFieldPath(view.selection, status.path),
-        );
-    }
-  return fields;
-}
-
 class Handle {
   active = true;
+  readonly lifetime = new Cancellation();
+  attempt = 0;
   error: string | undefined;
   private snapshot: QuerySnapshot;
   private signature: string;
@@ -161,18 +150,18 @@ class Handle {
     if (!this.active) return;
     this.refreshSnapshot();
     this.active = false;
+    this.lifetime.abort('Query handle is disposed.');
     this.unsubscribe();
     this.listeners.clear();
     this.view.dispose();
   }
 }
 
-/** Serialized acquisition and selective refresh over shared canonical state. */
+/** Shared acquisition with concurrent, generation-checked reads. */
 export class AcquisitionClient {
   private readonly store = new StateStore();
-  private readonly scopes = new Map<string, Scope>();
+  private readonly scopes = new Map<string, AcquisitionScheduler>();
   private disposed = false;
-  private request = 0;
   constructor(
     private readonly options: {
       readonly onListenerError?: (error: unknown) => void;
@@ -182,15 +171,34 @@ export class AcquisitionClient {
     if (this.disposed) throw new Error('Client is disposed.');
     const selection = freezeFields(source.selection);
     const address = source.stateAddress;
-    const read = source.read.bind(source);
-    const fetchSelection = source.fetchSelection?.bind(source);
     const collection = source.collection === true;
-    const view = this.store.watch(address, selection);
     let scope = this.scopes.get(address);
+    if (scope && scope.collection !== collection)
+      throw new Error(
+        'Sources sharing an address must agree on collection semantics.',
+      );
     if (!scope) {
-      scope = { tail: Promise.resolve(), handles: new Set() };
+      scope = new AcquisitionScheduler(
+        this.store,
+        address,
+        selection,
+        collection,
+      );
       this.scopes.set(address, scope);
     }
+    const captured: AcquisitionSource = {
+      stateAddress: address,
+      selection,
+      collection,
+      read: source.read.bind(source),
+      ...(source.fetchSelection
+        ? { fetchSelection: source.fetchSelection.bind(source) }
+        : {}),
+      ...(source.fingerprint
+        ? { fingerprint: source.fingerprint.bind(source) }
+        : {}),
+    };
+    const view = this.store.watch(address, selection);
     const current = scope;
     const handle = new Handle(view, (error) => {
       // Observer failure must never become a transport failure or trigger a retry.
@@ -200,64 +208,38 @@ export class AcquisitionClient {
         /* Reporting cannot disrupt acquisition. */
       }
     });
-    current.handles.add(handle);
+    current.attach(handle);
     const enqueue = (
       requested?: readonly ResolvedField[],
       replaceMembership = false,
     ): Promise<void> => {
       if (this.disposed || !handle.active)
         return Promise.reject(new Error('Query handle is disposed.'));
-      const task = current.tail.then(async () => {
+      const attempt = ++handle.attempt;
+      const task = Promise.resolve().then(async () => {
         if (this.disposed || !handle.active)
-          throw new Error('Query handle is disposed.');
-        const fields = requested ?? needed(view);
-        handle.error = undefined;
-        handle.publish();
-        if (!fields.length) return;
-        const requestId = String(++this.request);
-        current.pendingInvalidations = [];
+          throw (
+            handle.lifetime.signal.reason ??
+            new Error('Query handle is disposed.')
+          );
+        if (handle.attempt === attempt) {
+          handle.error = undefined;
+          handle.publish();
+        }
         try {
-          // Keep requested, fetched, and commit coverage separate. Only the first
-          // and third coincide today; broader backends may expand the second.
-          const fetched = fetchSelection
-            ? narrowFields(selection, fetchSelection(fields))
-            : fields;
-          narrowFields(fetched, fields);
-          this.store.setFetching(address, requestId, fields, replaceMembership);
-          if (this.disposed || !current.handles.size)
-            throw new Error('Acquisition has no active owners.');
-          const response = await read(fetched);
-          if (this.disposed || !current.handles.size)
-            throw new Error('Acquisition has no active owners.');
-          // Snapshot and validate before committing; a source cannot alter data after return.
-          const acquired = snapshotInput(
-            response,
-          ) as unknown as AcquisitionResult;
-          const result = reconcileAcquisition({
-            acquired,
-            known: view.getSnapshot().records,
-            requested: fields,
-            fetched,
-            collection,
-            replaceMembership,
-            pendingInvalidations: current.pendingInvalidations,
-          });
-          this.store.commit(address, result.changes);
-          if (result.incomplete) throw new Error(result.incomplete);
-          if (!handle.active) throw new Error('Query handle is disposed.');
+          await cancellable(
+            current.run(handle, captured, requested, replaceMembership),
+            handle.lifetime.signal,
+          );
         } catch (error) {
-          if (handle.active && !this.disposed) {
+          if (handle.active && !this.disposed && handle.attempt === attempt) {
             handle.error =
               error instanceof Error ? error.message : String(error);
             handle.publish();
           }
           throw error;
-        } finally {
-          delete current.pendingInvalidations;
-          if (!this.disposed) this.store.setFetching(address, requestId);
         }
       });
-      current.tail = task.catch(() => {});
       return task;
     };
     const ensure = (): Promise<void> => enqueue();
@@ -298,16 +280,10 @@ export class AcquisitionClient {
         )
           throw new Error('Unknown refetch policy.');
         const paths = leafPaths(fields);
-        current.pendingInvalidations?.push(...paths);
         // Reserve queue order before notifying listeners, which may enqueue work.
         const task =
           options.refetch === 'none' ? Promise.resolve() : enqueue(fields);
-        this.store.commit(
-          address,
-          view.getSnapshot().records === null
-            ? [{ kind: 'membership-stale' }]
-            : staleChanges(view.getSnapshot().records ?? [], paths),
-        );
+        current.invalidate(paths);
         return task;
       } catch (error) {
         return Promise.reject(error);
@@ -328,17 +304,14 @@ export class AcquisitionClient {
       subscribe: (listener: () => void) => handle.subscribe(listener),
       dispose: () => {
         handle.dispose();
-        current.handles.delete(handle);
+        current.detach(handle);
       },
     });
   }
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    for (const scope of this.scopes.values()) {
-      for (const handle of scope.handles) handle.dispose();
-      scope.handles.clear();
-    }
+    for (const scope of this.scopes.values()) scope.dispose();
     this.scopes.clear();
     this.store.dispose();
   }

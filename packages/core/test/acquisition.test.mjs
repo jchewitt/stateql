@@ -99,7 +99,7 @@ test('a last-owner disposal ignores late data and a future view acquires a fresh
   await Promise.resolve();
   first.dispose();
   release();
-  await assert.rejects(first.ready, /owners/);
+  await assert.rejects(first.ready, /disposed/);
   const next = client.watch(source);
   await next.ready;
   assert.equal(calls, 2);

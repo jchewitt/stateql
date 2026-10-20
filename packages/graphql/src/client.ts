@@ -8,7 +8,11 @@ import type { FieldPaths } from './types.js';
 
 export type GraphQLTransport = (
   operation: PreparedOperation,
+  context?: GraphQLTransportContext,
 ) => Promise<unknown>;
+export interface GraphQLTransportContext {
+  readonly signal: AbortSignal;
+}
 export interface GraphQLClient {
   watch<R>(definition: {
     readonly resultType?: R;
@@ -24,9 +28,10 @@ export function httpTransport(options: {
   const url = new URL(options.endpoint);
   if (!['http:', 'https:'].includes(url.protocol))
     throw new Error('Expected an HTTP(S) endpoint.');
-  return async (operation) => {
+  return async (operation, context) => {
     const response = await fetch(url, {
       method: 'POST',
+      ...(context === undefined ? {} : { signal: context.signal }),
       headers: { 'content-type': 'application/json', ...options.headers?.() },
       body: JSON.stringify({
         query: operation.query,

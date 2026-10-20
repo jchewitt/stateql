@@ -138,7 +138,8 @@ try {
       '-e',
       `
       const { createSchema, createGraphQLClient } = await import('@jchewitt/stateql-graphql');
-      const { StateStore } = await import('@jchewitt/stateql-core');
+      const { StateStore, AcquisitionCancelledError, AcquisitionSupersededError } = await import('@jchewitt/stateql-core');
+      const assert = (await import('node:assert/strict')).default;
       const { generateSchemaModule } = await import('@jchewitt/stateql-graphql/codegen');
       const sdl = 'type Query { item: Item! } type Item { id: ID! name: String }';
       const bound = createSchema(sdl).field('item').select({ name: true }).bind({}, { source: 'test', scope: 'test' });
@@ -178,6 +179,37 @@ try {
       if (list.getSnapshot().records?.[0]?.identity.id !== '2' || list.getSnapshot().membershipStale) throw new Error('Packed list refresh failed.');
       lists.dispose();
       client.dispose();
+      const reads = [];
+      const concurrent = createGraphQLClient({
+        transport: (operation, context) => new Promise(resolve => reads.push({ resolve, context })),
+      });
+      async function waitForReads(count) {
+        for (let i = 0; i < 100; i++) {
+          if (reads.length === count) return;
+          await Promise.resolve();
+        }
+        throw new Error('Packed concurrent acquisition did not start.');
+      }
+      const current = concurrent.watch(bound);
+      await waitForReads(1);
+      reads[0].resolve({ data: { item: { __typename: 'Item', name: 'initial' } } });
+      await current.ready;
+      const old = current.refresh('name');
+      const obsolete = assert.rejects(old, AcquisitionSupersededError);
+      await waitForReads(2);
+      const fresh = current.invalidate('name');
+      await waitForReads(3);
+      reads[2].resolve({ data: { item: { __typename: 'Item', name: 'newest' } } });
+      await fresh;
+      reads[1].resolve({ data: { item: { __typename: 'Item', name: 'obsolete' } } });
+      await obsolete;
+      assert.equal(current.getSnapshot().records[0].data.name, 'newest');
+      const canceled = assert.rejects(current.refresh('name'), AcquisitionCancelledError);
+      await waitForReads(4);
+      current.dispose();
+      await canceled;
+      assert.equal(reads[3].context.signal.aborted, true);
+      concurrent.dispose();
     `,
     ],
     {
@@ -187,15 +219,24 @@ try {
   );
   writeFileSync(
     join(consumer, 'consumer.ts'),
-    "import type { StoreReader } from '@jchewitt/stateql-core';\n" +
+    "import { AcquisitionCancelledError, AcquisitionSupersededError, type AcquisitionContext, type CancellationSignal, type StoreReader } from '@jchewitt/stateql-core';\n" +
       'declare const reader: StoreReader<Readonly<{ id: string }>>;\n' +
       'const id: string = reader.getSnapshot().id;\nvoid id;\n' +
-      '// @ts-expect-error undeclared fields must not be inferred as any\nreader.getSnapshot().missing;\n',
+      '// @ts-expect-error undeclared fields must not be inferred as any\nreader.getSnapshot().missing;\n' +
+      'declare const context: AcquisitionContext;\n' +
+      'const signal: CancellationSignal = context.signal;\n' +
+      'const reason: AcquisitionCancelledError | undefined = signal.reason;\n' +
+      'const unsubscribe: () => void = signal.subscribe(() => {});\n' +
+      'const superseded: Error = new AcquisitionSupersededError();\n' +
+      'void reason; void unsubscribe; void superseded;\n',
   );
   writeFileSync(
     join(consumer, 'planner.ts'),
     `
-    import { createSchema, createGraphQLClient, type FieldType, type ObjectRef, type ResultOf } from '@jchewitt/stateql-graphql';
+    import { createSchema, createGraphQLClient, type FieldType, type ObjectRef, type ResultOf, type GraphQLTransportContext } from '@jchewitt/stateql-graphql';
+    declare const transportContext: GraphQLTransportContext;
+    const signal: AbortSignal = transportContext.signal;
+    void signal;
     type Model = { Query: { item: FieldType<ObjectRef<'Item'>> }; Item: { name: FieldType<string | null> } };
     const definition = createSchema<Model>('type Query { item: Item! } type Item { name: String }').field('item').select({ name: { as: 'label' } });
     declare const result: ResultOf<typeof definition>;

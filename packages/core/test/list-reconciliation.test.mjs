@@ -306,7 +306,7 @@ test('collection capability and disposal guard explicit list refresh, including 
   handle.dispose();
   const last = handle.getSnapshot();
   blocked.resolve();
-  await assert.rejects(refreshing, /owners/);
+  await assert.rejects(refreshing, /disposed/);
   assert.equal(handle.getSnapshot(), last);
   await assert.rejects(handle.refreshList(), /disposed/);
 });

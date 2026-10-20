@@ -45,12 +45,14 @@ Depends on P2.
 
 - [x] P3.1 Implement shared records, consumer projections, stable snapshots, subscriptions, and disposal. See the [store guide](STORE.md); execution and reconciliation remain below.
 - [x] P3.2 Implement cache hit/miss and missing-field acquisition across compatible views. See the [acquisition guide](ACQUISITION.md) for the supported subset and remaining reconciliation work.
-- [x] P3.3 Implement field/branch invalidation and requested/fetched/committed coverage. See [invalidation semantics](ACQUISITION.md#selective-invalidation-and-refresh); reads remain serialized pending P3.6.
+- [x] P3.3 Implement field/branch invalidation and requested/fetched/committed coverage. See [invalidation semantics](ACQUISITION.md#selective-invalidation-and-refresh).
 - [x] P3.4 Implement identity-based list patching separately from membership replacement. Keyed root lists support `refreshList()` and shared `membershipStale`; unkeyed and nested object lists remain outside the prototype's supported schema subset.
 - [x] P3.5 Handle omitted fields, successful nulls, structural nulls, and GraphQL partial errors. Located failures preserve valid siblings; null resources and singleton identity changes clear obsolete data. Null list entries without identity remain explicitly unsupported.
-- [ ] P3.6 Implement in-flight deduplication, field generations, cancellation ownership, and late-response protection.
+- [x] P3.6 Implement in-flight deduplication, field generations, cancellation ownership, and late-response protection. See the [concurrency contract](CONCURRENCY.md); these are local request generations, not authoritative server revisions.
 - [ ] P3.7 Add bounded read retries and field error state; keep writes outside automatic retries.
 - [ ] P3.8 Demonstrate a vanilla TypeScript consumer plus fake whole-resource and push-event adapters.
+
+Inactive cache data is currently retained until client disposal. Configurable retention and timeout timers remain follow-on lifecycle work; neither is claimed by P3.6.
 
 For P3.6/P3.8, keep local request generations separate from future server revision metadata, and route simulated pushes through the shared validation/commit path. This preserves the E1/E2 boundary without implementing a production stream protocol or offline outbox in the current proof of concept.
 
