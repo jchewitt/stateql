@@ -138,7 +138,7 @@ try {
       '-e',
       `
       const { createSchema, createGraphQLClient } = await import('@jchewitt/stateql-graphql');
-      const { StateStore, AcquisitionCancelledError, AcquisitionSupersededError } = await import('@jchewitt/stateql-core');
+      const { StateStore, AcquisitionCancelledError, AcquisitionSupersededError, ReadTransportError } = await import('@jchewitt/stateql-core');
       const assert = (await import('node:assert/strict')).default;
       const { generateSchemaModule } = await import('@jchewitt/stateql-graphql/codegen');
       const sdl = 'type Query { item: Item! } type Item { id: ID! name: String }';
@@ -210,6 +210,22 @@ try {
       await canceled;
       assert.equal(reads[3].context.signal.aborted, true);
       concurrent.dispose();
+      let attempts = 0;
+      const waits = [];
+      const retrying = createGraphQLClient({
+        retry: { retries: 1, initialDelayMs: 100 },
+        scheduler: { random: () => 0.5, wait: async (delay) => { waits.push(delay); } },
+        transport: async () => {
+          if (++attempts === 1) throw new ReadTransportError('transient', { retryable: true });
+          return { data: { item: { __typename: 'Item', name: 'retried' } } };
+        },
+      });
+      const recovered = retrying.watch(bound);
+      await recovered.ready;
+      assert.equal(attempts, 2);
+      assert.deepEqual(waits, [50]);
+      assert.equal(recovered.getSnapshot().records[0].data.name, 'retried');
+      retrying.dispose();
     `,
     ],
     {
@@ -234,6 +250,13 @@ try {
     join(consumer, 'planner.ts'),
     `
     import { createSchema, createGraphQLClient, type FieldType, type ObjectRef, type ResultOf, type GraphQLTransportContext } from '@jchewitt/stateql-graphql';
+    import { ReadTransportError, type ReadRetryPolicy, type RetryScheduler, type AcquisitionClientOptions } from '@jchewitt/stateql-core';
+    const retry: ReadRetryPolicy = { retries: 2, initialDelayMs: 100, maxDelayMs: 2000 };
+    const scheduler: RetryScheduler = { random: () => 0.5, wait: async (_delay, signal) => { if (signal.aborted) throw signal.reason; } };
+    const coreOptions: AcquisitionClientOptions = { retry, scheduler };
+    void coreOptions;
+    const retryable: boolean = new ReadTransportError('network', { retryable: true }).retryable;
+    void retryable;
     declare const transportContext: GraphQLTransportContext;
     const signal: AbortSignal = transportContext.signal;
     void signal;
@@ -244,7 +267,7 @@ try {
     void label;
     // @ts-expect-error unknown selected field
     definition.bind({}, { source: 'test', scope: 'test' }).prepare('missing');
-    const client = createGraphQLClient({ endpoint: 'http://localhost/graphql' });
+    const client = createGraphQLClient({ endpoint: 'http://localhost/graphql', retry, scheduler });
     const handle = client.watch(definition.bind({}, { source: 'test', scope: 'test' }));
     void handle.invalidate('label', { refetch: 'none' });
     void handle.refresh();

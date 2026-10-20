@@ -16,7 +16,7 @@ A new request records its requested field generations when it starts. A later re
 
 For example, a full invoice refresh may start before a second refresh of `accountId`. The second request owns the newer generation for `accountId`. When the older full response arrives, it may still update the amount and other unaffected fields, but cannot replace the account ID. The older forced promise rejects with `AcquisitionSupersededError` after publishing any eligible changes atomically. Call `ensure()` to acquire any remaining missing/stale/error fields. This error is control flow, not a claim that the server failed.
 
-An `ensure()` waiting on superseded work recomputes coverage and can resolve if newer work already satisfied it. Genuine source failures still reject promptly, even when other covering reads remain pending. There is no automatic retry loop for those failures.
+An `ensure()` waiting on superseded work recomputes coverage and can resolve if newer work already satisfied it. Terminal source failures still reject promptly, even when other covering reads remain pending. [P3.7 retry policy](RETRIES.md) can recover explicitly classified transient transport failures before a request becomes terminal.
 
 Mark-only invalidation has a different contract: an older response can populate values, but those fields remain stale. Starting a newer read then excludes older overlapping writes. This preserves pending invalidation even before membership exists or when an older response returns a null resource.
 
@@ -38,4 +38,4 @@ The GraphQL boundary bridges that signal to a native `AbortSignal`. `GraphQLTran
 
 Handle-level `error` follows the latest invoked read/ensure attempt, so an older failing or superseded attempt cannot replace a newer attempt's status. Shared field/resource errors remain cache state visible to every relevant view. Mark-only invalidation does not reset the handle's attempt error.
 
-Inactive cache data remains until client disposal. Timeout policies, configurable retention timers, retry scheduling, and a public stream ingestion API are not implemented by this increment.
+Inactive cache data remains until client disposal. P3.7 adds [retry scheduling](RETRIES.md) while preserving these request generations and ownership rules. Timeout policies, configurable retention timers, and a public stream ingestion API remain future work.

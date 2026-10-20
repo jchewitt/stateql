@@ -1,6 +1,6 @@
 # Acquisition and selective refresh
 
-P3.2–P3.6 connect the planner to the shared store through a portable acquisition boundary and add selective invalidation/refresh, keyed-list reconciliation, partial-error/null handling, and concurrent scheduling with cancellation. The GraphQL package offers an HTTP default and an injectable transport for tests or alternate execution environments. Core still imports no GraphQL, framework, HTTP, browser, Node, or timer API.
+P3.2–P3.7 connect the planner to the shared store through a portable acquisition boundary and add selective invalidation/refresh, keyed-list reconciliation, partial-error/null handling, concurrent scheduling with cancellation, and bounded read retries. The GraphQL package offers an HTTP default and an injectable transport for tests or alternate execution environments. Core still imports no GraphQL, framework, HTTP, browser, Node, or timer API.
 
 ```ts
 const client = createGraphQLClient({
@@ -39,7 +39,7 @@ Forced reads can run concurrently, and identical current requests share executio
 
 ## Acquisition and observations
 
-`watch` starts acquisition without waiting for a listener. `getSnapshot` is side-effect-free. `ready` rejects on initial failure; an internal rejection handler prevents unhandled errors when UI code observes snapshot errors instead. `ensure` is an explicit promise-returning retry/fill operation, not a forced refetch. There are no automatic retry loops yet.
+`watch` starts acquisition without waiting for a listener. `getSnapshot` is side-effect-free. `ready` rejects on terminal initial failure; an internal rejection handler prevents unhandled errors when UI code observes snapshot errors instead. `ensure` is an explicit promise-returning retry/fill operation, not a forced refetch. GraphQL defaults to two additional attempts for classified transient transport failures; see [retry configuration and limits](RETRIES.md).
 
 `watch` and `ensure` wait for relevant current in-flight work and recompute missing/stale/error coverage before starting another request. Identical consumers reuse acquisition, while extensions fetch additional fields. They recompute after superseded work rather than treating supersession as a source failure. Forced reads and different addresses can progress independently.
 
@@ -65,7 +65,7 @@ GraphQL execution errors are checked against the generated operation's response 
 
 `records: undefined` means unacquired, `records: []` means a known empty list, and `records: null` means the selected resource or an ancestor is null. Successful null is complete and reused by `ensure()`. Failed null exposes shared `resourceError`, is incomplete/stale, and is retried by `ensure()`. Both discard previous records. Mark-only invalidation makes a successful null stale; a later ensure reacquires the handle's selection. An invalidation during a read remains pending even if that older response resolves to null. Recovery creates records from returned fields, without restoring previously discarded values.
 
-Errors without a usable path (including request/validation errors), malformed paths, and errors in identity/context fields that cannot be mapped safely reject the whole response. A correctly bubbled null from an identity failure can still be applied at its identified structural boundary. Network failures remain handle-level attempt errors; automatic retry and transport-failure field policies are still P3.7 work.
+Errors without a usable path (including request/validation errors), malformed paths, and errors in identity/context fields that cannot be mapped safely reject the whole response. A correctly bubbled null from an identity failure can still be applied at its identified structural boundary. Classified transport failures can retry; terminal failures also mark eligible requested fields stale/error on existing records while retaining cached values. Resources without record cells retain their shape and report a handle error. GraphQL execution/validation failures are not automatically retried.
 
 ## Keyed lists and membership refresh
 
@@ -93,4 +93,4 @@ Source `read(fetched, context)` receives a portable cancellation signal and retu
 
 Only successfully returned, generation-eligible requested writes become fresh. Core reports omitted requested fields even when old values exist, while retaining successful returned writes; the GraphQL decoder preserves omissions for that policy. Source callbacks never receive direct access to the store. An HTTP transport receives the prepared operation plus cancellation context and returns the GraphQL envelope. GraphQL schema logic stays in the GraphQL package.
 
-This completes P3.2–P3.6 for the explicitly supported subset. P3.7–P3.8 still include retry policy and additional adapter scenarios. Angular integration and the Apollo comparison follow those tasks.
+This completes P3.2–P3.7 for the explicitly supported subset. P3.8 covers additional adapter scenarios. Angular integration and the Apollo comparison follow that task.

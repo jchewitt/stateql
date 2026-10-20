@@ -49,10 +49,10 @@ Depends on P2.
 - [x] P3.4 Implement identity-based list patching separately from membership replacement. Keyed root lists support `refreshList()` and shared `membershipStale`; unkeyed and nested object lists remain outside the prototype's supported schema subset.
 - [x] P3.5 Handle omitted fields, successful nulls, structural nulls, and GraphQL partial errors. Located failures preserve valid siblings; null resources and singleton identity changes clear obsolete data. Null list entries without identity remain explicitly unsupported.
 - [x] P3.6 Implement in-flight deduplication, field generations, cancellation ownership, and late-response protection. See the [concurrency contract](CONCURRENCY.md); these are local request generations, not authoritative server revisions.
-- [ ] P3.7 Add bounded read retries and field error state; keep writes outside automatic retries.
+- [x] P3.7 Add bounded read retries and field error state; keep writes outside automatic retries. See [retry policy, classification, and lifecycle](RETRIES.md).
 - [ ] P3.8 Demonstrate a vanilla TypeScript consumer plus fake whole-resource and push-event adapters.
 
-Inactive cache data is currently retained until client disposal. Configurable retention and timeout timers remain follow-on lifecycle work; neither is claimed by P3.6.
+Inactive cache data is currently retained until client disposal. Configurable retention and request timeout timers remain follow-on lifecycle work; bounded attempts do not bound an individual request's duration. Narrower policy inheritance also remains deferred until conflicting owners of shared work have defined semantics.
 
 For P3.6/P3.8, keep local request generations separate from future server revision metadata, and route simulated pushes through the shared validation/commit path. This preserves the E1/E2 boundary without implementing a production stream protocol or offline outbox in the current proof of concept.
 
@@ -107,12 +107,15 @@ No npm publish is part of F0. The scaffold does not reserve an npm name or confi
 
 Planned product goal; depends on P3.8 and a continue decision in P5. Design alongside E2. See [the contract and acceptance criteria](../PLAN.md#e1-real-time-stream-cohesion).
 
+- [ ] E1.0 Notify the user before streaming implementation and review the expanded server-driven invalidation/data-sync design together.
 - [ ] E1.1 Define a validated, scoped event envelope and reusable routing from subscription/custom payloads to canonical resource/record/field addresses.
 - [ ] E1.2 Feed pushes through the same ordering/commit/notification path as reads, without per-component cache reducers.
 - [ ] E1.3 Define explicit list membership operations and safe invalidation when filter/path routing cannot be inferred.
 - [ ] E1.4 Implement shared connection ownership, disposal, bounded reconnect, cursor resume/deduplication, and gap-triggered refresh.
 - [ ] E1.5 Demonstrate a real GraphQL subscription plus a fake custom event source; test duplicate/malformed events, scope isolation, and HTTP/push overlap.
 - [ ] E1.6 Compare application code against Apollo automatic normalized updates and explicit list updates, including required adapter mappings on both sides.
+- [ ] E1.7 Add configurable invalidation-only and data-update modes over WebSocket/SSE; keep client-only invalidation/fetch behavior available without a server companion.
+- [ ] E1.8 Define bounded retention of invalidation tokens for inactive resources, on-demand reacquisition, revision handshakes/replay, and gap-triggered validation.
 
 Exit: ordinary field pushes update all interested consumers through one declared binding; list and reconnect semantics are explicit and tested.
 
@@ -143,6 +146,18 @@ Planned product goal; depends on a continue decision in P5. Define serialization
 
 Exit: persisted reads recover predictably; supported queued commands replay under an explicit server contract with observable conflicts and no cross-scope execution. Do not claim effortless arbitrary replay or client-only exactly-once effects.
 
+## E4 Adapter-based server event companion
+
+Planned extension requested October 20, 2026; design with E1/E2 after the user discussion. See [server contracts and acceptance criteria](../PLAN.md#e4-adapter-based-server-event-companion).
+
+- [ ] E4.1 Define separate event-input, routing/projection, and delivery interfaces; keep server/database dependencies outside portable core.
+- [ ] E4.2 Implement business-event input and a deterministic database-change-feed example, publishing committed changes with event IDs and revision coverage.
+- [ ] E4.3 Route scoped invalidation tokens or data updates through WebSocket/SSE delivery, with server authorization and safe fallback for computed fields/filtered lists.
+- [ ] E4.4 Define durable publication options, replay, backpressure, gaps, and resynchronization without promising atomic database/event delivery from ordinary callbacks.
+- [ ] E4.5 Demonstrate both modes end to end, including inactive pages, deletes, duplicate/out-of-order events, reconnect, scope changes, and client-only fallback.
+
+Exit: adapters translate declared committed server changes into authorized client updates or invalidations under an explicit delivery/ordering contract.
+
 ## Other later extensions
 
-React adapter, full RxJS adapter, production REST source, Node event-publishing companion, pagination, global entity normalization, and SSR each require a separate task proposal after the core experiment. E1–E3 now track stream, ordering, and offline goals explicitly. Preserve their execution/commit boundaries now; none of these roadmap items is implemented or a new prerequisite for R1 by default.
+React adapter, full RxJS adapter, production REST source, pagination, global entity normalization, and SSR each require a separate task proposal after the core experiment. E1–E4 track stream, ordering, offline, and server event-companion goals explicitly. Preserve their execution/commit boundaries now; none of these roadmap items is implemented or a new prerequisite for R1 by default.

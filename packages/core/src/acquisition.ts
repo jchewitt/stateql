@@ -7,6 +7,7 @@ import {
 import { StateStore } from './state-store.js';
 import { leafPaths } from './acquisition-coverage.js';
 import { AcquisitionScheduler } from './acquisition-scheduler.js';
+import { ReadRetrier, type AcquisitionClientOptions } from './read-retry.js';
 import {
   Cancellation,
   cancellable,
@@ -162,11 +163,10 @@ export class AcquisitionClient {
   private readonly store = new StateStore();
   private readonly scopes = new Map<string, AcquisitionScheduler>();
   private disposed = false;
-  constructor(
-    private readonly options: {
-      readonly onListenerError?: (error: unknown) => void;
-    } = {},
-  ) {}
+  private readonly retry: ReadRetrier;
+  constructor(private readonly options: AcquisitionClientOptions = {}) {
+    this.retry = new ReadRetrier(options);
+  }
   watch(source: AcquisitionSource): QueryHandle {
     if (this.disposed) throw new Error('Client is disposed.');
     const selection = freezeFields(source.selection);
@@ -183,6 +183,7 @@ export class AcquisitionClient {
         address,
         selection,
         collection,
+        this.retry,
       );
       this.scopes.set(address, scope);
     }

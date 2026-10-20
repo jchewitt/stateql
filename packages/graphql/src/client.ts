@@ -2,9 +2,13 @@ import {
   AcquisitionClient,
   type QueryHandle,
   type AcquisitionSource,
+  type AcquisitionClientOptions,
 } from '@jchewitt/stateql-core';
 import type { PreparedOperation } from './operation.js';
 import type { FieldPaths } from './types.js';
+import { httpTransport } from './http-transport.js';
+import { defaultRetryScheduler } from './retry-scheduler.js';
+export { httpTransport } from './http-transport.js';
 
 export type GraphQLTransport = (
   operation: PreparedOperation,
@@ -20,44 +24,26 @@ export interface GraphQLClient {
   }): QueryHandle<FieldPaths<R>>;
   dispose(): void;
 }
-/** Default HTTP setup; headers may be supplied per request for current credentials. */
-export function httpTransport(options: {
-  readonly endpoint: string;
-  readonly headers?: () => Readonly<Record<string, string>>;
-}): GraphQLTransport {
-  const url = new URL(options.endpoint);
-  if (!['http:', 'https:'].includes(url.protocol))
-    throw new Error('Expected an HTTP(S) endpoint.');
-  return async (operation, context) => {
-    const response = await fetch(url, {
-      method: 'POST',
-      ...(context === undefined ? {} : { signal: context.signal }),
-      headers: { 'content-type': 'application/json', ...options.headers?.() },
-      body: JSON.stringify({
-        query: operation.query,
-        variables: operation.variables,
-      }),
-    });
-    if (!response.ok)
-      throw new Error(`GraphQL HTTP request failed (${response.status}).`);
-    return response.json() as Promise<unknown>;
-  };
-}
 export function createGraphQLClient(
-  options: { readonly onListenerError?: (error: unknown) => void } & (
-    | {
-        readonly endpoint: string;
-        readonly headers?: () => Readonly<Record<string, string>>;
-        readonly transport?: never;
-      }
-    | {
-        readonly transport: GraphQLTransport;
-        readonly endpoint?: never;
-        readonly headers?: never;
-      }
-  ),
+  options: AcquisitionClientOptions &
+    (
+      | {
+          readonly endpoint: string;
+          readonly headers?: () => Readonly<Record<string, string>>;
+          readonly transport?: never;
+        }
+      | {
+          readonly transport: GraphQLTransport;
+          readonly endpoint?: never;
+          readonly headers?: never;
+        }
+    ),
 ): GraphQLClient {
-  const client = new AcquisitionClient(options);
+  const client = new AcquisitionClient({
+    ...options,
+    retry: options.retry ?? {},
+    scheduler: options.scheduler ?? defaultRetryScheduler,
+  });
   const transport =
     options.transport ??
     httpTransport({
