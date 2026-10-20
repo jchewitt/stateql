@@ -60,8 +60,9 @@ test('reordering, failure recovery, save, and consumer teardown work through the
   );
   await page.getByRole('button', { name: '2. Refresh account IDs' }).click();
   await expect(page.getByRole('alert')).toHaveCount(0);
-  await page.getByLabel('INV-1 account ID').fill('custom-saved');
-  await page.getByRole('button', { name: 'Save and refresh' }).click();
+  const editor = page.getByRole('region', { name: 'Editor one', exact: true });
+  await editor.getByLabel('Draft account ID').fill('custom-saved');
+  await editor.getByRole('button', { name: 'Save draft', exact: true }).click();
   await expect(invoice(page).getByTestId('account-id')).toHaveText(
     'custom-saved',
   );

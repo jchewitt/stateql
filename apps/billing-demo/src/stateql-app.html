@@ -59,6 +59,9 @@
         <button [disabled]="busy()" (click)="refresh('list')">
           Refresh list membership
         </button>
+        <button [disabled]="busy()" (click)="remove()">
+          Remove INV-1 on server
+        </button>
         <button [disabled]="busy()" (click)="fail()">Fail next request</button>
         <button [disabled]="busy()" (click)="delay()">
           {{ delayed() ? 'Remove delay' : 'Delay responses 1s' }}
@@ -85,11 +88,13 @@
     />
     }
   </div>
+  @for (tenant of [tenantId()]; track tenant) {
+  <billing-editors [tenantId]="tenant" /> }
   <request-inspector [fixture]="fixture" />
   <footer>
     StateQL views · Central and feature-derived definitions share one scoped
-    resource. Form drafts and explicit save integration are the next milestone.
-    Switching clients reloads their caches; fixture server data and the request
-    log remain until reset.
+    resource. Form drafts stay local until an explicit save. Switching clients
+    reloads their caches; fixture server data and the request log remain until
+    reset.
   </footer>
 </main>

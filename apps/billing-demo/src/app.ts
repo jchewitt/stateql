@@ -1,3 +1,4 @@
+import { BillingEditors } from './forms/billing-editors';
 import { RequestInspector } from './request-inspector';
 import { FixtureService } from './fixture.service';
 import { Component, inject, signal } from '@angular/core';
@@ -7,7 +8,7 @@ import type { TenantId } from './data/operations';
 
 @Component({
   selector: 'billing-app',
-  imports: [InvoicePanel, RequestInspector],
+  imports: [InvoicePanel, RequestInspector, BillingEditors],
   templateUrl: './app.html',
 })
 export class App {
@@ -18,19 +19,13 @@ export class App {
   readonly message = signal('Two consumers. One initial request.');
   readonly error = signal('');
   readonly showMonitor = signal(true);
-  readonly draft = signal('A-custom-ledger');
   readonly delayed = signal(false);
 
   selectTenant(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     if (value === 'A' || value === 'B') {
       this.tenantId.set(value);
-      this.draft.set(`${value}-custom-ledger`);
     }
-  }
-
-  setDraft(event: Event): void {
-    this.draft.set((event.target as HTMLInputElement).value);
   }
 
   async run(action: () => Promise<void>, success: string): Promise<void> {
@@ -77,6 +72,13 @@ export class App {
       'Server order reversed. Refresh to see identity-based merging.',
     );
   }
+  remove(): void {
+    const tenantId = this.tenantId();
+    void this.run(
+      () => this.fixture.control({ action: 'remove', tenantId, id: 'INV-1' }),
+      'INV-1 removed on the server. Refresh to detect the unavailable record.',
+    );
+  }
   fail(): void {
     void this.run(
       () =>
@@ -102,14 +104,6 @@ export class App {
       enabled
         ? 'Responses delayed by 1 second. Try switching tenants during a refresh.'
         : 'Response delay removed.',
-    );
-  }
-  save(): void {
-    const scope = this.tenantId();
-    const value = this.draft();
-    void this.run(
-      () => this.billing.save(scope, value),
-      'INV-1 saved, then account IDs refreshed.',
     );
   }
   reset(): void {

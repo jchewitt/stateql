@@ -1,3 +1,8 @@
+import {
+  EDITOR_SOURCE,
+  stateqlEditorSource,
+  apolloEditorSource,
+} from './forms/sources';
 import { provideHttpClient } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
@@ -13,9 +18,13 @@ const stateql =
 
 void bootstrapApplication(stateql ? StateQLApp : App, {
   providers: stateql
-    ? [provideBillingClient(new URL('/graphql', window.location.href).href)]
+    ? [
+        provideBillingClient(new URL('/graphql', window.location.href).href),
+        { provide: EDITOR_SOURCE, useFactory: stateqlEditorSource },
+      ]
     : [
         provideHttpClient(),
+        { provide: EDITOR_SOURCE, useFactory: apolloEditorSource },
         provideApollo(() => ({
           link: inject(HttpLink).create({ uri: '/graphql' }),
           cache: createBillingCache(),

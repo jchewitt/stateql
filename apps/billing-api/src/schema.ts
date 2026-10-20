@@ -66,7 +66,14 @@ export function createRoot(
         throw new Error(
           'Provide accountId, including explicit null when clearing it.',
         );
-      return fixture.save(tenant(tenantId), id, accountId);
+      try {
+        return fixture.save(tenant(tenantId), id, accountId);
+      } catch (error) {
+        throw new GraphQLError(
+          error instanceof Error ? error.message : 'Save rejected.',
+          { extensions: { code: 'FIXTURE_SAVE_REJECTED' } },
+        );
+      }
     },
   };
 }

@@ -1,3 +1,4 @@
+import { BillingEditors } from './forms/billing-editors';
 import { Component, inject, signal, viewChild } from '@angular/core';
 import type { TenantId } from './data/operations';
 import { FixtureService } from './fixture.service';
@@ -6,7 +7,7 @@ import { StateQLPanel } from './stateql-panel';
 
 @Component({
   selector: 'billing-app',
-  imports: [StateQLPanel, RequestInspector],
+  imports: [StateQLPanel, RequestInspector, BillingEditors],
   templateUrl: './stateql-app.html',
 })
 export class StateQLApp {
@@ -85,6 +86,13 @@ export class StateQLApp {
           failNext: 'request',
         }),
       'Next GraphQL request will fail once. Retry manually.',
+    );
+  }
+  remove(): void {
+    const tenantId = this.tenantId();
+    void this.run(
+      () => this.fixture.control({ action: 'remove', tenantId, id: 'INV-1' }),
+      'INV-1 removed on the server. Refresh to detect the unavailable record.',
     );
   }
   delay(): void {
