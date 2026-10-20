@@ -62,13 +62,15 @@ Exit: the relevant acceptance matrix in `PLAN.md` passes, including invalidation
 
 Depends on P3.
 
-- [ ] P4.1 Add the actual Angular library, appropriate peer dependencies, and Angular Package Format build/pack checks.
+- [x] P4.1 Add the actual Angular library, appropriate peer dependencies, and Angular Package Format build/pack checks. A non-owning readonly signal bridge is implemented; see [the Angular guide](ANGULAR.md).
 - [ ] P4.2 Implement DI, signal snapshots, reactive argument replacement, and destruction cleanup.
 - [ ] P4.3 Add StateQL views beside the Apollo baseline with central and feature-derived definitions.
-- [ ] P4.4 Demonstrate a dirty form draft, pristine-field refresh, save mutation, and targeted invalidation.
-- [ ] P4.5 Add browser tests for shared updates, narrow requests, account switching, errors, and cleanup.
+- [ ] P4.4 Demonstrate isolated form drafts, pristine-field refresh, dirty conflicts and explicit save with targeted invalidation. Apply the [forms contract](FORMS.md): immutable submitted payloads, edits during save, confirmed-save/failed-refresh distinction, reset to latest server data, scope/record isolation, unavailable records, and no automatic write retries.
+- [ ] P4.5 Add browser tests for shared updates, narrow requests, account switching, errors, and cleanup; cover the P4.4 draft/save cases with the same policy for Apollo and StateQL.
 
 Exit: the same fixture scenarios pass in both implementations and the adapter contains no second cache engine.
+
+Form drafts remain editor-owned, separate from shared accepted server state and pending commands. Angular controls provide local storage; the proof of concept does not add another global cache or a forms framework. P4.1 exposes read-only observation, while P4.4 implements and validates the editing policy. Real socket commands and authoritative revision conflicts remain E1/E2/E4.
 
 ## P5 Compare and choose the next scope
 

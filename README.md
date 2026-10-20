@@ -4,7 +4,7 @@
 
 GraphQL-first state management built around composable definitions and selective field refresh.
 
-**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent reads share identical work, protect newer fields from late responses, and cancel when their last interested owner leaves. Bounded retries recover classified transient transport failures. StateQL's Angular adapter remains planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
+**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent reads share identical work, protect newer fields from late responses, and cancel when their last interested owner leaves. Bounded retries recover classified transient transport failures. StateQL's Angular package now provides readonly signal observation; owned queries and form integration remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
 
 With a schema-generated invoice definition and client:
 
@@ -30,6 +30,8 @@ pnpm check
 `pnpm check` verifies formatting, strict TypeScript contracts and Angular templates, tooling and API/Apollo integration tests, production builds, and the actual packed library artifact installed into an isolated ESM/TypeScript consumer. Build products and package-check artifacts are ignored by Git.
 
 The library ships JavaScript with optional TypeScript declarations. Plain JavaScript consumers can use runtime GraphQL SDL without generated types or a TypeScript loader. After building, run `pnpm demo:vanilla`, `pnpm demo:typescript`, or `pnpm demo:adapters`. The [vanilla guide](docs/VANILLA.md) explains the examples, editor checks, and the limits of the simulated event adapter.
+
+The [Angular foundation](docs/ANGULAR.md) observes shared snapshots as readonly signals and is checked as an installed APF package with an Angular template consumer. The [forms contract](docs/FORMS.md) keeps local drafts and pending saves separate from server state; its demo implementation is scheduled for P4.4.
 
 ## Run the billing experiment
 
@@ -60,7 +62,7 @@ Run `pnpm demo:acquire` for actual StateQL HTTP requests against an isolated fix
 | ------------------------ | ------------------------------------------------------------------------------ |
 | `packages/core`          | Shared records, projections, observation, canonical addresses and selections   |
 | `packages/graphql`       | Private schema tooling, operation planner, decoder and HTTP acquisition client |
-| `packages/angular`       | Reserved Angular adapter; signals and lifecycle integration planned            |
+| `packages/angular`       | Private APF package and readonly signal observation with lifecycle cleanup     |
 | `apps/billing-api`       | Local GraphQL billing fixture and deterministic controls                       |
 | `apps/billing-demo`      | Angular/Apollo baseline with two consumers and request inspector               |
 | `examples/query-planner` | Runnable plain TypeScript operation planning example                           |

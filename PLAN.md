@@ -215,6 +215,8 @@ The core subscription API is sufficient for both signals and Observables. Start 
 
 The demo uses a read-only summary and an editable form. Form values are drafts. Bind fresh server values into pristine controls; preserve dirty controls and expose a conflict indication if their server baseline changes. Use a small explicit demo binding, not a new form framework. Saving performs one mutation, then targeted invalidation after success. Writes are not automatically retried.
 
+The [forms contract](docs/FORMS.md) separates editor-owned baseline/draft/latest values from shared accepted server data and the immutable payload of a pending command. Typing cannot update peers or send writes by default. Explicit Save must preserve edits made while it is pending, distinguish confirmed success from a later refresh failure, and never apply an old outcome to a new scope/record. Reset uses the latest valid server value. Future socket delivery changes the transport, not these ownership rules; authoritative conflicts require server revisions/preconditions. P4.4/P4.5 will test these cases equally for Apollo and StateQL.
+
 ### Plain JavaScript and React
 
 The vanilla examples use the same client and subscribe/getSnapshot contract with explicit disposal. P3.8 verifies native JavaScript and compiled TypeScript consumers against installed package tarballs without a TypeScript runtime. See [examples and adapter limits](docs/VANILLA.md).
