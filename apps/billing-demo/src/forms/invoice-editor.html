@@ -1,0 +1,69 @@
+<section class="panel editor" [attr.aria-label]="title()">
+  <h2>{{ title() }}</h2>
+  <p class="muted">
+    Local draft · tenant {{ tenantId() }}. Changing tenant or invoice discards
+    this editor's draft.
+  </p>
+  <label
+    >Invoice
+    <select
+      aria-label="Invoice"
+      [value]="recordId()"
+      (change)="selectRecord($event)"
+    >
+      <option value="INV-1">INV-1</option>
+      <option value="INV-2">INV-2</option>
+    </select></label
+  >
+  @if (ready()) { @if (state(); as current) {
+  <form (submit)="$event.preventDefault(); save()" class="save-form">
+    <label
+      >Account ID
+      <input
+        aria-label="Draft account ID"
+        [formControl]="control"
+        maxlength="80"
+    /></label>
+    <button type="submit" class="primary" [disabled]="!current.canSave">
+      Save draft
+    </button>
+    <button type="button" (click)="control.setValue(null)">Set null</button>
+  </form>
+  @if (control.invalid && (control.dirty || control.touched)) {
+  <p class="error" data-testid="draft-validation">
+    Enter 1–80 characters, or choose Set null.
+  </p>
+  }
+  <p class="muted">
+    Draft: {{ current.draft === null ? '(null)' : current.dirty ? 'Unsaved
+    changes' : 'Matches baseline' }}
+  </p>
+  <p class="muted" data-testid="latest-server">
+    Latest valid server value: {{ text(current.latest) }}
+  </p>
+  @if (!current.available) {
+  <p class="error" data-testid="unavailable">{{ current.unavailableReason }}</p>
+  } @if (current.conflict) {
+  <p class="error" data-testid="draft-conflict">
+    Server value changed. Your draft is preserved. Choose which value to keep.
+  </p>
+  }
+  <div class="actions">
+    <button [disabled]="!current.canResolve" (click)="resolve(true)">
+      Use server value
+    </button>
+    @if (current.conflict || current.phase === 'unknown') {
+    <button [disabled]="!current.canResolve" (click)="resolve(false)">
+      Keep my draft
+    </button>
+    }
+    <button [disabled]="current.busy" (click)="refresh()">
+      {{ current.phase === 'saved-refresh-failed' ? 'Retry refresh' : 'Refresh
+      server value' }}
+    </button>
+  </div>
+  <p class="status" data-testid="save-status">{{ current.message }}</p>
+  } } @else {
+  <p>Opening editor…</p>
+  }
+</section>

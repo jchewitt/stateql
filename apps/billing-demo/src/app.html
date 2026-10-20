@@ -51,6 +51,9 @@
         <button [disabled]="busy()" (click)="reverse()">
           Reverse server order
         </button>
+        <button [disabled]="busy()" (click)="remove()">
+          Remove INV-1 on server
+        </button>
         <button [disabled]="busy()" (click)="fail()">Fail next request</button>
         <button [disabled]="busy()" (click)="delay()">
           {{ delayed() ? 'Remove delay' : 'Delay responses 1s' }}
@@ -60,22 +63,6 @@
         </button>
         <button [disabled]="busy()" (click)="reset()">Reset experiment</button>
       </div>
-      <form (submit)="$event.preventDefault(); save()" class="save-form">
-        <label
-          >INV-1 account ID
-          <input
-            aria-label="INV-1 account ID"
-            [value]="draft()"
-            (input)="setDraft($event)"
-            required
-            maxlength="80"
-        /></label>
-        <button [disabled]="busy() || !draft()">Save and refresh</button>
-      </form>
-      <p class="muted">
-        Save returns identity only, then runs the narrow query. Controls affect
-        this local fixture server only.
-      </p>
     </details>
   </section>
   <div class="consumers">
@@ -93,6 +80,8 @@
     />
     }
   </div>
+  @for (tenant of [tenantId()]; track tenant) {
+  <billing-editors [tenantId]="tenant" /> }
   <request-inspector [fixture]="fixture" />
   <footer>
     Apollo baseline · Separate broad and narrow documents share one normalized

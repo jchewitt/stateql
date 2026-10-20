@@ -1,6 +1,6 @@
 # Billing comparison demo
 
-The app includes the completed P1 Apollo baseline and P4.3 StateQL views against the same ordinary GraphQL schema. The API and demo are private workspace applications, not published npm libraries. Forms integration and the complete parity matrix remain P4.4/P4.5.
+The app includes the completed P1 Apollo baseline and P4.3 StateQL views against the same ordinary GraphQL schema. The API and demo are private workspace applications, not published npm libraries. P4.4/P4.5 add a shared forms policy and browser coverage for both modes.
 
 ## Start and inspect
 
@@ -27,7 +27,6 @@ Open http://127.0.0.1:4200 for Apollo or http://127.0.0.1:4200/?client=stateql f
 | Reverse server order    | The next list response follows server order. Apollo merges entity fields by composite identity, preserving each invoice's correct amount/name.                                                                        |
 | Fail next request       | The next accepted GraphQL operation returns HTTP 503 once. A failed narrow refresh leaves cached values intact; retry manually to recover. No automatic retry policy is added to this baseline.                       |
 | Delay responses 1s      | Read data is captured before the delay. Switching tenants while an A refresh is pending cannot populate B's view with A's data. Same-tenant response ordering remains a later comparison scenario.                    |
-| Save and refresh        | Save INV-1's edited account ID. Mutation returns identity only; a subsequent narrow query updates both views. The input is a local draft, not a full reactive-forms integration.                                      |
 | Unmount / mount monitor | Disposes/recreates that component's own subscription. The other watcher remains active; remount uses the shared cache.                                                                                                |
 | Reset experiment        | Resets fixtures, delay/failure settings, server request log, and Apollo cache; active queries reload.                                                                                                                 |
 
@@ -49,9 +48,28 @@ In StateQL mode, the workspace uses `billingInvoices` from `src/data/stateql-def
 | Unmount / mount monitor | Destroys/recreates an owned query; the other view stays active and cached data is reused.                                                                                                 |
 | Reset experiment        | Resets the shared fixture then reloads the app, discarding all tenant caches and owners. Starts again at tenant A.                                                                        |
 
-The same inspector displays actual `StateQLRead` documents and response sizes. The app bundles both clients for this lab; its total bundle is not a standalone package-size comparison. Requests/logs from another open tab can affect counts because the fixture is shared. Use one tab and reset before comparing modes. The StateQL panel handles unavailable/incomplete data and field errors without treating missing values as zero or null. Readonly snapshots remain separate from form drafts; StateQL has no save UI yet.
+The same inspector displays actual `StateQLRead` documents and response sizes. The app bundles both clients for this lab; its total bundle is not a standalone package-size comparison. Requests/logs from another open tab can affect counts because the fixture is shared. Use one tab and reset before comparing modes. The StateQL panel handles unavailable/incomplete data and field errors without treating missing values as zero or null. Readonly snapshots remain separate from form drafts; both modes have two independent editors below the read panels.
 
 ## Boundaries and comparison
+
+### Preliminary network result (October 20)
+
+With fresh tenant-A fixtures, an initial full read followed by one server advance and an account-ID refresh produced:
+
+| Client                                                     | Initial response | Narrow response | Total operations |
+| ---------------------------------------------------------- | ---------------: | --------------: | ---------------: |
+| Apollo, broad document then `InvoiceAccounts`              |        453 bytes |       235 bytes |                2 |
+| StateQL, central definition then `invalidate('accountId')` |        453 bytes |       235 bytes |                2 |
+
+These are UTF-8 GraphQL JSON response-body bytes from the local inspector, excluding HTTP headers and request bodies. They are a small fixture observation, not a latency or throughput benchmark. Both clients already achieve the same narrow network result. StateQL removes the separately maintained narrow query and derives refresh targets from the central definition; schema metadata and its runtime still have costs. P5 must measure declarations, coordination, generated code, package cost and planning overhead before an overall recommendation. The shared form policy is needed with either client.
+
+### Try the editors
+
+Below the read panels, type in **Editor one**: neither Editor two nor the shared panels change. Change server data and refresh account IDs: pristine Editor two follows, while Editor one retains its edit and shows a conflict. **Use server value** discards the draft in favor of the latest valid value; **Keep my draft** rebases it for a deliberate Save.
+
+**Save draft** sends one identity-only mutation followed by a targeted refresh. Typing can continue while it is pending. A failed follow-up read displays **Saved; refresh failed** and offers a read-only retry. Known rejection preserves the draft; an uncertain acknowledgement requires a successful explicit refresh and deliberate reconciliation before another write. Empty input is invalid; use **Set null** to clear the field explicitly.
+
+Changing tenant or the editor's invoice selection discards that editor's draft. **Remove INV-1 on server**, then refresh its editor, demonstrates preserved drafts with an unavailable target and disabled Save. Reset restores the fixture. The browser suite uses deterministic response gates to exercise edits, target switches and editor disposal during both mutation and follow-up-read stages.
 
 Central documents and fragments live in `apps/billing-demo/src/data/operations.ts`; cache identity policies live in `cache.ts`. `BillingService` coordinates Apollo operations. `FixtureService` and `RequestInspector` are shared by both modes and own development fixture controls and network evidence. Each `InvoicePanel` owns its watch subscription and cleanup. There is no second application cache or custom merge engine.
 
@@ -69,7 +87,7 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
-The API suite checks tenant separation, save/null, reset, deterministic request/field failures, error paths, filtering, and malformed requests. The Apollo suite checks document validation, deduplication, independent watcher updates, narrow field coverage, preserved siblings, response size, reordering, tenant isolation, failure recovery, save, delayed scope changes, and owner teardown. StateQL demo tests exercise the actual central/feature definitions, request coverage, shared addresses, cached siblings, missing-field acquisition, and explicit list refresh. Browser scenarios exercise both Angular modes, the inspector, shared updates, error recovery, monitor remounting, tenant replacement, reset, and mobile width. P4.5 will extend this to the complete parity matrix, including forms. CI runs the normal suite on Linux/Windows and Chromium scenarios on Linux.
+The API suite checks tenant separation, save/null, reset, deterministic request/field failures, error paths, filtering, and malformed requests. The Apollo suite checks document validation, deduplication, independent watcher updates, narrow field coverage, preserved siblings, response size, reordering, tenant isolation, failure recovery, save, delayed scope changes, and owner teardown. StateQL demo tests exercise the actual central/feature definitions, request coverage, shared addresses, cached siblings, missing-field acquisition, and explicit list refresh. Browser scenarios exercise both Angular modes, the inspector, shared updates, error recovery, monitor remounting, tenant replacement, reset, and mobile width. The same form scenarios run for both modes, including conflicts, edits during save, uncertain acknowledgements, read-only recovery, record removal, and disposal during a post-save read. CI runs the normal suite on Linux/Windows and Chromium scenarios on Linux.
 
 The demo uses supported Angular 21 with TypeScript 5.9, matching the repository's existing Node/TypeScript baseline. Apollo Angular 14 supports this combination. Application source and templates stay strict. Only the demo's external declaration checking uses `skipLibCheck`: Apollo Client 4.3.4's incremental-handler declarations conflict with `exactOptionalPropertyTypes`. The portable core retains full declaration checking. Incremental delivery is outside this demo.
 

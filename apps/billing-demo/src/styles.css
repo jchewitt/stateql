@@ -311,3 +311,16 @@ nav a {
 nav a[aria-current] {
   font-weight: 700;
 }
+
+.editor h2 {
+  margin-bottom: 12px;
+}
+.editor .save-form label {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+.editor .save-form input {
+  width: 100%;
+  margin: 0;
+}

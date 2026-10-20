@@ -4,6 +4,47 @@ import { listen } from '../src/server.js';
 
 const query = `query Billing($tenantId: ID!) { billing(tenantId: $tenantId) { tenantId invoices { id accountId amountCents user { name } } } }`;
 
+test('fixture removal is scoped and rejected saves carry an explicit pre-write code', async (t) => {
+  const api = await listen(0);
+  t.after(api.close);
+  const post = (path: string, body: unknown) =>
+    fetch(api.url + path, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  assert.equal(
+    (
+      await post('/__fixture/control', {
+        action: 'remove',
+        tenantId: 'A',
+        id: 'INV-1',
+      })
+    ).status,
+    200,
+  );
+  assert.equal(api.fixture.snapshot().A.length, 1);
+  assert.equal(api.fixture.snapshot().B.length, 2);
+  assert.equal(
+    (
+      await post('/__fixture/control', {
+        action: 'remove',
+        tenantId: 'A',
+        id: 123,
+      })
+    ).status,
+    400,
+  );
+  const result = (await (
+    await post('/graphql', {
+      query:
+        'mutation { saveInvoice(tenantId: "A", id: "INV-1", accountId: "new") { id } }',
+    })
+  ).json()) as { errors: { extensions: { code: string } }[] };
+  assert.equal(result.errors[0]?.extensions.code, 'FIXTURE_SAVE_REJECTED');
+  assert.equal(api.fixture.snapshot().A.length, 1);
+});
+
 test('HTTP fixture scopes invoices, logs requests, supports save and reset', async (t) => {
   const api = await listen(0);
   t.after(api.close);

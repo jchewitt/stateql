@@ -110,6 +110,11 @@ export function createBillingServer(fixture = new BillingFixture()) {
         case 'reverse':
           fixture.reverse(tenant(body['tenantId']));
           break;
+        case 'remove':
+          if (typeof body['id'] !== 'string')
+            throw new HttpError(400, 'id must be a string.');
+          fixture.remove(tenant(body['tenantId']), body['id']);
+          break;
         case 'configure':
           fixture.configure({
             latencyMs: body['latencyMs'],

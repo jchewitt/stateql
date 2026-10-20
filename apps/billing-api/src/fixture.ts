@@ -87,6 +87,14 @@ export class BillingFixture {
     this.invoices[tenantId].reverse();
   }
 
+  remove(tenantId: TenantId, id: string): void {
+    if (!this.invoices[tenantId].some((invoice) => invoice.id === id))
+      throw new Error('Invoice not found in this tenant.');
+    this.invoices[tenantId] = this.invoices[tenantId].filter(
+      (invoice) => invoice.id !== id,
+    );
+  }
+
   save(tenantId: TenantId, id: string, accountId: string | null): Invoice {
     const invoice = this.invoices[tenantId].find((item) => item.id === id);
     if (!invoice) throw new Error('Invoice not found in this tenant.');

@@ -1,6 +1,6 @@
 # Angular integration
 
-P4.1/P4.2 implement the private `@jchewitt/stateql-angular` package, readonly observation, environment-owned client providers, and reactive query ownership. P4.3 adds StateQL billing views beside the Apollo baseline; see [the demo guide](DEMO.md). Form integration remains P4.4.
+P4.1/P4.2 implement the private `@jchewitt/stateql-angular` package, readonly observation, environment-owned client providers, and reactive query ownership. P4.3 adds StateQL billing views beside the Apollo baseline; see [the demo guide](DEMO.md). P4.4 adds demo-owned form drafts and explicit saves using the same editing policy for both clients.
 
 ## Shared client and owned queries
 
@@ -92,4 +92,4 @@ The build follows [Angular's package format](https://angular.dev/tools/libraries
 
 ## Forms boundary
 
-The signal exposes server snapshots. Editable controls hold separate local drafts; reading a signal never implies sending a command. The [forms contract](FORMS.md) specifies pristine-field refresh, conflict detection, explicit saves, edits during save, and future stream acknowledgements. Those behaviors are planned for P4.4, not implemented by this observation bridge.
+The signal exposes server snapshots. Editable controls hold separate local drafts; reading a signal never implies sending a command. The [forms contract](FORMS.md) specifies pristine-field refresh, conflict detection, explicit saves, edits during save, and future stream acknowledgements. P4.4 implements those behaviors in the demo. The Angular library exposes observations and owned queries; it does not own form drafts or send writes.

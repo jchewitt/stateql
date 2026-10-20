@@ -13,15 +13,16 @@
     "@angular/common": "21.2.25",
     "@angular/compiler": "21.2.25",
     "@angular/core": "21.2.25",
+    "@angular/forms": "21.2.25",
     "@angular/platform-browser": "21.2.25",
     "@apollo/client": "4.3.4",
+    "@jchewitt/stateql-angular": "workspace:*",
+    "@jchewitt/stateql-core": "workspace:*",
+    "@jchewitt/stateql-graphql": "workspace:*",
     "apollo-angular": "14.2.0",
     "graphql": "16.14.2",
     "rxjs": "7.8.2",
-    "tslib": "2.8.1",
-    "@jchewitt/stateql-core": "workspace:*",
-    "@jchewitt/stateql-graphql": "workspace:*",
-    "@jchewitt/stateql-angular": "workspace:*"
+    "tslib": "2.8.1"
   },
   "devDependencies": {
     "@angular/build": "21.2.27",

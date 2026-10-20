@@ -4,7 +4,7 @@
 
 GraphQL-first state management built around composable definitions and selective field refresh.
 
-**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent reads share identical work, protect newer fields from late responses, and cancel when their last interested owner leaves. Bounded retries recover classified transient transport failures. StateQL's Angular package now provides client DI, readonly signals and owned queries with reactive argument replacement, exercised by the billing demo beside Apollo. Demo forms remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
+**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent reads share identical work, protect newer fields from late responses, and cancel when their last interested owner leaves. Bounded retries recover classified transient transport failures. StateQL's Angular package now provides client DI, readonly signals and owned queries with reactive argument replacement, exercised by the billing demo beside Apollo. Both modes now demonstrate isolated form drafts, conflict resolution and explicit saves; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
 
 With a schema-generated invoice definition and client:
 
@@ -31,7 +31,7 @@ pnpm check
 
 The library ships JavaScript with optional TypeScript declarations. Plain JavaScript consumers can use runtime GraphQL SDL without generated types or a TypeScript loader. After building, run `pnpm demo:vanilla`, `pnpm demo:typescript`, or `pnpm demo:adapters`. The [vanilla guide](docs/VANILLA.md) explains the examples, editor checks, and the limits of the simulated event adapter.
 
-The [Angular foundation](docs/ANGULAR.md) observes shared snapshots as readonly signals and is checked as an installed APF package with an Angular template consumer. The [forms contract](docs/FORMS.md) keeps local drafts and pending saves separate from server state; its demo implementation is scheduled for P4.4.
+The [Angular foundation](docs/ANGULAR.md) observes shared snapshots as readonly signals and is checked as an installed APF package with an Angular template consumer. The [forms contract](docs/FORMS.md) keeps local drafts and pending saves separate from server state; both demo modes implement that policy with Angular reactive forms.
 
 ## Run the billing experiment
 
@@ -41,7 +41,7 @@ pnpm demo
 
 Open http://127.0.0.1:4200 for Apollo or http://127.0.0.1:4200/?client=stateql for StateQL. The navigation links switch between them with a fresh client cache. Click **Change server data**, then **Refresh account IDs**: both views update while amounts and names stay cached. **Refetch full query** (Apollo) or **Refresh all fields** (StateQL) updates those remaining fields. StateQL has a separate **Refresh list membership** control for adopting server order. Expand a request in the inspector to see the actual document, variables, and response size. Ports 4100 and 4200 must be free.
 
-The [demo guide](docs/DEMO.md) explains tenant isolation, save, failure/recovery, delay, order changes, and the limits of the comparison. The fixture contains synthetic data and local development controls; it is not a production server.
+The [demo guide](docs/DEMO.md) explains tenant isolation, forms, save outcomes, failure/recovery, delay, order changes, and the limits of the comparison. The fixture contains synthetic data and local development controls; it is not a production server.
 
 Run the browser regression suite with the demo stopped:
 
