@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "ng serve --host 127.0.0.1 --port 4200",
+    "dev": "pnpm --filter @jchewitt/stateql-angular... --filter @jchewitt/stateql-graphql... build && ng serve --host 127.0.0.1 --port 4200",
     "build": "ng build",
     "typecheck": "ngc -p tsconfig.app.json --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test": "tsx --test test/*.test.ts"
@@ -18,7 +18,10 @@
     "apollo-angular": "14.2.0",
     "graphql": "16.14.2",
     "rxjs": "7.8.2",
-    "tslib": "2.8.1"
+    "tslib": "2.8.1",
+    "@jchewitt/stateql-core": "workspace:*",
+    "@jchewitt/stateql-graphql": "workspace:*",
+    "@jchewitt/stateql-angular": "workspace:*"
   },
   "devDependencies": {
     "@angular/build": "21.2.27",

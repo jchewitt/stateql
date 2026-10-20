@@ -1,6 +1,6 @@
 # Angular integration
 
-P4.1/P4.2 implement the private `@jchewitt/stateql-angular` package, readonly observation, environment-owned client providers, and reactive query ownership. The billing app still runs the Apollo baseline; StateQL views and forms arrive in P4.3/P4.4.
+P4.1/P4.2 implement the private `@jchewitt/stateql-angular` package, readonly observation, environment-owned client providers, and reactive query ownership. P4.3 adds StateQL billing views beside the Apollo baseline; see [the demo guide](DEMO.md). Form integration remains P4.4.
 
 ## Shared client and owned queries
 

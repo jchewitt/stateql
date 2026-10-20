@@ -1,0 +1,62 @@
+<section class="panel" [attr.aria-label]="title()">
+  <div class="panel-heading">
+    <div>
+      <p class="eyebrow">
+        {{ compact() ? 'Feature-derived definition' : 'Central definition' }}
+      </p>
+      <h2>{{ title() }}</h2>
+    </div>
+    <span class="badge"
+      >{{ !snapshot() || snapshot()?.fetching ? 'Fetching' : 'Watching' }}</span
+    >
+  </div>
+  @if (error()) {
+  <p role="alert" class="error">{{ error() }}</p>
+  } @if (snapshot(); as current) { @if (current.stale) {
+  <p class="muted" data-testid="stale-state">
+    Some selected fields need refreshing.
+  </p>
+  } @if (current.membershipStale && current.records) {
+  <p class="muted" data-testid="membership-state">
+    List membership or order needs refreshing.
+  </p>
+  } @if (current.records === null) {
+  <p class="muted">Invoices are unavailable.</p>
+  } @else if (!current.records?.length) {
+  <p class="muted">
+    {{ current.fetching ? 'Loading invoices…' : current.complete ? 'No
+    invoices.' : 'Invoices not acquired.' }}
+  </p>
+  } @for (record of current.records; track record.identity['id']) {
+  <article
+    class="invoice"
+    [attr.data-testid]="'invoice-' + text(record.identity['id'])"
+  >
+    <div class="invoice-heading">
+      <strong>{{ text(record.identity['id']) }}</strong
+      ><span>{{ text(record.data['status']) }}</span>
+    </div>
+    <div class="account-value" data-testid="account-id">
+      {{ text(record.data['accountId']) }}
+    </div>
+    @if (compact()) {
+    <p class="muted">
+      Shared invoice · tenant {{ text(record.identity['tenantId']) }}
+    </p>
+    } @else {
+    <div class="invoice-details">
+      <span data-testid="user-name">{{ userName(record.data['user']) }}</span
+      ><strong data-testid="amount"
+        >{{ amount(record.data['amountCents']) === null ? 'Unavailable' :
+        (amount(record.data['amountCents']) | currency: 'USD') }}</strong
+      >
+    </div>
+    }
+  </article>
+  } } @else {
+  <p class="muted">
+    {{ error() ? 'Invoices unavailable.' : 'Binding current tenant…' }}
+  </p>
+  }
+  <p class="panel-foot">Own StateQL query handle · shared scoped state</p>
+</section>

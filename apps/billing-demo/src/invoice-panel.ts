@@ -5,6 +5,7 @@ import {
   type Invoice,
   type TenantId,
 } from './data/operations';
+import { FixtureService } from './fixture.service';
 import { BillingService } from './billing.service';
 
 @Component({
@@ -64,6 +65,8 @@ export class InvoicePanel {
   readonly error = signal('');
   private readonly billing = inject(BillingService);
 
+  private readonly fixture = inject(FixtureService);
+
   constructor() {
     effect((cleanup) => {
       const tenantId = this.tenantId();
@@ -86,14 +89,14 @@ export class InvoicePanel {
               result.data?.billing.tenantId === tenantId
             )
               this.invoices.set(result.data.billing.invoices);
-            if (!result.loading) void this.billing.inspect();
+            if (!result.loading) void this.fixture.inspect();
           },
           error: (error: unknown) => {
             this.loading.set(false);
             this.error.set(
               error instanceof Error ? error.message : 'Request failed.',
             );
-            void this.billing.inspect();
+            void this.fixture.inspect();
           },
         });
       cleanup(() => subscription.unsubscribe());

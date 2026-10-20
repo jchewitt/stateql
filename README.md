@@ -4,7 +4,7 @@
 
 GraphQL-first state management built around composable definitions and selective field refresh.
 
-**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent reads share identical work, protect newer fields from late responses, and cancel when their last interested owner leaves. Bounded retries recover classified transient transport failures. StateQL's Angular package now provides client DI, readonly signals and owned queries with reactive argument replacement; demo forms remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
+**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent reads share identical work, protect newer fields from late responses, and cancel when their last interested owner leaves. Bounded retries recover classified transient transport failures. StateQL's Angular package now provides client DI, readonly signals and owned queries with reactive argument replacement, exercised by the billing demo beside Apollo. Demo forms remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
 
 With a schema-generated invoice definition and client:
 
@@ -27,7 +27,7 @@ pnpm install --frozen-lockfile
 pnpm check
 ```
 
-`pnpm check` verifies formatting, strict TypeScript contracts and Angular templates, tooling and API/Apollo integration tests, production builds, and the actual packed library artifact installed into an isolated ESM/TypeScript consumer. Build products and package-check artifacts are ignored by Git.
+`pnpm check` verifies formatting, strict TypeScript contracts and Angular templates, tooling and API/Apollo/StateQL integration tests, production builds, and the actual packed library artifact installed into an isolated ESM/TypeScript consumer. Build products and package-check artifacts are ignored by Git.
 
 The library ships JavaScript with optional TypeScript declarations. Plain JavaScript consumers can use runtime GraphQL SDL without generated types or a TypeScript loader. After building, run `pnpm demo:vanilla`, `pnpm demo:typescript`, or `pnpm demo:adapters`. The [vanilla guide](docs/VANILLA.md) explains the examples, editor checks, and the limits of the simulated event adapter.
 
@@ -39,7 +39,7 @@ The [Angular foundation](docs/ANGULAR.md) observes shared snapshots as readonly 
 pnpm demo
 ```
 
-Open http://127.0.0.1:4200. Click **Change server data**, then **Refresh account IDs**: both views update while amounts and names stay cached. **Refetch full query** updates those remaining fields. Expand a request in the inspector to see the actual document, variables, and response size. Ports 4100 and 4200 must be free.
+Open http://127.0.0.1:4200 for Apollo or http://127.0.0.1:4200/?client=stateql for StateQL. The navigation links switch between them with a fresh client cache. Click **Change server data**, then **Refresh account IDs**: both views update while amounts and names stay cached. **Refetch full query** (Apollo) or **Refresh all fields** (StateQL) updates those remaining fields. StateQL has a separate **Refresh list membership** control for adopting server order. Expand a request in the inspector to see the actual document, variables, and response size. Ports 4100 and 4200 must be free.
 
 The [demo guide](docs/DEMO.md) explains tenant isolation, save, failure/recovery, delay, order changes, and the limits of the comparison. The fixture contains synthetic data and local development controls; it is not a production server.
 
@@ -64,7 +64,7 @@ Run `pnpm demo:acquire` for actual StateQL HTTP requests against an isolated fix
 | `packages/graphql`       | Private schema tooling, operation planner, decoder and HTTP acquisition client |
 | `packages/angular`       | Private APF package, client DI, signals and reactive query ownership           |
 | `apps/billing-api`       | Local GraphQL billing fixture and deterministic controls                       |
-| `apps/billing-demo`      | Angular/Apollo baseline with two consumers and request inspector               |
+| `apps/billing-demo`      | Apollo and StateQL views with independent consumers and a shared inspector     |
 | `examples/query-planner` | Runnable plain TypeScript operation planning example                           |
 | `examples/vanilla`       | JavaScript/TypeScript consumers and fake whole-resource/event adapters         |
 | `scripts`, `tests`       | Package/release checks and Angular browser scenarios                           |
