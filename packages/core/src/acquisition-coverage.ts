@@ -57,9 +57,11 @@ export function hasOmissions(
     (path) =>
       !fields.some(
         (field) =>
-          field.kind === 'write' &&
+          field.kind !== 'object' &&
           pathPrefix(field.path, path) &&
-          (field.path.length === path.length || field.value === null),
+          (field.path.length === path.length ||
+            field.kind === 'error' ||
+            field.value === null),
       ),
   );
 }

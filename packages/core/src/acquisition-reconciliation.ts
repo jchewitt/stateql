@@ -11,7 +11,7 @@ import {
   staleChanges,
 } from './acquisition-coverage.js';
 import { snapshotIdentity } from './state-identity.js';
-import type { AcquiredRecord } from './acquisition.js';
+import type { AcquiredRecord, AcquisitionResult } from './acquisition.js';
 import type { FieldPath, RecordSnapshot, StateChange } from './state-types.js';
 
 interface Reconciliation {
@@ -19,11 +19,23 @@ interface Reconciliation {
   /** Successful matching writes can commit even when a narrow refresh is incomplete. */
   readonly incomplete: string | undefined;
 }
+function errorMessages(
+  records: readonly AcquiredRecord[],
+  requested: readonly ResolvedField[],
+): string[] {
+  return records.flatMap((record) =>
+    record.fields.flatMap((field) =>
+      field.kind === 'error' && fieldAtPath(field.path, requested)
+        ? [field.message]
+        : [],
+    ),
+  );
+}
 
 /** Decide membership and field commits together before mutating the store. */
 export function reconcileAcquisition(options: {
-  readonly acquired: readonly AcquiredRecord[];
-  readonly known: readonly RecordSnapshot[] | undefined;
+  readonly acquired: AcquisitionResult;
+  readonly known: readonly RecordSnapshot[] | null | undefined;
   readonly requested: readonly ResolvedField[];
   readonly fetched: readonly ResolvedField[];
   readonly collection: boolean;
@@ -31,7 +43,7 @@ export function reconcileAcquisition(options: {
   readonly pendingInvalidations: readonly FieldPath[];
 }): Reconciliation {
   const {
-    acquired,
+    acquired: response,
     known,
     requested,
     fetched,
@@ -39,6 +51,32 @@ export function reconcileAcquisition(options: {
     replaceMembership,
     pendingInvalidations,
   } = options;
+  if (!Array.isArray(response)) {
+    if (
+      !response ||
+      typeof response !== 'object' ||
+      !('kind' in response) ||
+      response.kind !== 'null' ||
+      (response.error !== undefined &&
+        (typeof response.error !== 'string' || !response.error))
+    )
+      throw new Error(
+        'Source must return records or an explicit null resource.',
+      );
+    return {
+      changes: [
+        {
+          kind: 'resource-null',
+          ...(response.error === undefined ? {} : { error: response.error }),
+        },
+        ...(pendingInvalidations.length
+          ? [{ kind: 'membership-stale' as const }]
+          : []),
+      ],
+      incomplete: response.error,
+    };
+  }
+  const acquired = response as readonly AcquiredRecord[];
   const ids = acquired.map((record) =>
     canonicalInput(snapshotIdentity(record.identity)),
   );
@@ -52,7 +90,9 @@ export function reconcileAcquisition(options: {
     for (const field of record.fields) {
       const fetchedField = fieldAtPath(field.path, fetched);
       if (
-        (field.kind !== 'write' && field.kind !== 'object') ||
+        (field.kind !== 'write' &&
+          field.kind !== 'object' &&
+          field.kind !== 'error') ||
         !fetchedField ||
         (field.kind === 'object' && !fetchedField.children.length) ||
         (field.kind === 'write' &&
@@ -62,6 +102,15 @@ export function reconcileAcquisition(options: {
         throw new Error(
           'Source returned an invalid write or a write outside fetched coverage.',
         );
+      if (
+        field.kind === 'error' &&
+        (typeof field.message !== 'string' ||
+          !field.message ||
+          (field.structuralNull !== undefined &&
+            typeof field.structuralNull !== 'boolean') ||
+          (field.structuralNull === true && !fetchedField.children.length))
+      )
+        throw new Error('Source returned an invalid field error.');
       if (field.kind === 'object' && field.identity !== undefined)
         snapshotIdentity(field.identity);
       // snapshotInput omits undefined object properties. Validate value again
@@ -79,7 +128,7 @@ export function reconcileAcquisition(options: {
     if (
       record.fields.some(
         (field) =>
-          field.kind === 'write' &&
+          field.kind !== 'object' &&
           record.fields.some(
             (other) =>
               other.path.length > field.path.length &&
@@ -101,10 +150,14 @@ export function reconcileAcquisition(options: {
   const changed =
     known !== undefined &&
     (missing.length > 0 || ids.some((id) => !existing.has(id)));
-  if (changed && !collection)
-    throw new Error('Membership changed for a non-collection resource.');
-
-  const replacing = replaceMembership || known === undefined;
+  if (!collection && acquired.length > 1)
+    throw new Error('Non-collection sources must return at most one record.');
+  const failures = errorMessages(acquired, requested);
+  // Incomplete list reads can patch known records, but cannot admit new membership.
+  const replacing =
+    (replaceMembership && !failures.length) ||
+    known == null ||
+    (!collection && changed);
   const matched = replacing
     ? acquired
     : acquired.filter((record) =>
@@ -122,7 +175,7 @@ export function reconcileAcquisition(options: {
           records: acquired.map((record) => record.identity),
         },
       ]
-    : changed
+    : changed || (replaceMembership && failures.length)
       ? [{ kind: 'membership-stale' }]
       : [];
   for (const record of matched)
@@ -133,15 +186,26 @@ export function reconcileAcquisition(options: {
     ))
       if (fieldAtPath(field.path, requested))
         changes.push({ ...field, record: record.identity });
+  for (const record of matched)
+    changes.push(
+      ...staleChanges(
+        [record],
+        paths.filter((path) => hasOmissions(record.fields, [path])),
+      ),
+    );
   if (!replacing) changes.push(...staleChanges(missing, paths));
   // Include retained missing members, but never patch ignored unknown members.
   changes.push(
     ...staleChanges(replacing ? acquired : known!, pendingInvalidations),
   );
+  const errors = replaceMembership
+    ? failures
+    : errorMessages(matched, requested);
   return {
     changes,
-    incomplete:
-      !replacing && missing.length
+    incomplete: errors.length
+      ? errors.join('; ')
+      : !replacing && missing.length
         ? 'Field refresh incomplete: known records were missing; use refreshList() to reconcile membership.'
         : omitted
           ? 'Source omitted requested fields.'

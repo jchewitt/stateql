@@ -31,8 +31,9 @@ interface StoredRecord {
   readonly cells: Map<string, Cell>;
 }
 interface Resource {
-  membership: readonly string[] | undefined;
+  membership: readonly string[] | null | undefined;
   membershipStale: boolean;
+  resourceError: string | undefined;
   records: Map<string, StoredRecord>;
   readonly requests: Map<
     string,
@@ -77,6 +78,7 @@ function emptyResource(): Resource {
   return {
     membership: undefined,
     membershipStale: true,
+    resourceError: undefined,
     records: new Map(),
     requests: new Map(),
     views: new Set(),
@@ -216,22 +218,32 @@ class View implements StateView {
     this.signature = canonicalInput(this.snapshot);
   }
   private compute(): StateSnapshot {
-    const records = this.resource.membership?.map((id) =>
-      projectRecord(this.resource.records.get(id)!, this.selection),
-    );
+    const records =
+      this.resource.membership === null
+        ? null
+        : this.resource.membership?.map((id) =>
+            projectRecord(this.resource.records.get(id)!, this.selection),
+          );
     const statuses = records?.flatMap((record) => record.fields);
     return Object.freeze({
-      records: records === undefined ? undefined : Object.freeze(records),
+      records: records == null ? records : Object.freeze(records),
+      resourceError: this.resource.resourceError,
       complete:
         records !== undefined &&
-        statuses!.every(
-          (status) => status.present && status.error === undefined,
-        ),
+        this.resource.resourceError === undefined &&
+        (records === null ||
+          statuses!.every(
+            (status) => status.present && status.error === undefined,
+          )),
       membershipStale: this.resource.membershipStale,
       stale:
         this.resource.membershipStale ||
         records === undefined ||
-        statuses!.some((status) => status.stale || status.error !== undefined),
+        this.resource.resourceError !== undefined ||
+        (statuses?.some(
+          (status) => status.stale || status.error !== undefined,
+        ) ??
+          false),
       fetching: [...this.resource.requests.values()].some(
         (request) =>
           request.membership ||
@@ -331,6 +343,18 @@ export class StateStore {
       ),
     };
     for (const change of changes) {
+      if (change.kind === 'resource-null') {
+        if (
+          change.error !== undefined &&
+          (typeof change.error !== 'string' || !change.error)
+        )
+          throw new Error('Resource error requires a message.');
+        next.membership = null;
+        next.membershipStale = change.error !== undefined;
+        next.resourceError = change.error;
+        next.records = new Map();
+        continue;
+      }
       if (change.kind === 'membership') {
         const members = change.records.map(identity);
         const ids = members.map(canonicalInput);
@@ -338,6 +362,7 @@ export class StateStore {
           throw new Error('Duplicate record identity.');
         next.membership = ids;
         next.membershipStale = false;
+        next.resourceError = undefined;
         next.records = new Map(
           members.map((member, index) => {
             const id = ids[index]!;
@@ -392,6 +417,24 @@ export class StateStore {
           (typeof change.message !== 'string' || !change.message)
         )
           throw new Error('Field error requires a message.');
+        if (
+          change.kind === 'error' &&
+          change.structuralNull !== undefined &&
+          typeof change.structuralNull !== 'boolean'
+        )
+          throw new Error('Invalid structural null marker.');
+        if (change.kind === 'error' && change.structuralNull) {
+          ensureParents(record, path);
+          clearDescendants(record, path);
+          record.cells.set(id, {
+            path,
+            kind: 'value',
+            value: null,
+            stale: true,
+            error: change.message,
+          });
+          continue;
+        }
         const cell: Cell = record.cells.get(id) ?? {
           path,
           kind: 'missing',
@@ -413,6 +456,7 @@ export class StateStore {
     }
     resource.membership = next.membership;
     resource.membershipStale = next.membershipStale;
+    resource.resourceError = next.resourceError;
     resource.records = next.records;
     this.publish(resource);
   }

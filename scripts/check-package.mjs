@@ -152,7 +152,8 @@ try {
       ]);
       if (view.getSnapshot().records?.[0]?.data.name !== 'Packed store') throw new Error('Packed shared store failed.');
       store.dispose();
-      const client = createGraphQLClient({ transport: async () => ({ data: { item: { __typename: 'Item', name: 'Acquired' } } }) });
+      let result = { data: { item: { __typename: 'Item', name: 'Acquired' } } };
+      const client = createGraphQLClient({ transport: async () => result });
       const acquired = client.watch(bound);
       await acquired.ready;
       if (acquired.getSnapshot().records?.[0]?.data.name !== 'Acquired') throw new Error('Packed acquisition failed.');
@@ -161,6 +162,12 @@ try {
       await acquired.refresh('name');
       if (acquired.getSnapshot().stale) throw new Error('Packed refresh failed.');
       if (acquired.getSnapshot().membershipStale) throw new Error('Packed membership state failed.');
+      result = { data: { item: { __typename: 'Item', name: null } }, errors: [{ message: 'field failed', path: ['item', 'name'] }] };
+      await acquired.refresh().then(() => { throw new Error('Expected partial failure.'); }, () => {});
+      if (acquired.getSnapshot().records?.[0]?.data.name !== 'Acquired' || acquired.getSnapshot().records?.[0]?.fields[0]?.error !== 'field failed') throw new Error('Packed field failure failed.');
+      result = { data: null, errors: [{ message: 'resource failed', path: ['item'] }] };
+      await acquired.refresh().then(() => { throw new Error('Expected resource failure.'); }, () => {});
+      if (acquired.getSnapshot().records !== null || acquired.getSnapshot().resourceError !== 'resource failed') throw new Error('Packed resource failure failed.');
       const listDefinition = createSchema('type Query { items: [Item!]! } type Item { id: ID! name: String }', { identities: { Item: ['id'] } }).field('items').select({ name: true }).bind({}, { source: 'test', scope: 'list' });
       let items = [{ __typename: 'Item', id: '1', name: 'first' }];
       const lists = createGraphQLClient({ transport: async () => ({ data: { items } }) });
@@ -203,6 +210,8 @@ try {
     void handle.refreshList();
     const membershipStale: boolean = handle.getSnapshot().membershipStale;
     void membershipStale;
+    const resourceError: string | undefined = handle.getSnapshot().resourceError;
+    void resourceError;
     // @ts-expect-error canonical source name is not the selected alias
     void handle.invalidate('name');
   `,

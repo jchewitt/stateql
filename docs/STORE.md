@@ -38,7 +38,9 @@ One `commit` is atomic. Invalid identity, unknown record, duplicate membership, 
 
 Nested fields use canonical segment arrays. Writing a child establishes embedded object ancestors. An explicit `object` change can carry identity; a changed identity discards old descendants. A `write` of null replaces that structural branch and removes its descendants. A successful write clears that field's stale/error state. Explicit object success clears the parent marker only; it does not mark stale children fresh. Plain object/array leaf values are opaque JSON; normalized nested object lists remain future reconciliation work.
 
-`stale` and `error` changes preserve the previous value. Branch changes mark existing descendants individually, allowing a later successful child write to recover without making siblings fresh. Missing descendants inherit branch errors. Nested status remains visible beneath a missing/null parent without resurrecting its old data. Missing fields are omitted from data and reported as missing in `fields`; successful null is present. `complete` means selected values are present without errors, even if stale. Unknown membership is `records: undefined`; acquired empty membership is `records: []` and complete.
+`stale` and ordinary `error` changes preserve the previous value. Branch changes mark existing descendants individually, allowing a later successful child write to recover without making siblings fresh. Missing descendants inherit branch errors. Nested status remains visible beneath a missing/null parent without resurrecting its old data. An `error` with `structuralNull: true` instead writes null, removes descendants, and leaves the branch stale with the supplied error. Missing fields are omitted from data and reported as missing in `fields`; successful null is present. `complete` means selected values are present without errors, even if stale.
+
+Unknown membership is `records: undefined`; acquired empty membership is `records: []` and complete. A `resource-null` change clears all records and exposes `records: null`. It is complete/fresh when successful; an optional error appears as shared `resourceError` and makes the resource incomplete/stale. A later membership replacement clears that error and starts with fresh records, without resurrecting values removed by the null. `membership-stale` can also mark a null resource for reacquisition.
 
 ## Observation and lifecycle
 
@@ -52,6 +54,6 @@ Inactive data remains available until explicit `evict(address)` or store disposa
 
 ## Remaining runtime work
 
-P3.2–P3.4 add [acquisition, selective refresh, and keyed-list reconciliation](ACQUISITION.md) with strict GraphQL decoding. P3.5–P3.8 still need partial-error/null propagation from the protocol, general concurrent stale-response protection, cancellation, retries, and alternate-source demonstrations. This store does not decide which server response is current or whether a partial list response should replace membership. The coordinator/decoder makes those decisions before calling `commit`.
+P3.2–P3.5 add [acquisition, selective refresh, keyed-list reconciliation, and partial-error/null handling](ACQUISITION.md). P3.6–P3.8 still need general concurrent stale-response protection, cancellation, retries, and alternate-source demonstrations. This store does not decide which server response is current or whether a partial list response should replace membership. The coordinator/decoder makes those decisions before calling `commit`.
 
 P4 will connect the completed runtime to Angular and forms. P5 then compares application wiring, correctness, requests, payloads, planning cost, and bundle size against the existing Apollo baseline. P3.1 alone is not enough to make that comparison.

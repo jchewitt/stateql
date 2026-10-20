@@ -27,11 +27,23 @@ export type AcquiredField =
       readonly kind: 'object';
       readonly path: FieldPath;
       readonly identity?: RecordIdentity;
+    }
+  | {
+      readonly kind: 'error';
+      readonly path: FieldPath;
+      readonly message: string;
+      /** An object became null; discard descendants rather than retaining its old shape. */
+      readonly structuralNull?: boolean;
     };
 export interface AcquiredRecord {
   readonly identity: RecordIdentity;
   readonly fields: readonly AcquiredField[];
 }
+export interface AcquiredNull {
+  readonly kind: 'null';
+  readonly error?: string;
+}
+export type AcquisitionResult = readonly AcquiredRecord[] | AcquiredNull;
 /** Provisional source boundary: decode protocol responses before returning records. */
 export interface AcquisitionSource {
   readonly stateAddress: string;
@@ -44,7 +56,7 @@ export interface AcquisitionSource {
   fetchSelection?(
     requested: readonly ResolvedField[],
   ): readonly ResolvedField[];
-  read(selection: readonly ResolvedField[]): Promise<readonly AcquiredRecord[]>;
+  read(selection: readonly ResolvedField[]): Promise<AcquisitionResult>;
 }
 export interface InvalidateOptions {
   readonly refetch?: 'active' | 'none';
@@ -78,6 +90,7 @@ interface Scope {
 function needed(view: StateView): readonly ResolvedField[] {
   const snapshot = view.getSnapshot();
   if (snapshot.records === undefined) return view.selection;
+  if (snapshot.records === null) return snapshot.stale ? view.selection : [];
   let fields: readonly ResolvedField[] = [];
   for (const record of snapshot.records)
     for (const status of record.fields) {
@@ -213,15 +226,13 @@ export class AcquisitionClient {
           this.store.setFetching(address, requestId, fields, replaceMembership);
           if (this.disposed || !current.handles.size)
             throw new Error('Acquisition has no active owners.');
-          const records = await read(fetched);
+          const response = await read(fetched);
           if (this.disposed || !current.handles.size)
             throw new Error('Acquisition has no active owners.');
           // Snapshot and validate before committing; a source cannot alter data after return.
           const acquired = snapshotInput(
-            records,
-          ) as unknown as readonly AcquiredRecord[];
-          if (!Array.isArray(acquired))
-            throw new Error('Source must return records.');
+            response,
+          ) as unknown as AcquisitionResult;
           const result = reconcileAcquisition({
             acquired,
             known: view.getSnapshot().records,
@@ -293,7 +304,9 @@ export class AcquisitionClient {
           options.refetch === 'none' ? Promise.resolve() : enqueue(fields);
         this.store.commit(
           address,
-          staleChanges(view.getSnapshot().records ?? [], paths),
+          view.getSnapshot().records === null
+            ? [{ kind: 'membership-stale' }]
+            : staleChanges(view.getSnapshot().records ?? [], paths),
         );
         return task;
       } catch (error) {

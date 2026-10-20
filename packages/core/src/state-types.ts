@@ -11,6 +11,7 @@ export type RecordIdentity = InputObject;
 export type FieldPath = readonly FieldSegment[];
 export type StateChange =
   | { readonly kind: 'membership'; readonly records: readonly RecordIdentity[] }
+  | { readonly kind: 'resource-null'; readonly error?: string }
   | { readonly kind: 'membership-stale' }
   | {
       readonly kind: 'write';
@@ -34,6 +35,7 @@ export type StateChange =
       readonly record: RecordIdentity;
       readonly path: FieldPath;
       readonly message: string;
+      readonly structuralNull?: boolean;
     };
 
 export interface FieldStatus {
@@ -49,8 +51,9 @@ export interface RecordSnapshot {
   readonly fields: readonly FieldStatus[];
 }
 export interface StateSnapshot {
-  /** Undefined means membership has not been acquired; [] is a known empty list. */
-  readonly records: readonly RecordSnapshot[] | undefined;
+  /** Undefined is unacquired, null is a null resource/ancestor, [] is an empty list. */
+  readonly records: readonly RecordSnapshot[] | null | undefined;
+  readonly resourceError: string | undefined;
   readonly complete: boolean;
   /** Unknown membership, or a narrow read detected added/missing records. */
   readonly membershipStale: boolean;
