@@ -9,6 +9,7 @@ import {
 import { leafPaths, pathPrefix, staleChanges } from './acquisition-coverage.js';
 import { reconcileAcquisition } from './acquisition-reconciliation.js';
 import { AcquisitionVersions } from './acquisition-versions.js';
+import { ReadTransportError, type ReadRetrier } from './read-retry.js';
 import {
   Cancellation,
   cancellable,
@@ -16,7 +17,7 @@ import {
 } from './cancellation.js';
 import type { AcquisitionResult, AcquisitionSource } from './acquisition.js';
 import type { StateStore } from './state-store.js';
-import type { FieldPath, StateView } from './state-types.js';
+import type { FieldPath, StateChange, StateView } from './state-types.js';
 
 export interface AcquisitionOwner {
   readonly active: boolean;
@@ -72,6 +73,7 @@ export class AcquisitionScheduler {
     readonly address: string,
     selection: readonly ResolvedField[],
     readonly collection: boolean,
+    private readonly retry: ReadRetrier,
   ) {
     // Membership must remain live when the owner that started a read disposes.
     this.view = store.watch(address, selection);
@@ -228,12 +230,24 @@ export class AcquisitionScheduler {
           request.cancellation.signal.reason ??
           new Error('Acquisition has no active owners.')
         );
-      const response = await cancellable(
-        Promise.resolve(
-          source.read(fetched, { signal: request.cancellation.signal }),
-        ),
-        request.cancellation.signal,
-      );
+      let response: AcquisitionResult;
+      try {
+        response = await this.retry.read(
+          () => source.read(fetched, { signal: request.cancellation.signal }),
+          request.cancellation.signal,
+          () =>
+            request.live &&
+            this.versions.current(request.version, request.fields),
+        );
+      } catch (error) {
+        if (
+          request.live &&
+          !this.disposed &&
+          error instanceof ReadTransportError
+        )
+          this.failFields(request, error);
+        throw error;
+      }
       if (!request.live || this.disposed)
         throw (
           request.cancellation.signal.reason ??
@@ -269,6 +283,34 @@ export class AcquisitionScheduler {
     } finally {
       this.finish(request);
     }
+  }
+  private failFields(request: Request, error: ReadTransportError): void {
+    const records = this.view.getSnapshot().records;
+    // No invented records or conversion of a transport failure into resource null.
+    const changes: StateChange[] = (records ?? []).flatMap((record) =>
+      leafPaths(request.fields).map((path) => ({
+        kind: 'error' as const,
+        record: record.identity,
+        path,
+        message: error.message,
+      })),
+    );
+    const eligible = this.versions.filter(
+      request.version,
+      changes,
+      this.store,
+      this.address,
+    );
+    if (eligible.changes.length) {
+      this.versions.committed(
+        request.version,
+        eligible.changes,
+        this.store,
+        this.address,
+      );
+      this.store.commit(this.address, eligible.changes);
+    }
+    if (eligible.superseded) throw new AcquisitionSupersededError();
   }
   private finish(request: Request): void {
     if (!request.live) return;

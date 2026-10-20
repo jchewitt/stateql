@@ -253,6 +253,22 @@ StateQL should decode and validate a declared event envelope into scoped canonic
 
 Acceptance: an HTTP-loaded view and two consumers receive a field push with no component-level reducer; unrelated fields remain unchanged. List membership uses explicit insert/remove/replacement semantics or invalidation when filters cannot be evaluated safely. Duplicate events, reconnect gaps, malformed envelopes, source errors, scope changes, and final-owner cleanup are tested. A bounded reconnect policy resumes from a cursor or refreshes a baseline. No network operation or persisted event may cross an authorization scope. Use one real GraphQL subscription example and one fake custom event source before claiming transport independence.
 
+Expanded direction from the user, October 20, 2026: support two configurable event modes over WebSockets or server-sent events (SSE). **Invalidation notices** carry scoped resource/field targets and version or opaque invalidation tokens; they mark cached data stale without forcing an immediate fetch. A page that later needs those fields reacquires them automatically. **Data updates** carry validated replacement values or explicitly supported deltas and update interested consumers through the common commit path. Applications may mix the modes by resource, or use ordinary client-triggered acquisition/invalidation with no stream or server companion.
+
+An invalidation hash is a routing/equality token, not necessarily an ordered revision or proof that a cache is current. Define how notices for inactive/evicted resources are retained within bounded storage and how reconnect gaps trigger baseline validation. An offline client cannot learn about missed changes without replay, a revision handshake, or revalidation. Data updates require the E2 ordering contract, explicit deletion/list-membership semantics, and safe fallback to invalidation when an adapter cannot provide a complete update.
+
+Before implementing E1, notify the user and revisit this end-to-end design with them. The current retry/runtime work must preserve the boundary without building a stream framework ahead of that discussion.
+
+### E4 Adapter-based server event companion
+
+Plan a separate optional server package that translates committed server changes into the same invalidation/data envelopes. Input adapters may consume explicit business-logic events, database change feeds, or another subscription system. Delivery adapters handle WebSocket, SSE, or another supported channel; database drivers and connection servers stay outside portable core.
+
+Server bindings must declare how a change maps to scoped resource paths, arguments, record identities, and affected fields. Database rows alone cannot reliably identify computed GraphQL fields, filtered memberships, or authorization-dependent projections. Allow shared/generated definitions and reusable mapping hooks; use invalidation when the server cannot safely compute the affected projection.
+
+Publish committed changes rather than rolled-back intermediate writes. Specify event identity, authoritative revision coverage, connection authorization, tenant routing, replay/gap behavior, and backpressure. Where losing an event between database commit and publication is unacceptable, evaluate a transactional outbox or durable change feed rather than promising atomic delivery from an ordinary callback. A database change does not authorize broadcasting its raw row to clients; subscriptions must enforce server-owned access rules.
+
+Acceptance: a business event adapter and a deterministic database-change adapter both drive invalidation-only and direct-update examples without UI reducers. Tests cover inactive-page reacquisition, filtered-list changes, deletes, reconnect gaps, authorization/scope replacement, duplicate delivery, and HTTP fallback. The objective is consistent convergence under a documented revision/delivery contract, not unconditional instantaneous consistency across database, server, and every client.
+
 ### E2 Revision-aware ordering across transports
 
 Problem: HTTP responses, poll results, stream messages, and mutation acknowledgements can arrive in a different order from the server changes they represent. Local request generations protect client work, but cannot establish server causality across independent channels.
@@ -295,6 +311,8 @@ const stop = invoices.field('status').poll({ everyMs: 10_000 });
 Use explicit milliseconds. Group identical state-and-field polling interests; the fastest active requested cadence wins, returning to a slower cadence when the faster owner leaves. Keep distinct field groups separate initially rather than fetching all fields at the fastest interval. Do not overlap a poll with an equivalent pending read or create a queue of missed ticks. Stop when the last owner releases the interest. Optional browser visibility policy belongs outside the portable core.
 
 Proposed read defaults are two retries after the first attempt, exponential backoff with jitter, and a bounded timeout. Retry transient transport failures and configured retryable responses; do not automatically retry schema/validation errors, authorization failures, cancellations, or ordinary business errors. Global defaults are inherited and overridable. No automatic write retries without an explicit idempotency contract.
+
+P3.7 implements client-level bounded attempts and injected retry scheduling. GraphQL defaults to two additional attempts for explicitly classified transient transport failures; portable core requires an injected scheduler to enable retries. Per-definition/consumer policy inheritance, request timeouts, and timed cache retention remain separate follow-on tasks. One deduplicated request has one immutable retry policy; introducing narrower overrides later requires a defined rule for conflicting owners. Bounded attempts alone do not bound how long an individual transport request can remain pending.
 
 Polling and retry timers share a scheduler so a poll does not spawn another retry chain while its previous read is recovering. Field errors coexist with unaffected data. Advanced partial-error retry and combining unequal polling schedules are later optimizations.
 

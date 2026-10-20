@@ -56,6 +56,6 @@ Inactive data remains available until explicit `evict(address)` or store disposa
 
 ## Remaining runtime work
 
-P3.2–P3.6 add [acquisition, selective refresh, keyed-list reconciliation, partial-error/null handling](ACQUISITION.md), and [concurrent scheduling with cancellation](CONCURRENCY.md). P3.7–P3.8 still need retries and alternate-source demonstrations. This store does not decide which server response is current or whether a partial list response should replace membership. The coordinator/decoder makes those decisions before calling `commit`.
+P3.2–P3.7 add [acquisition, selective refresh, keyed-list reconciliation, partial-error/null handling](ACQUISITION.md), [concurrent scheduling with cancellation](CONCURRENCY.md), and [bounded retries](RETRIES.md). P3.8 still needs alternate-source demonstrations. This store does not decide which server response is current or whether a partial list response should replace membership. The coordinator/decoder makes those decisions before calling `commit`.
 
 P4 will connect the completed runtime to Angular and forms. P5 then compares application wiring, correctness, requests, payloads, planning cost, and bundle size against the existing Apollo baseline. P3.1 alone is not enough to make that comparison.

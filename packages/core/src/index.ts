@@ -6,6 +6,12 @@ export {
   AcquisitionSupersededError,
 } from './cancellation.js';
 export type { CancellationSignal } from './cancellation.js';
+export { ReadTransportError } from './read-retry.js';
+export type {
+  ReadRetryPolicy,
+  RetryScheduler,
+  AcquisitionClientOptions,
+} from './read-retry.js';
 export type {
   AcquisitionSource,
   AcquisitionContext,
