@@ -76,12 +76,23 @@ Form drafts remain editor-owned, separate from shared accepted server state and 
 
 Depends on P4.
 
-- [ ] P5.1 Compare application declarations and coordination code separately from generated and dependency code.
-- [ ] P5.2 Record actual payloads, operation counts, package cost, and planning overhead without relying on artificial network delay as a benchmark.
-- [ ] P5.3 Document correctness boundaries and decide: continue independent runtime, narrow to a planner over an existing cache, or redesign.
-- [ ] P5.4 Update the README with demonstrated behavior and a working demo guide.
+- [x] P5.1 Compare application declarations and coordination code separately from generated and dependency code.
+- [x] P5.2 Record actual payloads, operation counts, package cost, and planning overhead without relying on artificial network delay as a benchmark.
+- [x] P5.3 Document correctness boundaries and decide: continue independent runtime, narrow to a planner over an existing cache, or redesign.
+- [x] P5.4 Update the README with demonstrated behavior and a working demo guide.
 
 Exit: a concrete evidence-backed decision, rather than an unsupported claim of superiority over Apollo.
+
+Completed comparison: [method, measurements and decision](COMPARISON.md). Run `pnpm compare` to reproduce local artifacts. Continue the independent runtime as an experimental library: simpler selection-derived refresh and explicit field/membership semantics justify further work, while payloads match Apollo and runtime planning has a measurable cost. No general speed or feature-parity claim is made.
+
+### Follow-up findings from P5
+
+- [ ] Add a typed runtime result projection while preserving partial/missing/error states; current generic snapshots add presentation narrowing code.
+- [ ] Measure larger schemas, record counts, browser memory and lower-powered devices before making scaling/performance claims.
+- [ ] Evaluate reusable compiled operation plans with argument, scope and identity regression coverage.
+- [ ] Define inactive retention and request timeout ownership/cancellation before presenting the prototype as production-ready.
+
+These findings are not retroactively required to complete the initial comparison. Document limitations in R1's experimental release; schedule runtime changes in separately reviewed chunks.
 
 ## P6 Field polling
 

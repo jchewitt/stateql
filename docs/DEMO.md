@@ -52,7 +52,7 @@ The same inspector displays actual `StateQLRead` documents and response sizes. T
 
 ## Boundaries and comparison
 
-### Preliminary network result (October 20)
+### Network result (October 20)
 
 With fresh tenant-A fixtures, an initial full read followed by one server advance and an account-ID refresh produced:
 
@@ -61,7 +61,7 @@ With fresh tenant-A fixtures, an initial full read followed by one server advanc
 | Apollo, broad document then `InvoiceAccounts`              |        453 bytes |       235 bytes |                2 |
 | StateQL, central definition then `invalidate('accountId')` |        453 bytes |       235 bytes |                2 |
 
-These are UTF-8 GraphQL JSON response-body bytes from the local inspector, excluding HTTP headers and request bodies. They are a small fixture observation, not a latency or throughput benchmark. Both clients already achieve the same narrow network result. StateQL removes the separately maintained narrow query and derives refresh targets from the central definition; schema metadata and its runtime still have costs. P5 must measure declarations, coordination, generated code, package cost and planning overhead before an overall recommendation. The shared form policy is needed with either client.
+These are UTF-8 GraphQL JSON response-body bytes from the local inspector, excluding HTTP headers and request bodies, reproduced by the automated P5 harness. They are a small fixture observation, not a latency or throughput benchmark. Both clients achieve the same narrow network result. StateQL removes the separately maintained narrow query and derives refresh targets from the central definition; schema metadata and its runtime still have costs. See the [completed P5 comparison](COMPARISON.md) for declarations, coordination, generated code, package cost, planning overhead and the decision to continue as an experiment. The shared form policy is needed with either client.
 
 ### Try the editors
 
@@ -75,7 +75,7 @@ Central documents and fragments live in `apps/billing-demo/src/data/operations.t
 
 Apollo already supports the important narrow-fetch/shared-update behavior. This implementation explicitly maintains a broad document and a narrow document. StateQL's hypothesis is that one typed definition can derive these operations and refresh targets without that repeated application wiring. This milestone makes no claim that StateQL is superior or that Apollo lacks normalized updates.
 
-Apollo's default list semantics also adopt incoming membership/order. StateQL field-refresh semantics preserve membership/order and flag unknown or missing records for a broad refresh. No custom Apollo policy has been added to conceal that difference; P5 must account for it in the comparison. This baseline covers fixed membership and reordering, not pagination or new/deleted records.
+Apollo's default list semantics also adopt incoming membership/order. StateQL field-refresh semantics preserve membership/order and flag unknown or missing records for a broad refresh. No custom Apollo policy has been added to conceal that difference; the P5 comparison explicitly records it. Read scenarios cover fixed membership and reordering, and forms also exercise removed-record availability; this is not pagination or comprehensive membership parity coverage.
 
 The schema and fixture are isolated from Apollo. The HTTP server binds loopback only, uses synthetic data, limits JSON bodies to 64 KiB, bounds retained request records to 100, and has no CORS support. Fixture controls are unauthenticated development tools; do not expose the server or dev proxy publicly.
 

@@ -55,6 +55,6 @@ Definitions are immutable. `.extend(...)` adds fields and recursively composes n
 - A query root named `Query`; paths cannot traverse through list items (use nested selections).
 - Object lists require configured non-null scalar/enum identity fields. The billing fixture uses tenant-aware identities.
 - Custom scalars, interfaces/unions, OneOf inputs, custom directives, and selection directives are unsupported. Unsupported schema features fail explicitly.
-- The planner itself does not execute operations. The [acquisition runtime](ACQUISITION.md) adds HTTP execution, strict decoding, shared caching, subscriptions, and selective refresh. Mutation planning, polling, and the Angular StateQL adapter remain planned; the existing Angular demo remains the Apollo baseline.
+- The planner itself does not execute operations. The [acquisition runtime](ACQUISITION.md) adds HTTP execution, strict decoding, shared caching, subscriptions, and selective refresh. The [Angular adapter](ANGULAR.md) and both billing demo modes are implemented and [compared](COMPARISON.md). Mutation planning and polling remain planned.
 
 The GraphQL package stays private. Release readiness and npm ownership remain unchanged. This milestone demonstrates shared definition/address generation; it does not yet establish an advantage over Apollo's working cache behavior.

@@ -5,5 +5,5 @@
     "lib": ["ES2022", "DOM"],
     "skipLibCheck": true
   },
-  "include": ["test/**/*.ts", "src/data/**/*.ts"]
+  "include": ["test/**/*.ts", "src/data/**/*.ts", "bench/**/*.ts"]
 }

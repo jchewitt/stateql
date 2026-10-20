@@ -1,0 +1,11 @@
+# P5 comparison review
+
+Independent reviewer: `foundation_review`, before the P5 commit on October 20, 2026. A separate read-only `comparison_audit` agent inspected application declarations, coordination and correctness boundaries before the report was written.
+
+Scope: the repeatable `pnpm compare` harness, deterministic emitted-operation regression, representative browser bundle entries, local package measurements, recorded JSON, comparison/decision/task documentation, and a pinned development-only esbuild dependency. No production library API or runtime changed; no Changeset is required. Publication remains disabled and the existing workflow still requires multi-package release preparation.
+
+The reviewer found no actionable defects. They independently passed the focused network comparison test and the complete measurement command, then confirmed exact equality with the recorded baseline for declaration counts, source sizes, bundles, package measurements and network results. Timing samples varied as expected: their median batch means included approximately 144.6 µs for schema construction, 115.2 µs for full StateQL preparation, 87.9 µs for narrow preparation, and 25.5/16.5 µs for Apollo full/narrow transform plus print. These are different workloads and do not establish a runtime speed ratio.
+
+The reviewer checked separation of authored/generated/shared code; API-export bundles versus actual Angular AOT applications; dependency-inclusive bundles versus package archive/input sizes; warm batch means versus end-to-end latency; supported schema/list semantics; and the limited continue decision. The restored original Vite dependency resolution and corrected planner documentation were included in review. `git diff --check` passed.
+
+Parent validation: `pnpm check` passed formatting, builds, schema generation, strict type/template checks, 200 tests (16 tooling, 81 core, 5 fixture API, 56 GraphQL, 2 vanilla, 21 Angular, 19 demo), and isolated packed ESM/TypeScript/Angular AOT consumers. The new regression verifies exactly two client-emitted operations, equal response sizes, updated account IDs and retained sibling fields. Existing browser scenarios are unchanged; this is not a claim that P5 locally reran the prior 25-case browser suite. Hosted CI reruns that suite on the PR before merge.
