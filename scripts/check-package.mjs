@@ -7,6 +7,7 @@ import {
   realpathSync,
   rmSync,
   writeFileSync,
+  existsSync,
 } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -131,6 +132,27 @@ try {
     ],
     consumer,
   );
+  // Run the actual examples against only installed packages, without tsx/TypeScript.
+  assert.equal(existsSync(join(consumer, 'node_modules/typescript')), false);
+  for (const file of [
+    'fixture.mjs',
+    'javascript.mjs',
+    'fake-adapters.mjs',
+    'adapters.mjs',
+  ])
+    writeFileSync(
+      join(consumer, file),
+      readFileSync(join(root, 'examples/vanilla/src', file)),
+    );
+  writeFileSync(
+    join(consumer, 'typescript.js'),
+    readFileSync(join(root, 'examples/vanilla/dist/typescript.js')),
+  );
+  for (const file of ['javascript.mjs', 'adapters.mjs', 'typescript.js'])
+    execFileSync(process.execPath, [join(consumer, file)], {
+      cwd: consumer,
+      stdio: 'inherit',
+    });
   execFileSync(
     process.execPath,
     [
@@ -250,7 +272,11 @@ try {
     join(consumer, 'planner.ts'),
     `
     import { createSchema, createGraphQLClient, type FieldType, type ObjectRef, type ResultOf, type GraphQLTransportContext } from '@jchewitt/stateql-graphql';
-    import { ReadTransportError, type ReadRetryPolicy, type RetryScheduler, type AcquisitionClientOptions } from '@jchewitt/stateql-core';
+    import { ReadTransportError, type ReadRetryPolicy, type RetryScheduler, type AcquisitionClientOptions, type AcquiredPatch, type AcquisitionSource, type AcquisitionClient } from '@jchewitt/stateql-core';
+    declare const core: AcquisitionClient;
+    declare const source: AcquisitionSource;
+    declare const patch: AcquiredPatch;
+    core.ingest(source, patch);
     const retry: ReadRetryPolicy = { retries: 2, initialDelayMs: 100, maxDelayMs: 2000 };
     const scheduler: RetryScheduler = { random: () => 0.5, wait: async (_delay, signal) => { if (signal.aborted) throw signal.reason; } };
     const coreOptions: AcquisitionClientOptions = { retry, scheduler };
@@ -290,8 +316,16 @@ try {
       'NodeNext',
       '--target',
       'ES2022',
+      '--allowJs',
+      '--checkJs',
+      '--types',
+      'node',
+      '--typeRoots',
+      join(root, 'node_modules/@types'),
       'consumer.ts',
       'planner.ts',
+      'javascript.mjs',
+      'adapters.mjs',
     ],
     {
       cwd: consumer,

@@ -157,7 +157,7 @@ Central registration is the default application convention. Strict enforcement o
 
 Proposed setup is one client provider, endpoint configuration, and one development-time schema-generation command. The generated output supplies selection/argument types and compact runtime metadata for operation generation. Avoid requiring handwritten copies of server interfaces or a separate key-to-query mapping.
 
-Schema generation is a proposed implementation choice, not a previously confirmed user requirement. Prove its ergonomics in the API milestone. A schema-less mode could be added later with explicitly weaker type guarantees. Do not promise that arbitrary GraphQL arguments, enum values, and variable types can be inferred from field names alone.
+Schema generation is optional for consumers. P3.8 supports native JavaScript using runtime SDL and identity configuration, alongside explicit/generated TypeScript schema models for stronger editor checks. Both use the same validated runtime. A schema-less mode remains outside the prototype: arbitrary GraphQL arguments, enum values, and variable types cannot be inferred from field names alone.
 
 Generate valid operations using GraphQL tooling first. Values travel as variables. Validate generated documents against the demo schema in tests. Optimize serialization only if measurement shows it matters. Known unsupported features, including abstract types and advanced directives in the first prototype, must be rejected before transport. [GraphQL queries](https://graphql.org/learn/queries/)
 
@@ -217,7 +217,7 @@ The demo uses a read-only summary and an editable form. Form values are drafts. 
 
 ### Plain JavaScript and React
 
-The vanilla example uses the same client and subscribe/getSnapshot contract with explicit disposal. The library can be consumed by JavaScript even though implemented in TypeScript; the first smoke example is TypeScript.
+The vanilla examples use the same client and subscribe/getSnapshot contract with explicit disposal. P3.8 verifies native JavaScript and compiled TypeScript consumers against installed package tarballs without a TypeScript runtime. See [examples and adapter limits](docs/VANILLA.md).
 
 A later React adapter can use useSyncExternalStore with stable snapshots and subscription cleanup. This is why immutable snapshot identity and side-effect-free reads belong in the core contract now. SSR snapshots and hydration remain a later feature. [React external stores](https://react.dev/reference/react/useSyncExternalStore)
 

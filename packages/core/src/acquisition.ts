@@ -1,10 +1,11 @@
 import {
   canonicalInput,
   freezeFields,
+  narrowFields,
   selectFieldPath,
   type ResolvedField,
 } from './definition.js';
-import { StateStore } from './state-store.js';
+import { StateStore, validatedSelection } from './state-store.js';
 import { leafPaths } from './acquisition-coverage.js';
 import { AcquisitionScheduler } from './acquisition-scheduler.js';
 import { ReadRetrier, type AcquisitionClientOptions } from './read-retry.js';
@@ -47,6 +48,11 @@ export interface AcquiredNull {
   readonly error?: string;
 }
 export type AcquisitionResult = readonly AcquiredRecord[] | AcquiredNull;
+/** Provisional decoded in-process event; membership must already exist. */
+export interface AcquiredPatch {
+  readonly selection: readonly ResolvedField[];
+  readonly records: readonly AcquiredRecord[];
+}
 export interface AcquisitionContext {
   readonly signal: CancellationSignal;
 }
@@ -166,6 +172,22 @@ export class AcquisitionClient {
   private readonly retry: ReadRetrier;
   constructor(private readonly options: AcquisitionClientOptions = {}) {
     this.retry = new ReadRetrier(options);
+  }
+  /** Adapter-facing local patch ingress, not a server revision or stream protocol. */
+  ingest(source: AcquisitionSource, patch: AcquiredPatch): void {
+    if (this.disposed) throw new Error('Client is disposed.');
+    const scope = this.scopes.get(source.stateAddress);
+    if (!scope) throw new Error('Patch requires an existing active resource.');
+    if (scope.collection !== (source.collection === true))
+      throw new Error(
+        'Sources sharing an address must agree on collection semantics.',
+      );
+    const selection = validatedSelection(
+      narrowFields(validatedSelection(source.selection), patch.selection),
+    );
+    if (!selection.length)
+      throw new Error('Patch selection must not be empty.');
+    scope.ingest(selection, patch.records);
   }
   watch(source: AcquisitionSource): QueryHandle {
     if (this.disposed) throw new Error('Client is disposed.');

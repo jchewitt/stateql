@@ -6,6 +6,8 @@ It consumes portable selections from core. A validated acquisition decoder and d
 
 The package remains private while the source interface is exercised by the proof of concept. Package checks install its actual tarball alongside core into an isolated consumer; this does not enable npm publishing.
 
+Native JavaScript consumers can call `createSchema(sdl, options)` with runtime SDL and configured identities. Names and arguments are validated at runtime; generated TypeScript models are optional. Explicit `createSchema<Model>(sdl, options)` retains strict schema-aware editor checks. Both use the same JavaScript runtime, and neither needs a TypeScript loader. See [runnable vanilla examples and typing limits](../../docs/VANILLA.md).
+
 An injected `GraphQLTransport` receives the prepared operation and an optional `GraphQLTransportContext` containing a native `AbortSignal`. The client supplies this context for every acquisition; custom transports should forward the signal to their network implementation. The default HTTP transport forwards it to `fetch`. Core uses a portable cancellation interface and imports no browser globals. See the [concurrency contract](../../docs/CONCURRENCY.md).
 
 The assembled client defaults to two retries for classified transient transport failures, with jittered exponential backoff and native timers. Configure `retry`, pass `retry: false` to disable, or inject `scheduler` for deterministic control. Custom transports opt in by throwing `ReadTransportError` from core; ordinary exceptions, malformed JSON, and GraphQL errors do not retry. See [classification, terminal field errors, and limits](../../docs/RETRIES.md).

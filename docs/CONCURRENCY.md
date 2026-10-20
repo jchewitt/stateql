@@ -24,7 +24,9 @@ Structural changes need wider barriers. Null objects, object identity changes, a
 
 All source results still undergo validation and reconciliation before generation filtering. Malformed responses cannot bypass validation by arriving late. Generations are reserved before publishing accepted changes so reentrant listeners cannot erase the ordering boundary.
 
-These counters describe this client's local requests. They cannot decide which server value is newest across devices, HTTP, or future streams. Authoritative revision ordering remains E2; separately refreshed fields also do not imply a transactional server snapshot.
+P3.8's provisional `AcquisitionClient.ingest()` validates an entire patch before advancing the local clock, then uses the same filtering/commit path. Barriers apply to changed records and fields; an event for one invoice does not suppress an older ordinary write to another invoice. Unsafe older resource replacements remain conservatively blocked. An overlapping event can stop an older retry chain. See [ingestion constraints and examples](VANILLA.md).
+
+These counters describe this client's local requests and accepted patches. They cannot decide which server value is newest across devices, HTTP, or future streams. Authoritative revision ordering remains E2; separately refreshed fields also do not imply a transactional server snapshot.
 
 ## Ownership and disposal
 
@@ -38,4 +40,4 @@ The GraphQL boundary bridges that signal to a native `AbortSignal`. `GraphQLTran
 
 Handle-level `error` follows the latest invoked read/ensure attempt, so an older failing or superseded attempt cannot replace a newer attempt's status. Shared field/resource errors remain cache state visible to every relevant view. Mark-only invalidation does not reset the handle's attempt error.
 
-Inactive cache data remains until client disposal. P3.7 adds [retry scheduling](RETRIES.md) while preserving these request generations and ownership rules. Timeout policies, configurable retention timers, and a public stream ingestion API remain future work.
+Inactive cache data remains until client disposal. P3.7 adds [retry scheduling](RETRIES.md) while preserving these request generations and ownership rules. Timeout policies, configurable retention timers, and a production stream protocol remain future work.

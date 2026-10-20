@@ -14,6 +14,7 @@ import {
 } from '@jchewitt/stateql-core';
 import { decodeAcquisition, validateAcquisition } from './decoder.js';
 import type { GraphQLTransport } from './client.js';
+import type { RuntimeResource } from './runtime-types.js';
 import { compileOperation, type PreparedOperation } from './operation.js';
 import {
   containsList,
@@ -262,10 +263,18 @@ export class BoundDefinition<R> {
   }
 }
 
+export function createSchema(
+  source: string,
+  options?: SchemaOptions,
+): RuntimeResource;
 export function createSchema<S extends SchemaTypes>(
   source: string,
+  options?: SchemaOptions,
+): Resource<S, 'Query' & keyof S, Record<never, never>, ''>;
+export function createSchema(
+  source: string,
   options: SchemaOptions = {},
-): Resource<S, 'Query' & keyof S, Record<never, never>, ''> {
+): unknown {
   const context = inspectSchema(source, options);
   if (context.schema.getQueryType()!.name !== 'Query')
     throw new Error('This prototype requires a query root named Query.');

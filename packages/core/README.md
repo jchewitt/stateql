@@ -13,3 +13,7 @@ The [concurrency contract](https://github.com/jchewitt/stateql/blob/main/docs/CO
 The [retry contract](https://github.com/jchewitt/stateql/blob/main/docs/RETRIES.md) covers `ReadRetryPolicy`, `RetryScheduler`, `ReadTransportError`, and terminal field errors. Portable core defaults to no retries; enabling them requires a scheduler. No automatic write retry or request timeout is implemented.
 
 See the [project plan](https://github.com/jchewitt/stateql/blob/main/PLAN.md) and [task list](https://github.com/jchewitt/stateql/blob/main/docs/TASKS.md).
+
+Provisional `AcquisitionClient.ingest(source, patch)` applies validated patches to existing acquired records through the same reconciliation and commit path as reads. It requires active ownership, cannot change membership, and protects accepted fields from older local reads. The [vanilla guide](https://github.com/jchewitt/stateql/blob/main/docs/VANILLA.md) documents constraints and simulated adapters. This is not server revision ordering or a production socket protocol.
+
+The package ships ESM JavaScript and optional TypeScript declarations. JavaScript consumers do not need a compiler or TypeScript loader.

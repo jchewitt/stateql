@@ -18,6 +18,7 @@ export type {
   AcquiredRecord,
   AcquiredField,
   AcquiredNull,
+  AcquiredPatch,
   AcquisitionResult,
   QueryHandle,
   QuerySnapshot,

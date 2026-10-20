@@ -15,7 +15,11 @@ import {
   cancellable,
   AcquisitionSupersededError,
 } from './cancellation.js';
-import type { AcquisitionResult, AcquisitionSource } from './acquisition.js';
+import type {
+  AcquiredRecord,
+  AcquisitionResult,
+  AcquisitionSource,
+} from './acquisition.js';
 import type { StateStore } from './state-store.js';
 import type { FieldPath, StateChange, StateView } from './state-types.js';
 
@@ -109,6 +113,45 @@ export class AcquisitionScheduler {
         ? [{ kind: 'membership-stale' }]
         : staleChanges(records ?? [], paths),
     );
+  }
+  ingest(
+    selection: readonly ResolvedField[],
+    records: readonly AcquiredRecord[],
+  ): void {
+    if (this.disposed || !this.owners.size)
+      throw new Error('Patch requires an existing active resource.');
+    const result = reconcileAcquisition({
+      acquired: snapshotInput(records) as unknown as AcquisitionResult,
+      known: this.view.getSnapshot().records,
+      requested: selection,
+      fetched: selection,
+      collection: this.collection,
+      replaceMembership: false,
+      pendingInvalidations: [],
+      patch: true,
+    });
+    // Validation must finish before an invalid event can affect read eligibility.
+    // Empty intent paths tick the local clock without superseding untouched records.
+    const version = this.versions.advance([]);
+    this.commit(version, result.changes);
+  }
+  private commit(version: number, changes: readonly StateChange[]): boolean {
+    const eligible = this.versions.filter(
+      version,
+      changes,
+      this.store,
+      this.address,
+    );
+    if (eligible.changes.length) {
+      this.versions.committed(
+        version,
+        eligible.changes,
+        this.store,
+        this.address,
+      );
+      this.store.commit(this.address, eligible.changes);
+    }
+    return eligible.superseded;
   }
   async run(
     owner: AcquisitionOwner,
@@ -263,22 +306,8 @@ export class AcquisitionScheduler {
         replaceMembership,
         pendingInvalidations: this.versions.pending(request.version),
       });
-      const eligible = this.versions.filter(
-        request.version,
-        result.changes,
-        this.store,
-        this.address,
-      );
-      if (eligible.changes.length) {
-        this.versions.committed(
-          request.version,
-          eligible.changes,
-          this.store,
-          this.address,
-        );
-        this.store.commit(this.address, eligible.changes);
-      }
-      if (eligible.superseded) throw new AcquisitionSupersededError();
+      if (this.commit(request.version, result.changes))
+        throw new AcquisitionSupersededError();
       if (result.incomplete) throw new Error(result.incomplete);
     } finally {
       this.finish(request);
@@ -295,22 +324,8 @@ export class AcquisitionScheduler {
         message: error.message,
       })),
     );
-    const eligible = this.versions.filter(
-      request.version,
-      changes,
-      this.store,
-      this.address,
-    );
-    if (eligible.changes.length) {
-      this.versions.committed(
-        request.version,
-        eligible.changes,
-        this.store,
-        this.address,
-      );
-      this.store.commit(this.address, eligible.changes);
-    }
-    if (eligible.superseded) throw new AcquisitionSupersededError();
+    if (this.commit(request.version, changes))
+      throw new AcquisitionSupersededError();
   }
   private finish(request: Request): void {
     if (!request.live) return;

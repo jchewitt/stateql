@@ -15,3 +15,9 @@ export type {
 } from './types.js';
 export type { SchemaOptions } from './schema.js';
 export type { PreparedOperation } from './operation.js';
+export type {
+  RuntimeResource,
+  RuntimeDefinition,
+  RuntimeBoundDefinition,
+  RuntimeSelection,
+} from './runtime-types.js';

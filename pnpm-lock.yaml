@@ -120,6 +120,25 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
+  examples/vanilla:
+    dependencies:
+      '@jchewitt/stateql-core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@jchewitt/stateql-graphql':
+        specifier: workspace:*
+        version: link:../../packages/graphql
+      graphql:
+        specifier: 16.14.2
+        version: 16.14.2
+    devDependencies:
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   packages/core: {}
 
   packages/graphql:
