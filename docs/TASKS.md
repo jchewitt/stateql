@@ -52,6 +52,8 @@ Depends on P2.
 - [ ] P3.7 Add bounded read retries and field error state; keep writes outside automatic retries.
 - [ ] P3.8 Demonstrate a vanilla TypeScript consumer plus fake whole-resource and push-event adapters.
 
+For P3.6/P3.8, keep local request generations separate from future server revision metadata, and route simulated pushes through the shared validation/commit path. This preserves the E1/E2 boundary without implementing a production stream protocol or offline outbox in the current proof of concept.
+
 Exit: the relevant acceptance matrix in `PLAN.md` passes, including invalidation during an existing fetch and response reordering.
 
 ## P4 Angular integration and forms
@@ -99,6 +101,46 @@ Depends on a useful implemented package, P5, and registry setup.
 
 No npm publish is part of F0. The scaffold does not reserve an npm name or configure an npm account.
 
-## Later extensions
+## E1 Real-time stream cohesion
 
-React adapter, full RxJS adapter, REST source, WebSocket/event protocol, Node event-publishing companion, pagination, global entity normalization, SSR, and offline behavior each require a separate task proposal after the core experiment. Preserve their execution/commit boundaries now without implementing speculative infrastructure.
+Planned product goal; depends on P3.8 and a continue decision in P5. Design alongside E2. See [the contract and acceptance criteria](../PLAN.md#e1-real-time-stream-cohesion).
+
+- [ ] E1.1 Define a validated, scoped event envelope and reusable routing from subscription/custom payloads to canonical resource/record/field addresses.
+- [ ] E1.2 Feed pushes through the same ordering/commit/notification path as reads, without per-component cache reducers.
+- [ ] E1.3 Define explicit list membership operations and safe invalidation when filter/path routing cannot be inferred.
+- [ ] E1.4 Implement shared connection ownership, disposal, bounded reconnect, cursor resume/deduplication, and gap-triggered refresh.
+- [ ] E1.5 Demonstrate a real GraphQL subscription plus a fake custom event source; test duplicate/malformed events, scope isolation, and HTTP/push overlap.
+- [ ] E1.6 Compare application code against Apollo automatic normalized updates and explicit list updates, including required adapter mappings on both sides.
+
+Exit: ordinary field pushes update all interested consumers through one declared binding; list and reconnect semantics are explicit and tested.
+
+## E2 Revision-aware ordering across transports
+
+Planned product goal; depends on P3.6 and a continue decision in P5. Define the contract alongside E1; integrate its transport fixtures when available. See [ordering guarantees and limits](../PLAN.md#e2-revision-aware-ordering-across-transports).
+
+- [ ] E2.1 Define comparable authoritative revisions, comparison domains, epochs, and explicit timestamp/unversioned-source policies.
+- [ ] E2.2 Track covered field/subtree and membership revisions separately; distinguish local request generations from server revisions.
+- [ ] E2.3 Reject stale overlapping updates while allowing needed independent fields; handle equal-version conflicts, structural nulls, identity replacement, and deletion tombstones.
+- [ ] E2.4 Distinguish replacement snapshots from dependent deltas; implement deduplication, bounded gap handling, and authoritative resynchronization.
+- [ ] E2.5 Exercise HTTP/poll/push/command-ack reordering, duplicates, missing predecessors, clock ties/skew, epoch changes, and missing revision metadata with deterministic sources.
+- [ ] E2.6 Expose drop/conflict/resync diagnostics and document the conditional consistency guarantee.
+
+Exit: comparable newer data cannot be rolled back by older overlapping updates; unsupported ordering cannot silently claim success or absolute consistency.
+
+## E3 Framework-independent offline recovery
+
+Planned product goal; depends on a continue decision in P5. Define serialization/recovery boundaries after the E1/E2 contracts; integrate streams only once available. Persistence precedes the separate durable command queue. See [offline contracts and acceptance criteria](../PLAN.md#e3-framework-independent-persistence-and-offline-recovery).
+
+- [ ] E3.1 Define opt-in serializable checkpoints/changes with schema versions, scope, field metadata, membership, and revision coverage; do not serialize modifier functions.
+- [ ] E3.2 Add an asynchronous storage adapter and IndexedDB implementation, with migrations, atomic restore, quotas/corruption handling, and data retention policies outside core.
+- [ ] E3.3 Coordinate hydration, incoming live updates, and reconnect revalidation; test plain TypeScript and Angular consumers using the same persisted representation.
+- [ ] E3.4 Design a separate opt-in outbox for replayable commands with operation IDs, preconditions, dependency ordering, acknowledgement state, and recoverable failures.
+- [ ] E3.5 Require server idempotency and conflict contracts for retryable writes; reconcile ambiguous acknowledgements and stream echoes without treating optimistic state as confirmed.
+- [ ] E3.6 Test crash recovery, expired authorization/idempotency windows, schema changes, user switching, and multi-tab replay ownership; add later React coverage with its adapter.
+- [ ] E3.7 Compare equivalent persistence and offline-write workflows, measuring integration code and documented recovery limits separately.
+
+Exit: persisted reads recover predictably; supported queued commands replay under an explicit server contract with observable conflicts and no cross-scope execution. Do not claim effortless arbitrary replay or client-only exactly-once effects.
+
+## Other later extensions
+
+React adapter, full RxJS adapter, production REST source, Node event-publishing companion, pagination, global entity normalization, and SSR each require a separate task proposal after the core experiment. E1–E3 now track stream, ordering, and offline goals explicitly. Preserve their execution/commit boundaries now; none of these roadmap items is implemented or a new prerequisite for R1 by default.
