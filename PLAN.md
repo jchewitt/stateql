@@ -25,6 +25,8 @@ Apollo can merge fields from separate operations into the same normalized object
 
 Relay generates refetch queries for declared fragments, and Genql generates GraphQL from JavaScript selections. These are relevant precedents. StateQL's candidate distinction is runtime composition and field refresh through a stable state definition with fewer application-owned declarations. No ecosystem-wide uniqueness claim is assumed. [Relay refetchable fragments](https://relay.dev/docs/tutorial/refetchable-fragments/), [Genql](https://genql.dev/docs)
 
+The product roadmap also targets three related problems: repeated application code for stream-to-cache updates, stale updates arriving across different transports, and framework-independent offline recovery. These are planned capabilities, not implemented guarantees. Their contracts and evaluation criteria appear in [Stream cohesion, ordering, and offline recovery](#stream-cohesion-ordering-and-offline-recovery). Prefer proving stream cohesion and ordering together before expanding into durable write replay.
+
 ## Scope of the first proof of concept
 
 | Included                                                                | Deferred                                                   |
@@ -236,6 +238,50 @@ WebSocket is a transport, not a cache model. GraphQL subscriptions and a custom 
 Future event envelopes need scoped resource/record identity, change kind, affected fields, and revision or sequence metadata where available. Support explicit patch and invalidate events; invalidation can trigger a normal read when an event carries no data. Reconnect must detect gaps or conservatively mark affected state stale and fetch a new baseline. Deduplicate replayed events, define deletion and list-membership events, and bound queued work.
 
 The core can run in Node without an Angular or browser dependency. A server companion would be a separate package for publishing events and sharing generated definitions; it is not required for the GraphQL prototype. Server authorization remains server-owned. SSR use must create an isolated client per request/session rather than share a global cache between users. Persistent server caching and distributed coherence need their own later design.
+
+## Stream cohesion, ordering, and offline recovery
+
+Added to the product roadmap October 19, 2026. The first proof of concept and P5 comparison remain the immediate delivery sequence. Preserve the necessary boundaries during P3.6/P3.8; full implementations are tracked as E1–E3 in [the task list](docs/TASKS.md). These goals should reduce application-owned coordination, with explicit limits on what the client can infer.
+
+### E1 Real-time stream cohesion
+
+Problem: HTTP reads, subscription messages, and custom events often require separate application logic to locate shared state, merge updates, and keep views synchronized. The desired workflow is one reusable source binding into the same validation, ordering, commit, and notification path used by reads.
+
+Apollo already supports subscriptions and caching. Its `subscribeToMore` documentation includes `updateQuery` for incorporating newly added list items; that does not mean every update to an existing normalized entity requires a reducer. Compare StateQL against ordinary normalized entity updates as well as list insertion/removal and custom event envelopes. [Apollo subscriptions](https://www.apollographql.com/docs/react/data/subscriptions), [Apollo normalization](https://www.apollographql.com/docs/react/caching/overview)
+
+StateQL should decode and validate a declared event envelope into scoped canonical addresses, record identities, affected fields, and an explicit change kind. The adapter owns protocol parsing and any reusable envelope mapping. Core applies those changes and notifies interested consumers; UI components should not rewrite cached query trees. Stable addresses do not identify the meaning of arbitrary payloads automatically. With path-scoped storage, an entity-only event also needs a declared routing/invalidation policy for affected resource paths and argument sets; global entity fan-out is not implied.
+
+Acceptance: an HTTP-loaded view and two consumers receive a field push with no component-level reducer; unrelated fields remain unchanged. List membership uses explicit insert/remove/replacement semantics or invalidation when filters cannot be evaluated safely. Duplicate events, reconnect gaps, malformed envelopes, source errors, scope changes, and final-owner cleanup are tested. A bounded reconnect policy resumes from a cursor or refreshes a baseline. No network operation or persisted event may cross an authorization scope. Use one real GraphQL subscription example and one fake custom event source before claiming transport independence.
+
+### E2 Revision-aware ordering across transports
+
+Problem: HTTP responses, poll results, stream messages, and mutation acknowledgements can arrive in a different order from the server changes they represent. Local request generations protect client work, but cannot establish server causality across independent channels.
+
+Use an adapter contract for authoritative revisions or sequence numbers with a declared comparison domain and server epoch. These are data revisions, not package semantic versions. HTTP snapshots and stream messages must provide comparable revisions for an ordering guarantee across transports. Wall-clock timestamps are an optional policy with documented clock-skew and tie limits, never the default basis for an absolute-consistency claim. Opaque equality tokens can support conditional writes without necessarily supporting ordering.
+
+Track revision coverage at the affected field/subtree and list-membership level. A newer update to field B must not cause an older-but-still-needed update to field A to be discarded merely because the record has a higher watermark. Parent nulls, identity replacement, deletion tombstones, and membership replacement need structural revision rules to prevent stale resurrection. Related fields requiring an atomic server snapshot must declare a group; independent field freshness does not imply transaction consistency.
+
+Distinguish absolute replacement values from dependent deltas. A replacement snapshot may supersede older values; an increment or patch requiring revision N cannot skip missing revisions safely. Use base revisions, bounded buffering, deduplication, and gap-triggered resynchronization. Equal revisions with different contents and incomparable epochs are protocol conflicts to report, not arbitrary last-arrival winners. Define explicit behavior for unversioned sources; do not let an unversioned response silently overwrite revision-protected state.
+
+Acceptance: revision 12 arriving before revision 11 cannot be rolled back on overlapping fields, regardless of transport. Duplicate events are idempotent; independent fields can recover; missing delta predecessors trigger resynchronization; stale snapshots cannot resurrect deleted records. Reconnect and server-epoch changes require an authoritative baseline. Drops and conflicts expose diagnostics without spurious UI updates. The guarantee is no regression within the declared revision contract, not absolute distributed consistency. Server-side conditional writes remain necessary for write conflicts; version-based optimistic concurrency is an established pattern. [AWS concurrent-update guidance](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/BestPractices_ImplementingVersionControl.html)
+
+### E3 Framework-independent persistence and offline recovery
+
+Problem: applications repeatedly build storage, restore, reconnect, and pending-write logic around their state library. The goal is a reusable persistence/recovery layer with the same scoped state model across Angular, plain JavaScript, and later React.
+
+Separate cached-data persistence from a durable outgoing command queue. Apollo already documents cache persistence and rehydration through `apollo3-cache-persist`; compare equivalent capabilities instead of presenting persistence itself as new. [Apollo persistence](https://www.apollographql.com/docs/react/caching/advanced-topics#persisting-the-cache)
+
+Composition methods or pipe syntax do not automatically form a serializable transition journal. Define explicit versioned data records for checkpoints, confirmed changes, and pending commands. Never serialize closures, subscriptions, framework objects, or transports. An asynchronous storage adapter keeps IndexedDB and browser APIs outside core. If a localStorage adapter is offered, give it an explicit size/serialization limit rather than assuming equivalent transactional capabilities.
+
+First persist selected cached data with scope, schema/codec version, field presence/null distinctions, freshness, revisions, and membership metadata. Restore atomically, validate/migrate older schemas, handle quota/corruption/storage failures, and coordinate hydration with incoming reads/events so an old checkpoint cannot overwrite live state. Apply an explicit revalidation policy on reconnect. Persistence is opt-in by data policy; isolate users/tenants and clear or segregate persisted state and pending work when authorization changes.
+
+Then add a separate opt-in outbox for commands explicitly declared replayable. Record operation ID, scoped target, payload, base revision/preconditions, dependencies, and delivery/acknowledgement state. Keep optimistic drafts distinct from confirmed server state. Safe retries after ambiguous acknowledgements need server-supported idempotency within its documented retention contract; client replay alone cannot promise exactly-once effects. Conflicts, expired credentials, unsupported schema changes, and expired idempotency windows require reconciliation or an explicit blocked state. Keep business-specific resolution pluggable. [Stripe idempotent-request contract](https://docs.stripe.com/api/idempotent_requests)
+
+Acceptance: identical checkpoints restore correctly into plain TypeScript and Angular consumers; framework hydration stays adapter-owned. A crash between command delivery and acknowledgement cannot silently duplicate the server effect when replay uses the agreed idempotency contract. Duplicate stream echoes are reconciled, old checkpoints cannot overwrite newer events, user switching cannot replay another user's commands, and multi-tab ownership prevents competing replay workers. Document recovery limitations and preserve pending work when recovery fails.
+
+### Product evaluation and priority
+
+E1 and E2 together are the strongest near-term expansion hypothesis for applications combining live streams and requests. Measure application declarations/handlers, list-policy code, reconnect behavior, dropped stale updates, and correctness under reordered delivery against an equivalent Apollo setup. E3 could broaden appeal for PWAs and intermittently connected applications, but carries a larger storage and mutation-consistency scope; deliver persistence before durable writes. These capabilities are not individually unique. Desirability depends on demonstrably reducing coordination code while preserving predictable behavior, supported by working examples and failure tests. None is required to publish the first experimental release unless a later release decision explicitly adds it.
 
 ## Polling and retry policies
 

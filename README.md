@@ -68,6 +68,8 @@ Core has no runtime, UI-framework, GraphQL, or platform dependency. The initial 
 
 ## Plan and delivery
 
+Planned follow-on goals include unified stream updates, revision-aware ordering across transports, and framework-independent persistence/offline recovery. These are roadmap commitments to investigate and validate, not implemented features; see [their contracts, priorities, and limits](PLAN.md#stream-cohesion-ordering-and-offline-recovery).
+
 - [Architecture and proof-of-concept plan](PLAN.md)
 - [Task breakdown and acceptance criteria](docs/TASKS.md)
 - [Architecture decisions](docs/DECISIONS.md)
