@@ -288,6 +288,7 @@ test('collection capability and disposal guard explicit list refresh, including 
     ...f.source,
     stateAddress: 'single',
     collection: false,
+    read: async (fields) => (await f.source.read(fields)).slice(0, 1),
   });
   await singleton.ready;
   await assert.rejects(singleton.refreshList(), /collection/);

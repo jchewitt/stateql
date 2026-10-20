@@ -5,6 +5,8 @@ export type {
   AcquisitionSource,
   AcquiredRecord,
   AcquiredField,
+  AcquiredNull,
+  AcquisitionResult,
   QueryHandle,
   QuerySnapshot,
   InvalidateOptions,

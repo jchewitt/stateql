@@ -12,6 +12,7 @@ import {
   snapshotInput,
   type AcquiredField,
   type AcquiredRecord,
+  type AcquisitionResult,
   type FieldPath,
   type InputObject,
   type InputValue,
@@ -20,6 +21,7 @@ import {
 import { fieldAt, containsList, type SchemaContext } from './schema.js';
 import type { PathNode } from './definition.js';
 import type { PreparedOperation } from './operation.js';
+import { responseErrors, type ResponsePath } from './response-errors.js';
 
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value))
@@ -89,32 +91,34 @@ export function validateAcquisition(
   check(target.name, selection);
 }
 
-/** Strict acquisition decoder. Partial GraphQL error commits are intentionally deferred. */
+/** Decode successes and located failures before the core makes one atomic commit. */
 export function decodeAcquisition(
   context: SchemaContext,
   path: readonly PathNode[],
   operation: PreparedOperation,
   response: unknown,
-): readonly AcquiredRecord[] {
+): AcquisitionResult {
   const envelope = object(response);
-  if (envelope['errors'] !== undefined) {
-    if (!Array.isArray(envelope['errors']))
-      throw new Error('Malformed GraphQL errors.');
-    if (envelope['errors'].length)
-      throw new Error(
-        envelope['errors']
-          .map((error) => String(object(error)['message'] ?? 'GraphQL error'))
-          .join('; '),
-      );
-  }
+  const errors = responseErrors(context, operation, envelope);
+  const nullResource = (responsePath: ResponsePath): AcquisitionResult => {
+    const error = errors.at(responsePath);
+    errors.assertConsumed();
+    return { kind: 'null', ...(error === undefined ? {} : { error }) };
+  };
   let data: unknown = envelope['data'];
+  if (data === null) {
+    if (errors.at([]) === undefined)
+      throw new Error('Null GraphQL data requires an execution error.');
+    return nullResource([]);
+  }
   for (let index = 0; index < path.length; index++) {
     const node = path[index]!;
     data = object(data)[node.name];
-    if (data === null)
-      throw new Error(
-        'Null resource/ancestor acquisition requires structural reconciliation (not implemented yet).',
-      );
+    if (data === null) {
+      if (isNonNullType(fieldAt(context, node.parentType, node.name).type))
+        throw new Error(`Null non-null resource: ${node.name}`);
+      return nullResource(path.slice(0, index + 1).map((part) => part.name));
+    }
     if (index < path.length - 1)
       identity(
         context,
@@ -130,7 +134,7 @@ export function decodeAcquisition(
   if (list && !Array.isArray(data))
     throw new Error('Expected a resource list.');
   const items: unknown[] = list ? (data as unknown[]) : [data];
-  return items.map((item) => {
+  const records: AcquiredRecord[] = items.map((item, index) => {
     const record = object(item);
     const recordIdentity = identity(context, typeName, record, list) ?? {
       __resource: typeName,
@@ -141,12 +145,10 @@ export function decodeAcquisition(
       data: Record<string, unknown>,
       selection: readonly ResolvedField[],
       parent: FieldPath,
+      responseParent: ResponsePath,
     ): void {
       for (const selected of selection) {
-        if (!Object.hasOwn(data, selected.responseName))
-          throw new Error(
-            `Response omitted selected field: ${selected.responseName}`,
-          );
+        if (!Object.hasOwn(data, selected.responseName)) continue;
         const value = data[selected.responseName];
         const field = fieldAt(context, typeName, selected.name);
         const target = getNamedType(field.type);
@@ -154,6 +156,20 @@ export function decodeAcquisition(
           ...parent,
           { name: selected.name, arguments: selected.arguments },
         ];
+        const responsePath = [...responseParent, selected.responseName];
+        const error = errors.at(responsePath, !isObjectType(target));
+        if (error !== undefined) {
+          // A failed scalar-list element does not excuse malformed siblings.
+          // Validate the full returned leaf even though its cached value is retained.
+          if (!isObjectType(target)) scalar(field.type, value);
+          fields.push({
+            kind: 'error',
+            path,
+            message: error,
+            ...(isObjectType(target) ? { structuralNull: true } : {}),
+          });
+          continue;
+        }
         if (value === null) {
           if (isNonNullType(field.type))
             throw new Error(`Null non-null field: ${selected.name}`);
@@ -166,7 +182,7 @@ export function decodeAcquisition(
             path,
             ...(childIdentity === undefined ? {} : { identity: childIdentity }),
           });
-          decode(target.name, child, selected.children, path);
+          decode(target.name, child, selected.children, path, responsePath);
         } else
           fields.push({
             kind: 'write',
@@ -175,7 +191,15 @@ export function decodeAcquisition(
           });
       }
     }
-    decode(typeName, record, operation.selection, []);
+    decode(
+      typeName,
+      record,
+      operation.selection,
+      [],
+      [...operation.responsePath, ...(list ? [index] : [])],
+    );
     return { identity: recordIdentity, fields };
   });
+  errors.assertConsumed();
+  return records;
 }
