@@ -93,4 +93,4 @@ Source `read(fetched, context)` receives a portable cancellation signal and retu
 
 Only successfully returned, generation-eligible requested writes become fresh. Core reports omitted requested fields even when old values exist, while retaining successful returned writes; the GraphQL decoder preserves omissions for that policy. Source callbacks never receive direct access to the store. An HTTP transport receives the prepared operation plus cancellation context and returns the GraphQL envelope. GraphQL schema logic stays in the GraphQL package.
 
-This completes P3.2–P3.7 for the explicitly supported subset. P3.8 covers additional adapter scenarios. Angular integration and the Apollo comparison follow that task.
+This completes P3.2–P3.8 for the explicitly supported subset. The [vanilla examples](VANILLA.md) exercise JavaScript/TypeScript consumers, whole-resource reads, and provisional validated event ingestion. Angular integration and the Apollo comparison follow.

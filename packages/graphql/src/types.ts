@@ -154,11 +154,13 @@ type MergeObject<A, B> = {
   ]?: MergeValue<A, B, K>;
 };
 type Unwrap<V> = V extends readonly (infer I)[] ? Unwrap<I> : NonNullable<V>;
-export type FieldPaths<T> = {
-  [K in keyof T & string]: Unwrap<T[K]> extends object
-    ? K | `${K}.${FieldPaths<Unwrap<T[K]>>}`
-    : K;
-}[keyof T & string];
+export type FieldPaths<T> = string extends keyof T
+  ? string
+  : {
+      [K in keyof T & string]: Unwrap<T[K]> extends object
+        ? K | `${K}.${FieldPaths<Unwrap<T[K]>>}`
+        : K;
+    }[keyof T & string];
 export type ResultOf<T> = T extends { readonly resultType?: infer R }
   ? R
   : never;

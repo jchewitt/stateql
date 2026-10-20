@@ -85,7 +85,7 @@ function emptyResource(): Resource {
   };
 }
 
-function validatedSelection(
+export function validatedSelection(
   fields: readonly ResolvedField[],
 ): readonly ResolvedField[] {
   if (!fields.length) throw new Error('Selection must not be empty.');

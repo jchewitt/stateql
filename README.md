@@ -29,6 +29,8 @@ pnpm check
 
 `pnpm check` verifies formatting, strict TypeScript contracts and Angular templates, tooling and API/Apollo integration tests, production builds, and the actual packed library artifact installed into an isolated ESM/TypeScript consumer. Build products and package-check artifacts are ignored by Git.
 
+The library ships JavaScript with optional TypeScript declarations. Plain JavaScript consumers can use runtime GraphQL SDL without generated types or a TypeScript loader. After building, run `pnpm demo:vanilla`, `pnpm demo:typescript`, or `pnpm demo:adapters`. The [vanilla guide](docs/VANILLA.md) explains the examples, editor checks, and the limits of the simulated event adapter.
+
 ## Run the billing experiment
 
 ```sh
@@ -54,15 +56,16 @@ Run `pnpm demo:store` to see shared StateQL records update two differently selec
 
 Run `pnpm demo:acquire` for actual StateQL HTTP requests against an isolated fixture, including shared loading, missing-field fetching, account ID invalidation that preserves cached amounts, and explicit list refresh that adopts server order. The [acquisition guide](docs/ACQUISITION.md) documents the API and supported response subset.
 
-| Location                 | Current role                                                                 |
-| ------------------------ | ---------------------------------------------------------------------------- |
-| `packages/core`          | Shared records, projections, observation, canonical addresses and selections |
-| `packages/graphql`       | Private typed schema generator and validated operation planner               |
-| `packages/angular`       | Reserved Angular adapter; signals and lifecycle integration planned          |
-| `apps/billing-api`       | Local GraphQL billing fixture and deterministic controls                     |
-| `apps/billing-demo`      | Angular/Apollo baseline with two consumers and request inspector             |
-| `examples/query-planner` | Runnable plain TypeScript operation planning example                         |
-| `scripts`, `tests`       | Package/release checks and Angular browser scenarios                         |
+| Location                 | Current role                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| `packages/core`          | Shared records, projections, observation, canonical addresses and selections   |
+| `packages/graphql`       | Private schema tooling, operation planner, decoder and HTTP acquisition client |
+| `packages/angular`       | Reserved Angular adapter; signals and lifecycle integration planned            |
+| `apps/billing-api`       | Local GraphQL billing fixture and deterministic controls                       |
+| `apps/billing-demo`      | Angular/Apollo baseline with two consumers and request inspector               |
+| `examples/query-planner` | Runnable plain TypeScript operation planning example                           |
+| `examples/vanilla`       | JavaScript/TypeScript consumers and fake whole-resource/event adapters         |
+| `scripts`, `tests`       | Package/release checks and Angular browser scenarios                           |
 
 Core has no runtime, UI-framework, GraphQL, or platform dependency. The initial package identifier `@jchewitt/stateql-core` is provisional until npm scope ownership is confirmed. It is not a claim that the npm scope has been reserved.
 

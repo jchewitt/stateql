@@ -158,6 +158,8 @@ export function narrowFields(
       canonicalInput(previous.arguments) !== canonicalInput(field.arguments)
     )
       throw new Error(`Selection is not a compatible subset: ${field.name}`);
+    if (previous.children.length && !field.children.length)
+      throw new Error(`Object selection requires children: ${field.name}`);
     narrowFields(previous.children, field.children);
   }
   return freezeFields(selection);

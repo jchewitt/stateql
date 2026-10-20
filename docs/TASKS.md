@@ -50,7 +50,7 @@ Depends on P2.
 - [x] P3.5 Handle omitted fields, successful nulls, structural nulls, and GraphQL partial errors. Located failures preserve valid siblings; null resources and singleton identity changes clear obsolete data. Null list entries without identity remain explicitly unsupported.
 - [x] P3.6 Implement in-flight deduplication, field generations, cancellation ownership, and late-response protection. See the [concurrency contract](CONCURRENCY.md); these are local request generations, not authoritative server revisions.
 - [x] P3.7 Add bounded read retries and field error state; keep writes outside automatic retries. See [retry policy, classification, and lifecycle](RETRIES.md).
-- [ ] P3.8 Demonstrate a vanilla TypeScript consumer plus fake whole-resource and push-event adapters.
+- [x] P3.8 Demonstrate native JavaScript and TypeScript consumers plus fake whole-resource and push-event adapters. See [the examples and provisional ingestion contract](VANILLA.md); isolated package checks run without a TypeScript runtime.
 
 Inactive cache data is currently retained until client disposal. Configurable retention and request timeout timers remain follow-on lifecycle work; bounded attempts do not bound an individual request's duration. Narrower policy inheritance also remains deferred until conflicting owners of shared work have defined semantics.
 

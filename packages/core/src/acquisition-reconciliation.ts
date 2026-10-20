@@ -41,6 +41,8 @@ export function reconcileAcquisition(options: {
   readonly collection: boolean;
   readonly replaceMembership: boolean;
   readonly pendingInvalidations: readonly FieldPath[];
+  /** Decoded event patches supply existing records only, not a complete list read. */
+  readonly patch?: boolean;
 }): Reconciliation {
   const {
     acquired: response,
@@ -50,7 +52,13 @@ export function reconcileAcquisition(options: {
     collection,
     replaceMembership,
     pendingInvalidations,
+    patch = false,
   } = options;
+  if (
+    patch &&
+    (!Array.isArray(response) || !Array.isArray(known) || !response.length)
+  )
+    throw new Error('Patch requires nonempty records and acquired membership.');
   if (!Array.isArray(response)) {
     if (
       !response ||
@@ -144,9 +152,14 @@ export function reconcileAcquisition(options: {
     known?.map((record) => canonicalInput(record.identity)),
   );
   const returned = new Set(ids);
+  if (patch && ids.some((id) => !existing.has(id)))
+    throw new Error('Patch cannot insert or replace an unknown record.');
   const missing =
-    known?.filter((record) => !returned.has(canonicalInput(record.identity))) ??
-    [];
+    (patch
+      ? []
+      : known?.filter(
+          (record) => !returned.has(canonicalInput(record.identity)),
+        )) ?? [];
   const changed =
     known !== undefined &&
     (missing.length > 0 || ids.some((id) => !existing.has(id)));
@@ -165,6 +178,7 @@ export function reconcileAcquisition(options: {
       );
   const paths = leafPaths(requested);
   const omitted = matched.some((record) => hasOmissions(record.fields, paths));
+  if (patch && omitted) throw new Error('Patch omitted selected fields.');
   // A whole-list replacement must be usable for its calling view before admission.
   if (replaceMembership && omitted)
     throw new Error('Source omitted requested fields during list refresh.');
