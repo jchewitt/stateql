@@ -1,5 +1,5 @@
 # Proof of concept applications
 
-`billing-api` owns the GraphQL schema, synthetic billing fixtures, and deterministic controls. `billing-demo` is an Angular app using Apollo Angular, reusable GraphQL fragments, composite cache identities, and two independent query watchers.
+`billing-api` owns the GraphQL schema, synthetic billing fixtures, and deterministic controls. `billing-demo` provides Apollo and StateQL modes against that server. Apollo uses reusable fragments and composite cache identities; StateQL uses central and feature-derived definitions, generated requests, and owned Angular queries. Both have independent consumers and the same request inspector.
 
-Run both with `pnpm demo` from the repository root. See the [demo guide](../docs/DEMO.md). Both applications are private workspace packages; neither is published to npm. The later StateQL implementation will use the same fixture. See [tasks](../docs/TASKS.md).
+Run both with `pnpm demo` from the repository root. See the [demo guide](../docs/DEMO.md). Both applications are private workspace packages; neither is published to npm. StateQL forms integration is the next demo milestone. See [tasks](../docs/TASKS.md).

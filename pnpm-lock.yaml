@@ -66,6 +66,15 @@ importers:
       '@apollo/client':
         specifier: 4.3.4
         version: 4.3.4(graphql@16.14.2)(rxjs@7.8.2)
+      '@jchewitt/stateql-angular':
+        specifier: workspace:*
+        version: link:../../packages/angular
+      '@jchewitt/stateql-core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@jchewitt/stateql-graphql':
+        specifier: workspace:*
+        version: link:../../packages/graphql
       apollo-angular:
         specifier: 14.2.0
         version: 14.2.0(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2))(@apollo/client@4.3.4(graphql@16.14.2)(rxjs@7.8.2))(graphql@16.14.2)(rxjs@7.8.2)

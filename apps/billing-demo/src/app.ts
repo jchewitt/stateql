@@ -1,4 +1,5 @@
-import { JsonPipe } from '@angular/common';
+import { RequestInspector } from './request-inspector';
+import { FixtureService } from './fixture.service';
 import { Component, inject, signal } from '@angular/core';
 import { BillingService } from './billing.service';
 import { InvoicePanel } from './invoice-panel';
@@ -6,11 +7,12 @@ import type { TenantId } from './data/operations';
 
 @Component({
   selector: 'billing-app',
-  imports: [InvoicePanel, JsonPipe],
+  imports: [InvoicePanel, RequestInspector],
   templateUrl: './app.html',
 })
 export class App {
   readonly billing = inject(BillingService);
+  readonly fixture = inject(FixtureService);
   readonly tenantId = signal<TenantId>('A');
   readonly busy = signal(false);
   readonly message = signal('Two consumers. One initial request.');
@@ -44,14 +46,14 @@ export class App {
       );
     } finally {
       this.busy.set(false);
-      await this.billing.inspect();
+      await this.fixture.inspect();
     }
   }
 
   advance(): void {
     const scope = this.tenantId();
     void this.run(
-      () => this.billing.control({ action: 'advance', tenantId: scope }),
+      () => this.fixture.control({ action: 'advance', tenantId: scope }),
       'Server changed account IDs, amounts and names. Cached values are untouched.',
     );
   }
@@ -71,14 +73,14 @@ export class App {
   reverse(): void {
     const scope = this.tenantId();
     void this.run(
-      () => this.billing.control({ action: 'reverse', tenantId: scope }),
+      () => this.fixture.control({ action: 'reverse', tenantId: scope }),
       'Server order reversed. Refresh to see identity-based merging.',
     );
   }
   fail(): void {
     void this.run(
       () =>
-        this.billing.control({
+        this.fixture.control({
           action: 'configure',
           latencyMs: this.delayed() ? 1000 : 0,
           failNext: 'request',
@@ -90,7 +92,7 @@ export class App {
     const enabled = !this.delayed();
     void this.run(
       async () => {
-        await this.billing.control({
+        await this.fixture.control({
           action: 'configure',
           latencyMs: enabled ? 1000 : 0,
           failNext: 'none',

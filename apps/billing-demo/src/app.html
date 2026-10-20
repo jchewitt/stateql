@@ -5,6 +5,10 @@
     >
     <span class="milestone">01 · Apollo baseline</span>
   </header>
+  <nav aria-label="Client comparison">
+    <a aria-current="page" href="/">Apollo</a
+    ><a href="/?client=stateql">StateQL</a>
+  </nav>
   <section class="intro">
     <p class="eyebrow">The selective refresh experiment</p>
     <h1>One field changes.<br />Both views follow.</h1>
@@ -89,45 +93,9 @@
     />
     }
   </div>
-  <section class="inspector panel" aria-label="Request inspector">
-    <div class="panel-heading">
-      <div>
-        <p class="eyebrow">Network evidence</p>
-        <h2>Request inspector</h2>
-      </div>
-      <span class="count" data-testid="request-count"
-        >{{ billing.requests().count }} requests</span
-      >
-    </div>
-    <p class="muted">
-      Actual GraphQL requests reaching the server. Fixture controls are
-      excluded. Showing the last 100 completed operations.
-    </p>
-    @if (billing.inspectorError()) {
-    <p role="alert" class="error">{{ billing.inspectorError() }}</p>
-    } @for (request of billing.requests().records; track request.id) {
-    <details
-      class="request"
-      [attr.data-testid]="'request-' + request.operationName"
-    >
-      <summary>
-        <span>#{{ request.id }} · {{ request.operationName }}</span
-        ><span
-          >{{ request.responseBytes }} bytes {{ request.errors.length ? '·
-          failed' : '' }}</span
-        >
-      </summary>
-      <p class="fields">{{ request.fields.join(' · ') }}</p>
-      <pre>{{ request.variables | json }}</pre>
-      <pre>{{ request.query }}</pre>
-      @for (error of request.errors; track $index) {
-      <p class="error">{{ error }}</p>
-      }
-    </details>
-    }
-  </section>
+  <request-inspector [fixture]="fixture" />
   <footer>
-    This demo runs Apollo Angular. StateQL's query generation and cache runtime
-    are the next milestones.
+    Apollo baseline · Separate broad and narrow documents share one normalized
+    cache.
   </footer>
 </main>

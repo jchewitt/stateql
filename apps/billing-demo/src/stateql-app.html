@@ -1,0 +1,95 @@
+<main>
+  <header>
+    <a class="brand" href="https://github.com/jchewitt/stateql"
+      >StateQL <span>/ lab</span></a
+    >
+    <span class="milestone">02 · StateQL views</span>
+  </header>
+  <nav aria-label="Client comparison">
+    <a href="/">Apollo</a
+    ><a aria-current="page" href="/?client=stateql">StateQL</a>
+  </nav>
+  <section class="intro">
+    <p class="eyebrow">The selective refresh experiment</p>
+    <h1>One definition.<br />Refresh just what changed.</h1>
+    <p class="lede">
+      Change the server, then invalidate account IDs. Both views update from a
+      generated narrow request while amounts and names stay cached.
+    </p>
+  </section>
+  <section class="controls" aria-label="Experiment controls">
+    <div class="scope-row">
+      <label
+        >Tenant
+        <select
+          aria-label="Tenant"
+          [value]="tenantId()"
+          (change)="selectTenant($event)"
+        >
+          <option value="A">A · North studio</option>
+          <option value="B">B · South studio</option>
+        </select></label
+      ><span class="muted">Same invoice IDs, separate tenant state.</span>
+    </div>
+    <div class="actions">
+      <button [disabled]="busy()" (click)="change('advance')">
+        1. Change server data
+      </button>
+      <button
+        class="primary"
+        [disabled]="busy()"
+        (click)="refresh('accountId')"
+      >
+        2. Refresh account IDs
+      </button>
+      <button [disabled]="busy()" (click)="refresh('all')">
+        Refresh all fields
+      </button>
+    </div>
+    <p class="status" role="status">{{ busy() ? 'Working…' : message() }}</p>
+    @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+    }
+    <details>
+      <summary>More scenarios</summary>
+      <div class="actions secondary-actions">
+        <button [disabled]="busy()" (click)="change('reverse')">
+          Reverse server order
+        </button>
+        <button [disabled]="busy()" (click)="refresh('list')">
+          Refresh list membership
+        </button>
+        <button [disabled]="busy()" (click)="fail()">Fail next request</button>
+        <button [disabled]="busy()" (click)="delay()">
+          {{ delayed() ? 'Remove delay' : 'Delay responses 1s' }}
+        </button>
+        <button (click)="showMonitor.set(!showMonitor())">
+          {{ showMonitor() ? 'Unmount monitor' : 'Mount monitor' }}
+        </button>
+        <button [disabled]="busy()" (click)="reset()">Reset experiment</button>
+      </div>
+      <p class="muted">
+        Field refresh keeps cached list order. List refresh replaces membership
+        and order. Reset reloads the app and clears all tenant caches. Reads use
+        manual retry in both comparison modes.
+      </p>
+    </details>
+  </section>
+  <div class="consumers">
+    <stateql-panel [tenantId]="tenantId()" title="Billing workspace" />
+    @if (showMonitor()) {
+    <stateql-panel
+      [tenantId]="tenantId()"
+      title="Account monitor"
+      [compact]="true"
+    />
+    }
+  </div>
+  <request-inspector [fixture]="fixture" />
+  <footer>
+    StateQL views · Central and feature-derived definitions share one scoped
+    resource. Form drafts and explicit save integration are the next milestone.
+    Switching clients reloads their caches; fixture server data and the request
+    log remain until reset.
+  </footer>
+</main>

@@ -64,7 +64,7 @@ Depends on P3.
 
 - [x] P4.1 Add the actual Angular library, appropriate peer dependencies, and Angular Package Format build/pack checks. A non-owning readonly signal bridge is implemented; see [the Angular guide](ANGULAR.md).
 - [x] P4.2 Implement DI, signal snapshots, reactive argument replacement, and destruction cleanup. Typed client providers own the client; owned query views gate obsolete snapshots/commands and release only their handles. See [the Angular contract](ANGULAR.md).
-- [ ] P4.3 Add StateQL views beside the Apollo baseline with central and feature-derived definitions.
+- [x] P4.3 Add StateQL views beside the Apollo baseline with central and feature-derived definitions. Both modes use the shared fixture inspector; StateQL demonstrates narrow field refresh, explicit list refresh, scoped arguments, and owned consumers. Focused browser coverage is included; the full forms/parity matrix remains P4.4/P4.5. See [the demo guide](DEMO.md).
 - [ ] P4.4 Demonstrate isolated form drafts, pristine-field refresh, dirty conflicts and explicit save with targeted invalidation. Apply the [forms contract](FORMS.md): immutable submitted payloads, edits during save, confirmed-save/failed-refresh distinction, reset to latest server data, scope/record isolation, unavailable records, and no automatic write retries.
 - [ ] P4.5 Add browser tests for shared updates, narrow requests, account switching, errors, and cleanup; cover the P4.4 draft/save cases with the same policy for Apollo and StateQL.
 
