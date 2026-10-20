@@ -1,6 +1,66 @@
-# Angular package foundation
+# Angular integration
 
-P4.1 introduces the private `@jchewitt/stateql-angular` package and a small observation bridge. P4.2 will add client providers, owned query handles, reactive argument replacement, and their lifecycle integration. The billing app still runs the Apollo baseline; StateQL views and forms arrive in P4.3/P4.4.
+P4.1/P4.2 implement the private `@jchewitt/stateql-angular` package, readonly observation, environment-owned client providers, and reactive query ownership. The billing app still runs the Apollo baseline; StateQL views and forms arrive in P4.3/P4.4.
+
+## Shared client and owned queries
+
+Declare one typed Angular token for a client configuration. The adapter does not import GraphQL; the application assembles the default GraphQL experience:
+
+```ts
+import { inject, InjectionToken, signal } from '@angular/core';
+import {
+  createGraphQLClient,
+  type GraphQLClient,
+} from '@jchewitt/stateql-graphql';
+import {
+  injectStateQuery,
+  provideStateQLClient,
+} from '@jchewitt/stateql-angular';
+
+export const BILLING_CLIENT = new InjectionToken<GraphQLClient>(
+  'Billing StateQL',
+);
+
+// Add to application or route environment providers.
+export const billingProvider = provideStateQLClient(BILLING_CLIENT, () =>
+  createGraphQLClient({ endpoint: 'http://localhost:4100/graphql' }),
+);
+
+// During component/service construction; invoices is a central definition.
+const client = inject(BILLING_CLIENT);
+const tenant = signal('A');
+const query = injectStateQuery(
+  () =>
+    invoices.bind(
+      { billing: { tenantId: tenant() } },
+      { source: 'billing-api', scope: 'session-A' },
+    ),
+  (definition) => client.watch(definition),
+);
+```
+
+`provideStateQLClient(token, create)` creates a client lazily, once per providing environment injector. Descendants share it unless they explicitly override that token. The providing injector disposes it once on destruction. The factory must create a client owned by that injector, not borrow a globally shared instance whose lifetime belongs elsewhere. The typed token determines the factory's required type. Existing applications may use their own Angular providers instead if they manage client ownership themselves.
+
+`injectStateQuery(parameters, open, { injector? })` owns a fresh query handle returned by `open` for each binding. Both callbacks are synchronous. The parameter getter is pure and reads the signals that should select the query; use immutable parameter values. Only those dependencies trigger replacement. It reevaluates a binding when its tracked dependencies invalidate, without deep-equality, debounce, or canonical-address comparison. Core still decides cache reuse and request deduplication. Do not read unrelated signals in the parameter getter.
+
+The handle factory runs untracked in the supplied/current injection context on both initial creation and later replacements. It may call `inject`, or capture a previously injected client. It must return a newly owned handle, never a handle also owned by another query view. Incidental factory reads do not become query parameters. The initial binding opens synchronously and core starts acquisition automatically; subsequent replacements run on Angular's effect schedule. The factory's identity and captured nonreactive variables are not tracked.
+
+The readonly `query.state()` is a discriminated union:
+
+| Status     | Meaning                                                                                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pending`  | Reactive parameters changed and the replacement has not bound yet. No old snapshot or address is exposed.                                                      |
+| `active`   | A current handle exists; `stateAddress` and `snapshot` belong to that binding. Its snapshot may still be fetching, incomplete, stale, or carry a read error.   |
+| `error`    | Parameter evaluation, opening, or subscription setup failed. `error` is the original unknown value, distinct from a transport error inside an active snapshot. |
+| `disposed` | The query view has stopped and exposes no snapshot.                                                                                                            |
+
+An argument change hides the previous snapshot synchronously when state is read, before the effect runs. Reading state never opens a handle or starts transport work. Replacement unsubscribes/disposes the old handle; late responses cannot surface under the new binding. Other core owners can keep shared requests alive. Parameter/factory failures can recover on a later parameter change; they do not automatically retry a failing factory.
+
+`ensure()`, `invalidate(target?, options?)`, `refresh(target?)`, and `refreshList()` forward to the current handle. GraphQL alias/target types remain inferred. Commands reject while the binding is pending/failed or disposed, rather than accidentally acting on old parameters. An already-started command remains tied to its original handle and rejects on that handle's cancellation; it does not migrate to a new account. Use `ensure()` to await acquisition for the initial/current binding; there is no single lifetime-wide `ready` promise.
+
+Destroying the current injection scope, or calling `query.dispose()`, stops its effect and releases its subscription and handle exactly once. The provider's shared client remains alive until the provider scope ends. A manually disposed view stops evaluating parameters. Use the component injector for component lifetime; a root service naturally lives longer. Passing an explicit injector enables creation outside an injection context, using that injector's lifetime. Construct once outside reactive computations.
+
+## Observe an externally owned reader
 
 ```ts
 import { stateqlSignal } from '@jchewitt/stateql-angular';
@@ -25,6 +85,8 @@ Build with `pnpm build` or `pnpm --filter @jchewitt/stateql-angular build` after
 Pack the generated `dist` directory, not the source package directory. The package remains private, has no publication workflow enabled, and is not yet a supported release.
 
 `pnpm check` runs lifecycle/type tests and packs the real APF output. The package check installs it and core into a temporary consumer outside the workspace, verifies native ESM observation/destruction, and compiles a standalone Angular component and its template with `ngc`. It checks declarations, package contents, peers, license, and removal of stale build output. There are no decorated library declarations yet; the partial compiler setting is in place for later DI APIs.
+
+Installed package checks also exercise providers, argument changes, command gating, and handle/client lifetime separation with Angular's real effect scheduler. Node tests use Angular's server testing environment solely as a test harness; SSR hydration is not implemented. Test-only platform and GraphQL dependencies do not become runtime dependencies of the Angular package.
 
 The build follows [Angular's package format](https://angular.dev/tools/libraries/angular-package-format) and its [library compilation guidance](https://angular.dev/tools/libraries/creating-libraries). Lifetime cleanup uses the public [DestroyRef API](https://angular.dev/api/core/DestroyRef).
 

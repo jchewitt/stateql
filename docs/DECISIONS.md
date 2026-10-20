@@ -83,3 +83,9 @@ P4.1 adds a private APF package built with ng-packagr in partial compilation mod
 ## D019 Drafts and commands are separate from server state
 
 The October 20 forms direction reinforces editor-local drafts, not another shared cache. Preserve baseline/draft/latest values and capture immutable submitted values plus edit generations on explicit Save. Typing neither publishes cache changes nor sends socket commands. Reconcile confirmed saves without losing newer edits, and distinguish failed refresh from failed or ambiguous command acknowledgement. Scope/record identity binds drafts and outcomes. Start with a small demo binding using the same policy for both clients; defer a library forms abstraction, optimistic overlays, persistence, and durable outbox until their contracts are exercised. See [the full forms contract and limits](FORMS.md).
+
+## D020 Angular clients and query views have separate ownership
+
+P4.2 uses a typed application InjectionToken and an environment provider factory, keeping GraphQL out of the Angular runtime package. The provider owns one client per providing injector. `injectStateQuery` tracks a pure parameter getter, opens fresh owned handles untracked in the chosen injection context, and releases replaced handles without disposing the provider's client. Descriptor identity gates state and commands before effect-driven replacement, so a new account cannot expose or refresh the previous binding. Disposed views stop parameter evaluation. Parameter/factory failures are separate from active snapshot transport errors.
+
+The owned query and non-owning signal bridge share the same guarded subscription primitive. Core continues to own cache reuse, deduplication, cancellation and invalidation. No form draft writes or command transport are introduced. See [API, scheduling, and lifecycle rules](ANGULAR.md).

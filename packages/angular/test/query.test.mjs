@@ -1,0 +1,461 @@
+import '@angular/compiler';
+import assert from 'node:assert/strict';
+import { afterEach, test } from 'node:test';
+import {
+  createEnvironmentInjector,
+  EnvironmentInjector,
+  inject,
+  InjectionToken,
+  runInInjectionContext,
+  signal,
+  computed,
+} from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import {
+  ServerTestingModule,
+  platformServerTesting,
+} from '@angular/platform-server/testing';
+import { AcquisitionClient, resourceAddress } from '@jchewitt/stateql-core';
+import { createSchema, createGraphQLClient } from '@jchewitt/stateql-graphql';
+import {
+  injectStateQuery,
+  provideStateQLClient,
+} from '../dist/fesm2022/jchewitt-stateql-angular.mjs';
+
+TestBed.initTestEnvironment(ServerTestingModule, platformServerTesting());
+afterEach(() => TestBed.resetTestingModule());
+const scope = (providers) =>
+  createEnvironmentInjector(
+    providers ?? [],
+    TestBed.inject(EnvironmentInjector),
+  );
+const tick = () => TestBed.tick();
+async function until(predicate) {
+  for (let i = 0; i < 100; i++) {
+    tick();
+    if (predicate()) return;
+    await Promise.resolve();
+  }
+  assert.fail('Condition did not settle.');
+}
+function handles() {
+  const opened = [];
+  const open = (value) => {
+    let snapshot = Object.freeze({ value });
+    const listeners = new Set();
+    const calls = [];
+    const handle = {
+      stateAddress: value,
+      ready: Promise.resolve(),
+      getSnapshot: () => snapshot,
+      subscribe: (fn) => {
+        listeners.add(fn);
+        return () => {
+          listeners.delete(fn);
+          handle.removals++;
+        };
+      },
+      dispose: () => {
+        handle.disposals++;
+      },
+      ensure: async () => {
+        calls.push(['ensure']);
+      },
+      invalidate: async (...args) => {
+        calls.push(['invalidate', ...args]);
+      },
+      refresh: async (...args) => {
+        calls.push(['refresh', ...args]);
+      },
+      refreshList: async () => {
+        calls.push(['refreshList']);
+      },
+      publish(next) {
+        snapshot = Object.freeze({ value: next });
+        for (const fn of [...listeners]) fn();
+      },
+      calls,
+      listeners,
+      disposals: 0,
+      removals: 0,
+    };
+    opened.push(handle);
+    return handle;
+  };
+  return { open, opened };
+}
+
+test('provider lazily owns one client per providing injector, inherited by children', () => {
+  const token = new InjectionToken('client');
+  let creates = 0,
+    disposals = 0;
+  const factory = () => {
+    creates++;
+    return {
+      dispose() {
+        disposals++;
+      },
+    };
+  };
+  const root = scope([provideStateQLClient(token, factory)]);
+  const child = createEnvironmentInjector([], root);
+  assert.equal(creates, 0);
+  assert.equal(root.get(token), child.get(token));
+  assert.equal(creates, 1);
+  child.destroy();
+  assert.equal(disposals, 0);
+  const override = createEnvironmentInjector(
+    [provideStateQLClient(token, factory)],
+    root,
+  );
+  assert.notEqual(override.get(token), root.get(token));
+  override.destroy();
+  assert.equal(disposals, 1);
+  root.destroy();
+  assert.equal(disposals, 2);
+});
+
+test('provider disposes a client returned after its creation destroys the owning scope', () => {
+  const token = new InjectionToken('reentrant client');
+  let disposals = 0;
+  const owner = scope([
+    provideStateQLClient(token, () => {
+      owner.destroy();
+      return {
+        dispose() {
+          disposals++;
+        },
+      };
+    }),
+  ]);
+  assert.throws(() => owner.get(token), /destroyed/);
+  assert.equal(disposals, 1);
+});
+
+test('identical snapshot notifications preserve the owned state signal identity', () => {
+  const owner = scope();
+  const fixture = handles();
+  const query = injectStateQuery(() => 'A', fixture.open, { injector: owner });
+  const previous = query.state();
+  for (const notify of fixture.opened[0].listeners) notify();
+  assert.equal(query.state(), previous);
+  owner.destroy();
+});
+
+test('reactive arguments hide old state and reject commands before replacement runs', async () => {
+  const owner = scope();
+  const id = signal('A');
+  const fixture = handles();
+  const query = injectStateQuery(id, fixture.open, { injector: owner });
+  assert.equal(query.state().snapshot.value, 'A');
+  tick();
+  assert.equal(fixture.opened.length, 1);
+  id.set('B');
+  assert.equal(query.state().status, 'pending');
+  await assert.rejects(query.refresh(), /current binding/);
+  tick();
+  assert.equal(query.state().snapshot.value, 'B');
+  assert.equal(fixture.opened[0].disposals, 1);
+  fixture.opened[0].publish('late A');
+  assert.equal(query.state().snapshot.value, 'B');
+  await query.invalidate('name', { refetch: 'none' });
+  await query.ensure();
+  await query.refreshList();
+  assert.deepEqual(fixture.opened[1].calls, [
+    ['invalidate', 'name', { refetch: 'none' }],
+    ['ensure'],
+    ['refreshList'],
+  ]);
+  owner.destroy();
+  assert.equal(fixture.opened[1].disposals, 1);
+});
+
+test('observed A to B to A transitions do not reuse the old binding before flush', () => {
+  const owner = scope();
+  const id = signal('A');
+  const fixture = handles();
+  const query = injectStateQuery(id, fixture.open, { injector: owner });
+  id.set('B');
+  assert.equal(query.state().status, 'pending');
+  id.set('A');
+  assert.equal(query.state().status, 'pending');
+  tick();
+  assert.equal(query.state().snapshot.value, 'A');
+  assert.equal(fixture.opened.length, 2);
+  assert.equal(fixture.opened[0].disposals, 1);
+  owner.destroy();
+});
+
+test('parameter and factory errors detach old handles and recover after parameter change', async () => {
+  const owner = scope();
+  const id = signal('A');
+  const fixture = handles();
+  const query = injectStateQuery(
+    () => {
+      const value = id();
+      if (value === 'bad-params') throw new Error('parameter failure');
+      return value;
+    },
+    (value) => {
+      if (value === 'bad-open') throw new Error('factory failure');
+      return fixture.open(value);
+    },
+    { injector: owner },
+  );
+  id.set('bad-params');
+  assert.match(query.state().error.message, /parameter failure/);
+  await assert.rejects(query.ensure(), /current binding/);
+  tick();
+  assert.equal(fixture.opened[0].disposals, 1);
+  id.set('bad-open');
+  tick();
+  assert.match(query.state().error.message, /factory failure/);
+  id.set('B');
+  tick();
+  assert.equal(query.state().snapshot.value, 'B');
+  owner.destroy();
+});
+
+test('factory injection is consistent and incidental reads do not become parameter dependencies', () => {
+  const token = new InjectionToken('tag');
+  const owner = scope([{ provide: token, useValue: 'injected' }]);
+  const id = signal('A');
+  const incidental = signal(0);
+  const fixture = handles();
+  const query = runInInjectionContext(owner, () =>
+    injectStateQuery(id, (value) => {
+      incidental();
+      return fixture.open(`${inject(token)}-${value}`);
+    }),
+  );
+  tick();
+  incidental.set(1);
+  tick();
+  assert.equal(fixture.opened.length, 1);
+  id.set('B');
+  tick();
+  assert.equal(query.state().snapshot.value, 'injected-B');
+  owner.destroy();
+});
+
+test('manual disposal is idempotent, releases only the handle, and stops evaluating parameters', async () => {
+  const owner = scope();
+  const id = signal('A');
+  let evaluations = 0;
+  const fixture = handles();
+  const query = injectStateQuery(
+    () => {
+      evaluations++;
+      return id();
+    },
+    fixture.open,
+    { injector: owner },
+  );
+  query.dispose();
+  query.dispose();
+  id.set('B');
+  tick();
+  assert.equal(query.state().status, 'disposed');
+  assert.equal(evaluations, 1);
+  await assert.rejects(query.ensure(), /disposed/);
+  owner.destroy();
+  assert.equal(fixture.opened[0].disposals, 1);
+  assert.equal(fixture.opened[0].removals, 1);
+});
+
+test('reentrant parameter change or destruction during open disposes the returned obsolete handle', () => {
+  for (const action of ['change', 'destroy']) {
+    const owner = scope();
+    const id = signal('A');
+    const fixture = handles();
+    const query = injectStateQuery(
+      id,
+      (value) => {
+        const handle = fixture.open(value);
+        if (value === 'A') {
+          if (action === 'change') id.set('B');
+          else owner.destroy();
+        }
+        return handle;
+      },
+      { injector: owner },
+    );
+    assert.equal(fixture.opened[0].disposals, 1);
+    assert.equal(
+      query.state().status,
+      action === 'change' ? 'pending' : 'disposed',
+    );
+    tick();
+    if (action === 'change') {
+      assert.equal(query.state().snapshot.value, 'B');
+      owner.destroy();
+    }
+  }
+});
+
+test('failed or synchronously notifying subscriptions release the owned handle', () => {
+  for (const mode of ['subscribe', 'read', 'destroy']) {
+    const owner = scope();
+    const fixture = handles();
+    const query = injectStateQuery(
+      () => 'A',
+      (value) => {
+        const handle = fixture.open(value);
+        const subscribe = handle.subscribe;
+        handle.subscribe = (fn) => {
+          if (mode === 'subscribe') throw new Error('subscribe failure');
+          const cleanup = subscribe(fn);
+          fn();
+          if (mode === 'destroy') owner.destroy();
+          return cleanup;
+        };
+        if (mode === 'read')
+          handle.getSnapshot = () => {
+            throw new Error('read failure');
+          };
+        return handle;
+      },
+      { injector: owner },
+    );
+    assert.equal(fixture.opened[0].disposals, 1);
+    assert.equal(fixture.opened[0].listeners.size, 0);
+    assert.equal(
+      query.state().status,
+      mode === 'destroy' ? 'disposed' : 'error',
+    );
+    if (mode !== 'destroy') owner.destroy();
+    assert.equal(fixture.opened[0].disposals, 1);
+  }
+});
+
+test('missing, destroyed and reactive construction contexts reject before opening', () => {
+  const fixture = handles();
+  assert.throws(
+    () => injectStateQuery(() => 'A', fixture.open),
+    /injection context/,
+  );
+  const owner = scope();
+  assert.throws(
+    () =>
+      computed(() =>
+        injectStateQuery(() => 'A', fixture.open, { injector: owner }),
+      )(),
+    /reactive context/,
+  );
+  owner.destroy();
+  assert.throws(
+    () => injectStateQuery(() => 'A', fixture.open, { injector: owner }),
+    /destroyed/,
+  );
+  assert.equal(fixture.opened.length, 0);
+});
+
+test('shared core acquisition survives one argument switch and late data stays under its own scope', async () => {
+  const token = new InjectionToken('acquisition');
+  const root = scope([
+    provideStateQLClient(token, () => new AcquisitionClient()),
+  ]);
+  const a = createEnvironmentInjector([], root);
+  const b = createEnvironmentInjector([], root);
+  const requests = [];
+  const selection = [
+    { name: 'name', responseName: 'name', arguments: {}, children: [] },
+  ];
+  const source = (id) => ({
+    stateAddress: resourceAddress({ source: 'test', scope: id }, [
+      { name: 'item', arguments: {} },
+    ]),
+    selection,
+    read: (_fields, context) =>
+      new Promise((resolve) => requests.push({ id, context, resolve })),
+  });
+  const firstId = signal('A');
+  const open = (id) => inject(token).watch(source(id));
+  const first = injectStateQuery(firstId, open, { injector: a });
+  const second = injectStateQuery(() => 'A', open, { injector: b });
+  await until(() => requests.length === 1);
+  firstId.set('B');
+  assert.equal(first.state().status, 'pending');
+  await until(() => requests.length === 2);
+  assert.equal(requests[0].context.signal.aborted, false);
+  const result = (value) => [
+    {
+      identity: { id: '1' },
+      fields: [
+        { kind: 'write', path: [{ name: 'name', arguments: {} }], value },
+      ],
+    },
+  ];
+  requests[1].resolve(result('B-value'));
+  await until(
+    () => first.state().snapshot?.records?.[0]?.data.name === 'B-value',
+  );
+  requests[0].resolve(result('A-value'));
+  await until(
+    () => second.state().snapshot?.records?.[0]?.data.name === 'A-value',
+  );
+  assert.equal(first.state().snapshot.records[0].data.name, 'B-value');
+  a.destroy();
+  const refresh = second.refresh();
+  await until(() => requests.length === 3);
+  const rejected = assert.rejects(refresh);
+  b.destroy();
+  await rejected;
+  assert.equal(requests[2].context.signal.aborted, true);
+  root.destroy();
+});
+
+test('GraphQL definitions retain alias invalidation and cached siblings through the Angular wrapper', async () => {
+  const token = new InjectionToken('graphql');
+  const requests = [];
+  let version = 1;
+  const definition = createSchema(
+    'type Query { item(id: ID!): Item! } type Item { id: ID! name: String! amount: Int! }',
+  )
+    .field('item')
+    .select({ name: { as: 'label' }, amount: true });
+  const root = scope([
+    provideStateQLClient(token, () =>
+      createGraphQLClient({
+        transport: async (operation) => {
+          requests.push(operation.query);
+          return {
+            data: {
+              item: {
+                __typename: 'Item',
+                label: `name-${version}`,
+                amount: version * 10,
+              },
+            },
+          };
+        },
+      }),
+    ),
+  ]);
+  const owner = createEnvironmentInjector([], root);
+  const query = injectStateQuery(
+    () =>
+      definition.bind({ item: { id: '1' } }, { source: 'fixture', scope: 'A' }),
+    (bound) => inject(token).watch(bound),
+    { injector: owner },
+  );
+  await query.ensure();
+  assert.equal(query.state().snapshot.records[0].data.label, 'name-1');
+  version = 2;
+  await query.invalidate('label');
+  assert.match(requests.at(-1), /label: name/);
+  assert.doesNotMatch(requests.at(-1), /amount/);
+  assert.equal(query.state().snapshot.records[0].data.amount, 10);
+  assert.equal(query.state().snapshot.records[0].data.label, 'name-2');
+  owner.destroy();
+  // The component owned a handle, not the provider's shared client.
+  const peer = root
+    .get(token)
+    .watch(
+      definition.bind({ item: { id: '1' } }, { source: 'fixture', scope: 'A' }),
+    );
+  await peer.ready;
+  assert.equal(requests.length, 2);
+  peer.dispose();
+  root.destroy();
+});

@@ -63,7 +63,7 @@ Exit: the relevant acceptance matrix in `PLAN.md` passes, including invalidation
 Depends on P3.
 
 - [x] P4.1 Add the actual Angular library, appropriate peer dependencies, and Angular Package Format build/pack checks. A non-owning readonly signal bridge is implemented; see [the Angular guide](ANGULAR.md).
-- [ ] P4.2 Implement DI, signal snapshots, reactive argument replacement, and destruction cleanup.
+- [x] P4.2 Implement DI, signal snapshots, reactive argument replacement, and destruction cleanup. Typed client providers own the client; owned query views gate obsolete snapshots/commands and release only their handles. See [the Angular contract](ANGULAR.md).
 - [ ] P4.3 Add StateQL views beside the Apollo baseline with central and feature-derived definitions.
 - [ ] P4.4 Demonstrate isolated form drafts, pristine-field refresh, dirty conflicts and explicit save with targeted invalidation. Apply the [forms contract](FORMS.md): immutable submitted payloads, edits during save, confirmed-save/failed-refresh distinction, reset to latest server data, scope/record isolation, unavailable records, and no automatic write retries.
 - [ ] P4.5 Add browser tests for shared updates, narrow requests, account switching, errors, and cleanup; cover the P4.4 draft/save cases with the same policy for Apollo and StateQL.
@@ -96,8 +96,10 @@ Depends on a continue decision in P5.
 
 Depends on a useful implemented package, P5, and registry setup.
 
+- [ ] R1.0 Notify the user when P4/P5 and package acceptance are complete, identify the release packages/versions, and provide the exact trusted-publisher configuration for the user to set up. Requested October 20; do not silently enable publication or wait until after a publish attempt to request setup.
 - [ ] R1.1 Confirm npm identity and ownership of the chosen package scope; update metadata if necessary.
 - [ ] R1.2 Confirm the current npm flow for establishing new packages and trusted publishing; configure `jchewitt/stateql`, `publish.yml`, and environment `npm`.
+- [ ] R1.2a Complete automated CI publication for the approved release set, including dependency order, Angular APF output, version/peer checks, OIDC/provenance, and safe handling of partial multi-package publication. The current manually dispatched scaffold publishes core only.
 - [ ] R1.3 Add the first prerelease Changeset, changelog, compatibility requirements, and actual usage examples.
 - [ ] R1.4 Enable release readiness in a reviewed change; keep experimental versions on `next`.
 - [ ] R1.5 Validate the tagged commit, packed artifacts, independent review, and hosted CI before dispatching the release workflow.

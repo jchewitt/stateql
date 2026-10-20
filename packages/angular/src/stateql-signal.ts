@@ -6,6 +6,7 @@ import {
   type Signal,
 } from '@angular/core';
 import type { StoreReader } from '@jchewitt/stateql-core';
+import { observeReader } from './observe-reader.js';
 
 export interface StateQLSignalOptions {
   /** Defaults to the current injection context's lifetime. */
@@ -25,35 +26,14 @@ export function stateqlSignal<T>(
   if (destroyRef.destroyed)
     throw new Error('Cannot observe StateQL in a destroyed Angular scope.');
   const snapshot = signal(reader.getSnapshot());
-  let active = true;
-  let establishing = true;
-  const update = () => {
-    // Re-read after subscribe returns its cleanup. A synchronous notification
-    // must not throw before we have a way to release the registration.
-    if (!active || establishing) return;
-    const next = reader.getSnapshot();
-    if (active) snapshot.set(next);
-  };
-  let unsubscribe: () => void;
-  try {
-    unsubscribe = reader.subscribe(update);
-  } catch (error) {
-    active = false;
-    throw error;
-  }
-  establishing = false;
-  const cleanup = () => {
-    if (!active) return;
-    active = false;
-    unsubscribe();
-  };
+  const cleanup = observeReader(reader, (value) => {
+    if (!destroyRef.destroyed) snapshot.set(value);
+  });
   let unregister: (() => void) | undefined;
   try {
-    // A source can change while subscribing. Close the read/subscribe gap.
     if (destroyRef.destroyed)
       throw new Error('Angular scope was destroyed while subscribing.');
     unregister = destroyRef.onDestroy(cleanup);
-    update();
   } catch (error) {
     cleanup();
     unregister?.();
