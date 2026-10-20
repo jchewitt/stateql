@@ -90,6 +90,10 @@ export function checkAngularPackage({ root, artifacts, coreTarball, npm }) {
         '@angular/core@21.2.25',
         '@angular/compiler@21.2.25',
         '@angular/compiler-cli@21.2.25',
+        '@angular/common@21.2.25',
+        '@angular/platform-browser@21.2.25',
+        '@angular/platform-browser-dynamic@21.2.25',
+        '@angular/platform-server@21.2.25',
         'rxjs@7.8.2',
         'tslib@2.8.1',
         'typescript@5.9.3',
@@ -97,12 +101,21 @@ export function checkAngularPackage({ root, artifacts, coreTarball, npm }) {
       consumer,
     );
     const fixtureRoot = join(root, 'tests/fixtures/angular-consumer');
-    for (const file of ['consumer.mjs', 'consumer.ts', 'tsconfig.json'])
+    for (const file of [
+      'consumer.mjs',
+      'owned-query.mjs',
+      'consumer.ts',
+      'tsconfig.json',
+    ])
       writeFileSync(
         join(consumer, file),
         readFileSync(join(fixtureRoot, file)),
       );
     execFileSync(process.execPath, [join(consumer, 'consumer.mjs')], {
+      cwd: consumer,
+      stdio: 'inherit',
+    });
+    execFileSync(process.execPath, [join(consumer, 'owned-query.mjs')], {
       cwd: consumer,
       stdio: 'inherit',
     });

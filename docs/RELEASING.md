@@ -2,6 +2,10 @@
 
 The workflow is prepared; publishing is not enabled. `release.config.json` has `ready: false`, and version `0.0.0` is rejected. Core and GraphQL now implement the experimental acquisition runtime, and Angular has its initial observation package. Release acceptance and account setup are still required.
 
+The user requested a release-readiness notification and will configure npm trusted publishing at that handoff. Notify them once P4's integration/forms scenarios, P5's comparison decision, and package acceptance checks pass. Before publication, confirm the approved package names/versions and finish CI automation for that release set. The existing core-only scaffold is not yet the complete core/GraphQL/Angular release pipeline. Do not request registry changes merely to continue ordinary feature work.
+
+At handoff, provide the exact owner, repository, workflow filename and optional environment used by the final workflow, plus which npm packages need trust configuration. Recheck npm's current setup requirements then. CI should perform verified versioned publication and registry/provenance checks after that configuration, rather than require local registry credentials.
+
 ## Registry setup
 
 The GitHub account is `jchewitt`. npm is not authenticated in the setup environment, and the matching npm scope is not verified. Confirm ownership of `@jchewitt` or choose an owned scope before release. Update manifests, release configuration, package checks, fixtures, and documentation together if the scope changes.

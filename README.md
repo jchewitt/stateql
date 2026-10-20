@@ -4,7 +4,7 @@
 
 GraphQL-first state management built around composable definitions and selective field refresh.
 
-**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent reads share identical work, protect newer fields from late responses, and cancel when their last interested owner leaves. Bounded retries recover classified transient transport failures. StateQL's Angular package now provides readonly signal observation; owned queries and form integration remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
+**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent reads share identical work, protect newer fields from late responses, and cancel when their last interested owner leaves. Bounded retries recover classified transient transport failures. StateQL's Angular package now provides client DI, readonly signals and owned queries with reactive argument replacement; demo forms remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
 
 With a schema-generated invoice definition and client:
 
@@ -62,7 +62,7 @@ Run `pnpm demo:acquire` for actual StateQL HTTP requests against an isolated fix
 | ------------------------ | ------------------------------------------------------------------------------ |
 | `packages/core`          | Shared records, projections, observation, canonical addresses and selections   |
 | `packages/graphql`       | Private schema tooling, operation planner, decoder and HTTP acquisition client |
-| `packages/angular`       | Private APF package and readonly signal observation with lifecycle cleanup     |
+| `packages/angular`       | Private APF package, client DI, signals and reactive query ownership           |
 | `apps/billing-api`       | Local GraphQL billing fixture and deterministic controls                       |
 | `apps/billing-demo`      | Angular/Apollo baseline with two consumers and request inspector               |
 | `examples/query-planner` | Runnable plain TypeScript operation planning example                           |
