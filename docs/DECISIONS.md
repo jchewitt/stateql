@@ -22,6 +22,8 @@ Use MIT. Track versions and changelogs with Changesets. The first npm releases m
 
 The GitHub repository belongs to verified personal account `jchewitt`. npm authentication and scope ownership have not been established; `@jchewitt/stateql-core` is a provisional identifier, to be confirmed or changed before any release.
 
+October 20 update: the user selected `@launch-echo` for the core, GraphQL and Angular release set. Existing manifests still use `@jchewitt`; R1 migrates all references together and verifies npm scope access. Exact versions and multi-package publication remain pending.
+
 ## D006 Review before commit
 
 Every commit requires independent agent review and resolution of actionable findings. CI is complementary verification, not a substitute for the review. Future feature work uses branches and pull requests; the initial reviewed foundation is the bootstrap commit on `main`.
@@ -95,3 +97,19 @@ The owned query and non-owning signal bridge share the same guarded subscription
 P5's [recorded comparison](COMPARISON.md) demonstrates equal narrow response payloads, fewer authored read-selection declarations, mixed UI/adapter coordination counts and smaller representative consumer bundles at the cost of runtime schema/operation planning. Continue toward a three-package experimental alpha, not a claim of general superiority over Apollo. Requested/fetched/committed coverage, per-field freshness/errors and separate membership refresh are runtime contracts that a planner alone would not supply. A planner over an existing cache remains a fallback if those semantics do not earn their maintenance cost in real applications.
 
 Track typed runtime projection, larger-workload measurements, safe plan reuse, retention and timeout contracts separately. No premature optimization or new runtime framework is justified by the small desktop timing sample. Preserve P6 and the E1/E2 boundary, including the promised user discussion before implementing streams. R1 must finish multi-package publishing and account configuration; completing P5 does not enable publication.
+
+## D022 Consistent client/server configuration with injectable capabilities
+
+The approved product direction uses the same recognizable setup sequence on client and server: create/inject infrastructure, register providers, choose global defaults, assign resource groups, then apply resource overrides. Reuse portable resolution/ownership primitives where semantics match without imposing identical role-specific interfaces or a NestJS dependency. Global means one runtime/application instance. Registration does not enable all capabilities; omitted settings inherit and explicit disable settings stop inheritance. Start with one primary group per resource and reject conflicting authority/identity/scope bindings. Groups configure resources without changing their state identity.
+
+Custom and official adapters follow the same capability contracts, validation and lifecycle rules. Acquisition, transport, routing, checkpoint storage, retained replay and commands remain distinct. Shared connections may serve separate immutable bindings; disposing one binding never closes borrowed infrastructure or another owner's work. Keep default GraphQL setup simple, server dependencies out of browser builds, and extension interfaces provisional until exercised by working implementations. See [the full contract](../PLAN.md#consistent-client-and-server-adapter-configuration).
+
+## D023 Recoverable optional end-to-end flow
+
+Database/business changes may flow through resource-specific authorized projections to clients; reverse flow is a local draft, explicit command, validated server commit and authoritative acknowledgement/event. Developers choose paths and streaming-off, invalidation-only or data-sync modes per resource. Reconnect prioritizes active demand, including background consumers and pending commands; framework visibility is only a priority signal. Baselines and stream resume points must be coherent, with bounded replay/buffering and fresh-baseline fallback when history expires.
+
+Use coordinated authoritative revisions by default, distinguish them from replay cursors, and track covered fields/membership without assuming a whole record is current. Vector clocks remain a possible advanced independent-writer extension. A replacement server instance must recover through shared history/checkpoints or an authoritative baseline; process-local sequence numbers cannot supply this guarantee. Redis persistence, live messaging and retained history are separate capabilities. Socket.IO integrations borrow existing client/server infrastructure and reuse its transport recovery while StateQL owns application-state reconciliation. Streaming-off mode remains supported throughout. E1.0 now reviews concrete protocol choices against this agreed direction before implementation.
+
+## D024 Publish usable increments
+
+Publish the standalone client foundation first, then complete client lifecycle/configuration, recoverable live state with a minimal server companion, optional infrastructure integrations, persisted reads, and finally opt-in durable commands. Stages may split into smaller releases when each provides a complete vertical slice. Server/client setup must use the same vocabulary, precedence and ownership rules, with paired examples and contract tests. Every release works without a future release or hosted service, keeps previous standalone use cases working, and documents experimental API migrations. No empty adapter/server packages, new runtime behavior, scope migration or publication enablement is introduced by this planning decision. See [release gates](../PLAN.md#usable-incremental-releases) and [tasks](TASKS.md).

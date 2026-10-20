@@ -2,19 +2,23 @@
 
 The workflow is prepared; publishing is not enabled. `release.config.json` has `ready: false`, and version `0.0.0` is rejected. Core and GraphQL now implement the experimental acquisition runtime, and Angular has its initial observation package. Release acceptance and account setup are still required.
 
+Follow the [usable incremental release gates](../PLAN.md#usable-incremental-releases). The first alpha is a functioning standalone core/GraphQL/Angular release set, not a shell waiting for streaming or hosting. Each later integration publishes only when its own installed example, lifecycle/recovery scenarios and compatibility contract work. Preserve client-only operation and the same recognizable client/server provider/group/resource setup pattern throughout.
+
 The user requested a release-readiness notification and will configure npm trusted publishing at that handoff. Notify them once P4's integration/forms scenarios, P5's comparison decision, and package acceptance checks pass. Before publication, confirm the approved package names/versions and finish CI automation for that release set. The existing core-only scaffold is not yet the complete core/GraphQL/Angular release pipeline. Do not request registry changes merely to continue ordinary feature work.
 
 At handoff, provide the exact owner, repository, workflow filename and optional environment used by the final workflow, plus which npm packages need trust configuration. Recheck npm's current setup requirements then. CI should perform verified versioned publication and registry/provenance checks after that configuration, rather than require local registry credentials.
 
 ## Registry setup
 
-The GitHub account is `jchewitt`. npm is not authenticated in the setup environment, and the matching npm scope is not verified. Confirm ownership of `@jchewitt` or choose an owned scope before release. Update manifests, release configuration, package checks, fixtures, and documentation together if the scope changes.
+The GitHub account is `jchewitt`. The user selected the npm scope `@launch-echo` on October 20. Intended release packages are `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql` and `@launch-echo/stateql-angular`. npm account access to that scope is not yet verified. Existing manifests/imports still use `@jchewitt`; R1 must migrate manifests, peers, source imports, generated modules, fixtures, Changesets configuration, package/release checks and documentation together before publication. Do not re-ask which scope the user selected; verify access and resolve only actual conflicts.
 
 Establish the package using npm's current new-package/account flow, then configure its trusted publisher. The target settings are GitHub owner `jchewitt`, repository `stateql`, workflow filename `publish.yml`, and environment `npm`. Enable direct publish permission if npm's settings require it. Scope creation and initial package setup may need account-owner interaction; no stored token or registry setup is implied by the GitHub workflow.
 
 The workflow uses Node 24 and npm 11.6.2, above the documented trusted-publishing minimum, and requests OIDC permission only in the publish job. See [npm trusted publishers](https://docs.npmjs.com/trusted-publishers/). The public repository and `--provenance` support publication provenance. No `NPM_TOKEN` secret is expected.
 
 ## Version and review
+
+The commands and tag/workflow names below describe the current core-only scaffold. R1.2a must replace this section with the reviewed three-package procedure before the first release; do not dispatch the scaffold as though it publishes the complete release set. Exact versions and the final tag policy remain to be set in that release change.
 
 1. Complete the useful package functionality and release acceptance tasks in `docs/TASKS.md`.
 2. Enter prerelease mode with `pnpm exec changeset pre enter alpha`.

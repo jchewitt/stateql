@@ -1,12 +1,14 @@
 # StateQL Architecture and Proof of Concept Plan
 
-Approved implementation direction · October 16, 2026
+Approved implementation direction · October 16, 2026 · End-to-end and incremental-release direction updated October 20, 2026
 
-Implementation is tracked in [docs/TASKS.md](docs/TASKS.md). The repository-foundation milestone is being established first; proposed runtime API examples below remain design examples until their tasks are complete.
+Implementation is tracked in [docs/TASKS.md](docs/TASKS.md). P1–P5 are complete, and the [comparison](docs/COMPARISON.md) supports continuing the independent runtime as an experiment. R1 release preparation is next. Examples and future contracts below remain proposals unless their tasks are complete; no npm package has been published.
 
-StateQL will use composable data definitions to derive requests, address shared cached state, and target refreshes. Its first proof of concept will combine a framework-independent TypeScript runtime, a GraphQL source adapter, an Angular integration, and a small billing application. An equivalent Apollo implementation will establish whether StateQL materially reduces application wiring while preserving correct behavior.
+StateQL uses composable data definitions to derive requests, address shared cached state, and target refreshes. Its proof of concept combines a framework-independent TypeScript runtime, a GraphQL source adapter, an Angular integration, and a small billing application. An equivalent Apollo implementation measures application wiring and correctness without assuming general feature parity.
 
 Angular is the confirmed first UI. Plain TypeScript usage is part of the proof of concept. React, REST, WebSockets, and a possible Node server companion are later extensions; their requirements shape the boundaries now.
+
+The product direction is an optional end-to-end state flow: database/business changes reach interested clients, and explicit client commands pass through server validation and committed storage before becoming authoritative shared state. Disconnections, server changes behind a load balancer, intermittent PWA use, and absent streams are normal operating conditions. The standalone client remains supported throughout this evolution; developers choose the authoritative path and synchronization mode per resource. See [consistent adapter configuration](#consistent-client-and-server-adapter-configuration) and [usable incremental releases](#usable-incremental-releases).
 
 ## Product hypothesis and evaluation
 
@@ -84,6 +86,29 @@ The core asks what fields need updating. The source adapter determines what oper
 
 Keep these as module boundaries even where they share a package. Avoid publishing a package for every interface before a second implementation demonstrates the need. Keep the source interface internal and provisional during the proof of concept. Do not weaken GraphQL's supported semantics to accommodate hypothetical REST limitations or build a public plugin framework before a real second source requires it.
 
+### Consistent client and server adapter configuration
+
+The client and optional server companion must have a recognizable setup pattern: create or inject infrastructure, register providers, establish defaults, define resource groups, and override individual resources. Share portable configuration-resolution, validation and ownership primitives where their semantics match. Keep role-specific interfaces for server authorization, client observation and transport execution rather than forcing identical methods. The same vocabulary, precedence, lifecycle rules, diagnostics and documentation structure should make moving between client and server familiar.
+
+Separate provider registration from assignment. Register typed tokens with instances or synchronous/asynchronous factories, then reference those providers by capability. Plain JavaScript must work without a DI framework; Angular/NestJS integrations may obtain providers from their existing containers. NestJS's instance/factory/alias patterns are a reference, not a core dependency. [NestJS custom providers](https://docs.nestjs.com/fundamentals/custom-providers)
+
+| Configuration level   | Meaning on both client and server                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Provider registration | Name a reusable implementation or factory; registration alone does not enable every capability.               |
+| Global defaults       | Assign providers and policies for this runtime/application instance, not an unscoped process singleton.       |
+| Resource group        | Give a named collection of resources common adapters and configuration without creating new state identities. |
+| Resource override     | Replace an allowed setting/provider or explicitly disable an inherited capability.                            |
+
+Resolve configuration as global defaults → resource group → resource override. Omitted values inherit; explicit disable values stop inheritance for that capability. Start with one primary configuration group per resource. Multiple-group composition, if later needed, must define precedence and reject unresolved conflicts. A configuration group is distinct from a transactional consistency group. Definition selection composition continues to use the existing immutable definition model.
+
+Adapter bindings/configuration resolve before work starts and remain immutable for that binding. Identity, authorization scope and authoritative-source mappings cannot be silently changed by local consumer overrides. Incompatible bindings cannot share a state address. Consumer priority or selection does not create a competing retry/timeout policy for already-shared work; shared-policy conflict semantics must be specified before exposing such overrides. Persisted keys include scope/resource/schema context; a group name alone is not an isolation boundary.
+
+Use capability-specific contracts for data acquisition/decoding, message transport, event routing, checkpoint storage, retained replay history, and command execution. A package may implement several capabilities over one shared connection, but snapshot storage, live messaging and replay are not interchangeable. Custom adapters use the same interfaces, validation and contract tests as official adapters; neither can bypass revision checks or mutate cached state through a privileged path. Validate unsupported combinations before starting work, including requesting replay from an adapter that cannot provide it.
+
+Registered providers are reused according to explicit scope and reference ownership. Resource bindings may have different immutable options/namespaces while sharing infrastructure. One resource's disposal releases its interests/listeners, not another resource's work. Infrastructure created by StateQL is closed by its owning runtime; injected application-owned connections remain application-owned. Async initialization failure cleans up only owned partial resources. Server globals may share connections but must preserve tenant/request authorization boundaries; SSR state remains request/session-isolated.
+
+Keep advanced capabilities opt-in and separately importable. The default GraphQL client requires no registry boilerplate, Redis, socket server or server companion. Official adapter packages may expose separate client/server entry points; verify browser bundles cannot import server drivers or secrets. Publish integrations only with runnable behavior and compatibility tests, not empty extension shells. Establish a public contract through a working official implementation plus a custom/application-owned integration without core edits. Configuration syntax and package names beyond the initial release set remain provisional.
+
 ### Minimal contracts
 
 The core exposes getSnapshot(), subscribe(listener), and dispose() on active handles. Snapshots are immutable, preserve their reference until relevant state changes, and contain data completeness, fetching state, and errors. Reading a snapshot has no network side effects. subscribe returns an unsubscribe function; dispose releases the handle's ownership and scheduled work.
@@ -146,7 +171,7 @@ Composition rules:
 - select narrows a consumer view; extend unions compatible selections. Neither mutates the parent.
 - A refresh selection is temporary and never edits the default query definition.
 - Repeated identical selections are idempotent. Conflicting mappings or argument definitions produce errors rather than depending on merge order.
-- Policy precedence is client, domain, feature, then consumer or operation. Only explicitly provided policy values override inherited values.
+- Infrastructure bindings and shared execution policies follow global defaults, resource group, then resource overrides. Domain/feature/consumer definitions still compose selections; consumer-specific interests or operation modifiers may vary only where the shared-work contract explicitly permits it. They cannot silently override another owner's retry, identity or authority policy. Only explicitly supplied allowed settings override inherited values.
 - Identity and source mappings cannot be silently overridden at a local form. A distinct binding is required if their semantics change.
 - Direct field names map to GraphQL by default. An explicit alias changes the application-facing name while retaining the canonical source field address. The proof of concept includes one alias to test this.
 - Extensions are validated against schema metadata. A consumer cannot invent a field merely because it exists in an untyped object.
@@ -241,9 +266,11 @@ Future event envelopes need scoped resource/record identity, change kind, affect
 
 The core can run in Node without an Angular or browser dependency. A server companion would be a separate package for publishing events and sharing generated definitions; it is not required for the GraphQL prototype. Server authorization remains server-owned. SSR use must create an isolated client per request/session rather than share a global cache between users. Persistent server caching and distributed coherence need their own later design.
 
+Support official default transports and optional integrations with infrastructure developers already own. A Socket.IO adapter must bind an existing client connection or server namespace, use StateQL-specific handlers without interfering with unrelated traffic, and follow the same provider/group/resource pattern on both sides. Socket.IO has its own protocol and is not wire-compatible with plain WebSockets. Its reconnection/recovery features should report into StateQL rather than compete with a second transport reconnect loop. Transport recovery may fail; StateQL still owns state-level baseline/replay reconciliation. [Socket.IO protocol](https://socket.io/docs/v4/), [connection recovery](https://socket.io/docs/v4/connection-state-recovery/)
+
 ## Stream cohesion, ordering, and offline recovery
 
-Added to the product roadmap October 19, 2026. The first proof of concept and P5 comparison remain the immediate delivery sequence. Preserve the necessary boundaries during P3.6/P3.8; full implementations are tracked as E1–E3 in [the task list](docs/TASKS.md). These goals should reduce application-owned coordination, with explicit limits on what the client can infer.
+Added October 19 and expanded October 20, 2026. P5 is complete; first publish the useful client foundation through R1, then deliver the capabilities below in independently usable releases. Full implementations are tracked as A1/A2 and E1–E4 in [the task list](docs/TASKS.md). These goals should reduce application-owned coordination, with explicit limits on what the client can infer.
 
 ### E1 Real-time stream cohesion
 
@@ -259,7 +286,11 @@ Expanded direction from the user, October 20, 2026: support two configurable eve
 
 An invalidation hash is a routing/equality token, not necessarily an ordered revision or proof that a cache is current. Define how notices for inactive/evicted resources are retained within bounded storage and how reconnect gaps trigger baseline validation. An offline client cannot learn about missed changes without replay, a revision handshake, or revalidation. Data updates require the E2 ordering contract, explicit deletion/list-membership semantics, and safe fallback to invalidation when an adapter cannot provide a complete update.
 
-Before implementing E1, notify the user and revisit this end-to-end design with them. The current retry/runtime work must preserve the boundary without building a stream framework ahead of that discussion.
+Active demand drives ingestion and recovery priority. Mounted views, background services and pending commands may all own interests; visibility is an optional framework-provided priority signal, not the sole definition of need. Aggregate interests per scoped resource/selection and reflect them in server subscriptions where supported. On recovery synchronize active/high-priority dependencies first. Inactive cached state may keep bounded invalidation/version metadata or be marked for revalidation on reuse; evicted state reacquires a baseline. Hiding one view must not suspend another owner. Never advance a resource's applied checkpoint merely because its updates were skipped; an expanded selection needs coverage-aware catch-up or a baseline.
+
+Reconnect distinguishes delivery cursors from authoritative data revisions. The server may replay retained changes, send current replacement values for the selection, or require a baseline if history/coverage/epoch is incompatible. Revision numbers alone cannot reconstruct a diff: replay requires retained events, historical snapshots or sufficient change metadata. Establish the baseline and resume point coherently, buffering or replaying concurrent changes so the snapshot-to-stream handoff has no gap. Bound buffers and trigger resynchronization rather than silently dropping required predecessors. Retained history can expire; baseline fallback is a required successful path. [etcd historical watches and compaction](https://etcd.io/docs/v3.6/learning/api/)
+
+The October 20 discussion establishes this direction. E1.0 still calls for a concrete protocol/defaults review and notification before implementation; do not repeat an open-ended vision discussion or treat these planned capabilities as implemented.
 
 ### E4 Adapter-based server event companion
 
@@ -269,6 +300,10 @@ Server bindings must declare how a change maps to scoped resource paths, argumen
 
 Publish committed changes rather than rolled-back intermediate writes. Specify event identity, authoritative revision coverage, connection authorization, tenant routing, replay/gap behavior, and backpressure. Where losing an event between database commit and publication is unacceptable, evaluate a transactional outbox or durable change feed rather than promising atomic delivery from an ordinary callback. A database change does not authorize broadcasting its raw row to clients; subscriptions must enforce server-owned access rules.
 
+Developers choose per resource whether an authorized database change projection may feed delivery directly or must pass through business logic. Reverse flow is local draft → explicit command → server authorization/validation → committed database change → acknowledgement/event → accepted client state. Immediate, debounced and Save-button submission are configurable policies; typing is not inherently a shared-state write. Online commands need operation identity, declared revision preconditions/conflict outcomes, and acknowledgement/event-echo correlation. Durable offline replay is a separate E3 capability.
+
+Multi-instance operation must support reconnecting to a different process or physical server without session affinity for state correctness. Shared history/checkpoints or a recoverable authoritative baseline must be accessible to that instance; process-local counters are insufficient. Transport-specific load-balancer routing requirements may still apply. Plan injectable Redis integrations using the same global/group/resource bindings: shared snapshot/checkpoint storage, live event distribution and retained history are separate capabilities that may share infrastructure. Redis Pub/Sub is not retained replay; Streams and persistence settings have different delivery/durability contracts. Neither a shared cache nor a connection adapter automatically supplies transactional business ordering. [Redis delivery semantics](https://redis.io/docs/latest/develop/pubsub/), [Redis persistence](https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/)
+
 Acceptance: a business event adapter and a deterministic database-change adapter both drive invalidation-only and direct-update examples without UI reducers. Tests cover inactive-page reacquisition, filtered-list changes, deletes, reconnect gaps, authorization/scope replacement, duplicate delivery, and HTTP fallback. The objective is consistent convergence under a documented revision/delivery contract, not unconditional instantaneous consistency across database, server, and every client.
 
 ### E2 Revision-aware ordering across transports
@@ -276,6 +311,8 @@ Acceptance: a business event adapter and a deterministic database-change adapter
 Problem: HTTP responses, poll results, stream messages, and mutation acknowledgements can arrive in a different order from the server changes they represent. Local request generations protect client work, but cannot establish server causality across independent channels.
 
 Use an adapter contract for authoritative revisions or sequence numbers with a declared comparison domain and server epoch. These are data revisions, not package semantic versions. HTTP snapshots and stream messages must provide comparable revisions for an ordering guarantee across transports. Wall-clock timestamps are an optional policy with documented clock-skew and tie limits, never the default basis for an absolute-consistency claim. Opaque equality tokens can support conditional writes without necessarily supporting ordering.
+
+Default to authoritative scalar revisions for a resource or consistency domain; allocation must be coordinated across its server instances. `User_123: v4` is a resource revision, not a vector clock. True vector clocks are an advanced future capability for independent concurrent writers, with explicit conflict reconciliation and metadata bounds. They detect causality/concurrency; they neither choose business-correct winners nor generate graph diffs automatically. Do not require them for ordinary single-authority deployments. [Dynamo versioning](https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf)
 
 Track revision coverage at the affected field/subtree and list-membership level. A newer update to field B must not cause an older-but-still-needed update to field A to be discarded merely because the record has a higher watermark. Parent nulls, identity replacement, deletion tombstones, and membership replacement need structural revision rules to prevent stale resurrection. Related fields requiring an atomic server snapshot must declare a group; independent field freshness does not imply transaction consistency.
 
@@ -320,7 +357,7 @@ Polling and retry timers share a scheduler so a poll does not spawn another retr
 
 ## Workspace and implementation sequence
 
-Create a simple TypeScript workspace when implementation begins. Pin mutually compatible tool and framework versions then. Use a small Node GraphQL fixture server with in-memory data; the library does not depend on its server framework. StateQL is a working name; package and repository availability are checked before publication.
+The TypeScript workspace and Node GraphQL fixture are implemented; dependencies are pinned and the library does not depend on the fixture server framework. The repository is `jchewitt/stateql`. The user selected the npm scope `@launch-echo` on October 20; package migration and registry ownership verification are R1 work.
 
 ```text
 stateql/
@@ -343,7 +380,7 @@ stateql/
     decisions.md
 ```
 
-The structure above describes the target workspace. The initial foundation makes core buildable and reserves the later module boundaries. The task list distinguishes completed scaffolding from the remaining runtime and demo implementation.
+The structure above describes module boundaries, not an exact directory manifest. See the README for current paths and the task list for implemented versus planned capabilities.
 
 | Milestone                         | Work                                                                                                                                  | Completion evidence                                                                          |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -354,7 +391,28 @@ The structure above describes the target workspace. The initial foundation makes
 | 4. Evaluate the hypothesis        | Compare declarations, coordination code, payloads, request counts, and correctness; test fake alternate source/event ingress          | Written continue, narrow, or stop decision with measurements and tradeoffs                   |
 | 5. Add field polling if warranted | Shared polling interests and global/local retry policies                                                                              | Fake-clock tests prove deduplication, teardown, and retry/poll coordination                  |
 
-Milestones 0 through 4 form the initial proof of concept. Future adapters are scheduled only after its result is assessed.
+Milestones 0 through 4 are complete through P5. The following delivery sequence governs future releases; the milestone table above records the original proof-of-concept progression.
+
+## Usable incremental releases
+
+Every release must deliver a complete, documented use case that works without installing a future milestone. Keep standalone HTTP/client operation usable when streaming is disabled, unavailable, or not installed. Future integrations extend the existing runtime rather than replace it with a second cache or impose a server deployment on client-only consumers. Experimental maturity does not mean a placeholder: each alpha needs working installed-package examples, tested limitations and a compatibility/migration policy.
+
+These are capability gates and sequencing, not reserved version numbers or claims of shipped support. Split large stages into smaller releases only when each has its own usable vertical slice. A polling release need not wait for unrelated timeouts, for example. Every release maps to reviewed task chunks, regression checks and a changelog; public API evolution must be explicit even during alpha.
+
+| Delivery stage                                     | Useful result at publication                                                                                                                                                                          | Task coverage and release evidence                                                                                                                                                                                                                          |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A. Standalone foundation alpha                     | Usable plain JavaScript/TypeScript GraphQL client and Angular integration: cached reads, selective refresh, composition, retry and ownership behavior. No stream/server/Redis installation required.  | R1 after completed P1–P5. Publish core/GraphQL/Angular as a compatible set; verify actual registry installs, runnable examples and documented supported subset. Local form policy remains a demo, not a published forms framework.                          |
+| B. Client lifecycle and configuration              | Add usable polling/timed-cache features and the common provider/group/resource pattern in testable increments. Preserve the default setup and existing resource identities.                           | P6, P7 and A1. Fake-clock tests for stale time, retention and request deadlines; shared-owner policy tests; official plus custom-provider examples and previous-release consumer checks. No server dependency.                                              |
+| C. Recoverable live state                          | Optional invalidation/data modes with authoritative ordering, active-demand synchronization, HTTP fallback and a working minimal server companion. Include a validated online command round trip.     | E1/E2 and the matching E4 vertical slice, using A1 patterns. Tunnel/reconnect, baseline-to-stream handoff, missing history, field/membership ordering and acknowledgement/event-echo tests. Both configured streaming and streaming-off examples must work. |
+| D. Existing infrastructure and distributed servers | Integrate application-owned Socket.IO connections, multi-instance server operation and Redis capabilities through optional packages. Add REST acquisition as a separately releasable complete source. | A2 and remaining E4 work. Custom adapters require no core edits; reconnect to another instance, borrowed-connection cleanup, scoped replay and browser/server dependency isolation pass. Publish each integration when its own scenario is complete.        |
+| E. Persisted reads                                 | Restore scoped cached state/checkpoints across PWA restarts and reconnect safely, with or without streaming.                                                                                          | E3.1–E3.3 plus applicable recovery/isolation tests. Exercise schema migration, corrupted/expired storage and restore-versus-live-update races. No implicit write replay.                                                                                    |
+| F. Durable commands                                | Opt-in offline commands with explicit idempotency, preconditions, conflict and uncertain-acknowledgement handling.                                                                                    | E3.4–E3.7 and server command support. Crash/restart, duplicate delivery, expired idempotency windows, scope changes and multi-tab ownership tests; preserve unsaved drafts separately.                                                                      |
+
+The core/GraphQL/Angular names selected for stage A are `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql`, and `@launch-echo/stateql-angular`. Existing manifests still use `@jchewitt` until R1 migrates them together with imports, peers, generated code, fixtures and release checks. Scope access, exact versions and trusted publishing remain to verify/configure; this plan does not enable publication. Server/adapter package names are chosen only when implemented packages are ready.
+
+Release acceptance always includes independent review before commit, `pnpm check`, relevant browser/transport recovery scenarios, clean installed-package examples, dependency-boundary checks, and passing hosted CI. Do not publish empty server/adapter packages in anticipation of later hosting functionality. Self-hosted server integration is optional; managed hosting is not a prerequisite or an assumed deliverable. Document the two sides together with parallel setup examples as soon as the server slice ships, including provider registration, groups, overrides, ownership, diagnostics and cleanup.
+
+The long-term server/client product must demonstrate failure behavior as part of its feature, not postpone it to a later robustness release: tunnel disconnection, reconnect to another instance, HTTP response after newer push, replay gaps, duplicate events, server epoch change, inactive-resource return, and command acknowledgement loss. Whether this reduces developer coordination is measured against equivalent existing integrations; no ecosystem-wide uniqueness claim follows from the architecture alone.
 
 ## Acceptance scenarios
 
@@ -393,10 +451,10 @@ Continue if StateQL removes repeated narrow-query/key/update wiring, maintains t
 
 Narrow the project to a compiler/planner layer over an existing cache if that delivers most of the benefit with less maintenance. Stop or redesign if ordinary Apollo helpers provide comparably simple behavior, or if StateQL's configuration merely relocates the same complexity. A smaller public API is valuable only when its behavior is also predictable.
 
-## Decisions before implementation
+## Current decisions and next delivery
 
-Confirmed direction: Angular first, framework-independent core, GraphQL first, shared stable state with selective invalidation, centralized definitions with reusable overrides, and an Apollo comparison. Git and remote repository creation follow planning.
+Confirmed direction: Angular first, framework-independent core, GraphQL first, stable shared state with selective invalidation, centralized definitions with reusable overrides, and an evidence-backed Apollo comparison. P5 recommends continuing the independent runtime as an experiment.
 
-Proposed defaults for review: schema generation for strong typing; path-and-argument-scoped sharing rather than global normalization; identity-required selective list updates; active-handle refetch on invalidation; field polling after the initial comparison; small explicit form binding instead of a form package.
+Preserve schema-informed definitions with optional generated types, path/argument-scoped sharing, identity-required selective list updates, active-handle refetch on invalidation, and editor-local drafts. The future product uses consistent client/server provider registration and global/group/resource configuration, with optional acquisition, transport, persistence and server integrations.
 
-The next working session should walk through one definition from domain configuration to feature subset to form selection to generated accountId refresh. Settle any changes to those defaults, then begin Milestone 1 with the Apollo baseline and shared fixture server.
+Next delivery is R1: migrate to the selected `@launch-echo` scope, finish compatible three-package publication, validate packed/installed consumers, and hand off the exact trusted-publisher settings before attempting publication. Subsequent releases follow the usable capability gates above. This planning update implements no new adapters, timers, streams or release automation.

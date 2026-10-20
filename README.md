@@ -71,11 +71,13 @@ Run `pnpm demo:acquire` for actual StateQL HTTP requests against an isolated fix
 | `examples/vanilla`       | JavaScript/TypeScript consumers and fake whole-resource/event adapters         |
 | `scripts`, `tests`       | Package/release checks and Angular browser scenarios                           |
 
-Core has no runtime, UI-framework, GraphQL, or platform dependency. The initial package identifier `@jchewitt/stateql-core` is provisional until npm scope ownership is confirmed. It is not a claim that the npm scope has been reserved.
+Core has no runtime, UI-framework, GraphQL, or platform dependency. The user selected `@launch-echo` for the first core/GraphQL/Angular release. Workspace manifests still use the provisional `@jchewitt` names; release preparation will migrate them together and verify registry access before publication.
 
 ## Plan and delivery
 
 Planned follow-on goals include server-driven invalidation notices and direct state updates, an optional server companion with event/database adapters, revision-aware ordering across transports, and framework-independent persistence/offline recovery. These are roadmap commitments to investigate and validate, not implemented features; see [their contracts, priorities, and limits](PLAN.md#stream-cohesion-ordering-and-offline-recovery).
+
+The [incremental release plan](PLAN.md#usable-incremental-releases) keeps every publication independently usable, starting with the standalone client. Client and server will share a recognizable provider-registration and global/resource-group/resource-override pattern, with optional official or custom integrations such as Socket.IO and Redis. These remain planned capabilities; installing the foundation will not require them or a hosted service. Recovery after interrupted connections and server-instance changes is part of the future synchronization release's acceptance criteria.
 
 - [Architecture and proof-of-concept plan](PLAN.md)
 - [Task breakdown and acceptance criteria](docs/TASKS.md)

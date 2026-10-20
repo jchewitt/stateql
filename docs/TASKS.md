@@ -1,6 +1,6 @@
 # StateQL task breakdown
 
-Complete each chunk with its focused tests, independent agent review, and a passing `pnpm check`. Keep later package APIs internal until a concrete use case exercises them. The current delivery includes the repository foundation, Apollo comparison baseline, typed operation planner, and the first shared-store runtime chunk.
+Complete each chunk with its focused tests, independent agent review, and a passing `pnpm check`. Keep later package APIs internal until a concrete use case exercises them. P1–P5 are complete; R1 is the next delivery. Later work follows [usable incremental releases](../PLAN.md#usable-incremental-releases), with a runnable vertical slice at every publication and continued support for standalone client operation.
 
 ## F0 Repository foundation
 
@@ -90,7 +90,7 @@ Completed comparison: [method, measurements and decision](COMPARISON.md). Run `p
 - [ ] Add a typed runtime result projection while preserving partial/missing/error states; current generic snapshots add presentation narrowing code.
 - [ ] Measure larger schemas, record counts, browser memory and lower-powered devices before making scaling/performance claims.
 - [ ] Evaluate reusable compiled operation plans with argument, scope and identity regression coverage.
-- [ ] Define inactive retention and request timeout ownership/cancellation before presenting the prototype as production-ready.
+- [ ] Complete P7's stale-time, inactive-retention and request-timeout contracts before presenting the prototype as production-ready.
 
 These findings are not retroactively required to complete the initial comparison. Document limitations in R1's experimental release; schedule runtime changes in separately reviewed chunks.
 
@@ -100,21 +100,57 @@ Depends on a continue decision in P5.
 
 - [ ] P6.1 Add explicit interval units and owner-bound polling interests.
 - [ ] P6.2 Share identical interests and avoid overlapping poll/retry chains.
-- [ ] P6.3 Apply inherited global/domain/consumer policies and expose field-specific failure states.
+- [ ] P6.3 Apply A1's resolved global/group/resource policies and expose field-specific failure states. Define how differing owner polling interests combine; do not give each consumer an incompatible retry policy for shared work.
 - [ ] P6.4 Test fake-clock cadence, fastest-owner departure, retries, and final-owner disposal.
+
+## P7 Standalone client timing and retention
+
+Stage B follow-on to R1; coordinate configuration with A1. Each implemented capability may ship separately with its complete lifecycle contract. These timers are not implemented by the current retry-count configuration.
+
+- [ ] P7.1 Define per-field stale time, inactive retention and request deadline as distinct policies with explicit units and disable/inheritance behavior.
+- [ ] P7.2 Implement freshness expiry and on-demand/active revalidation without treating a stale value as absent or manufacturing a stream dependency.
+- [ ] P7.3 Evict inactive state under bounded retention while preserving active owners and isolating tenant/schema contexts.
+- [ ] P7.4 Implement shared-request deadlines with explicit retry interaction; one owner's disposal must not cancel another owner's valid work.
+- [ ] P7.5 Test expiry, reacquisition, final-owner cleanup, shared work, retry/deadline races and disposal with deterministic clocks; demonstrate normal client use with all streaming disabled.
+
+## A1 Consistent provider and resource configuration
+
+Stage B, with paired server examples completed as part of stage C. See [the shared architecture contract](../PLAN.md#consistent-client-and-server-adapter-configuration). Reuse portable implementation primitives where semantics match; keep different client/server responsibilities in separate interfaces.
+
+- [ ] A1.1 Implement provider tokens with supplied instances and sync/async factories, explicit runtime scope and optional framework DI bridges. Plain JavaScript must not require a DI container.
+- [ ] A1.2 Separate provider registration from assignment; resolve immutable global defaults → one primary resource group → resource overrides, with explicit disabling and conflict diagnostics.
+- [ ] A1.3 Keep groups out of state identity; reject incompatible authority/identity/scope bindings and define conflicts for owners of shared scheduled work.
+- [ ] A1.4 Define small capability-specific contracts as real implementations arrive: acquisition/decoding, transport, event routing, checkpoints, replay history and commands. Validate requested capabilities before starting work.
+- [ ] A1.5 Share connections safely across bindings; test owned versus injected infrastructure, reference cleanup, initialization failure and resource disposal without cross-resource teardown.
+- [ ] A1.6 Prove official and user-supplied implementations use the same validation/commit boundaries and require no core edits. Preserve simple default GraphQL setup and installed JS/TS consumers.
+- [ ] A1.7 Add parallel client/server setup examples and contract tests for registration, groups, overrides, initialization, diagnostics and disposal when the server vertical slice ships. Test browser/server dependency isolation.
+
+## A2 Optional infrastructure and source integrations
+
+Stage D after the recoverable live-state slice, independently releasable per useful integration. Adapter package names remain provisional; publish no empty shells.
+
+- [ ] A2.1 Add a Socket.IO client/server transport integration using the existing connection/namespace, isolated handlers and borrowed ownership. Reuse transport reconnect/recovery signals; failed recovery triggers StateQL resynchronization.
+- [ ] A2.2 Pass shared streaming/recovery scenarios using official defaults and an application-owned/custom transport without changing core. Document protocol compatibility and optional peer dependencies.
+- [ ] A2.3 Add Redis-backed checkpoint storage, live distribution and retained-history capabilities with separate contracts, shared infrastructure where safe, and global/group/resource assignment. Validate retention/replay/durability capabilities explicitly.
+- [ ] A2.4 Demonstrate reconnect to another server instance using shared history or authoritative baseline; cover epoch changes, expired history, authorization, cleanup and bounded backpressure. Document transport-specific load-balancer requirements separately.
+- [ ] A2.5 Implement a production REST source with explicit endpoint/field mappings and requested/fetched/committed coverage; test structural nulls/deletion/identity changes and demonstrate a standalone HTTP-only application.
+- [ ] A2.6 Publish each completed optional integration with installed-package examples, compatibility/migration notes, custom-provider tests and a streaming-off regression. Server libraries must not enter browser bundles.
 
 ## R1 First experimental npm release
 
 Depends on a useful implemented package, P5, and registry setup.
 
+Stage A publishes the implemented foundation, independently usable before any server/hosting integration. The user selected `@launch-echo` on October 20: intended packages are `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql` and `@launch-echo/stateql-angular`. Selection is confirmed; npm account access, manifest migration, exact versions and trusted publishing are not complete. The scope change is implemented as a reviewed R1 chunk, not partially applied by this planning update.
+
 - [ ] R1.0 Notify the user when P4/P5 and package acceptance are complete, identify the release packages/versions, and provide the exact trusted-publisher configuration for the user to set up. Requested October 20; do not silently enable publication or wait until after a publish attempt to request setup.
-- [ ] R1.1 Confirm npm identity and ownership of the chosen package scope; update metadata if necessary.
+- [ ] R1.1 Verify npm identity/access to the selected `@launch-echo` scope; migrate all three manifests, imports, peer dependencies, generated modules, fixtures, checks, Changesets configuration and release metadata together.
 - [ ] R1.2 Confirm the current npm flow for establishing new packages and trusted publishing; configure `jchewitt/stateql`, `publish.yml`, and environment `npm`.
 - [ ] R1.2a Complete automated CI publication for the approved release set, including dependency order, Angular APF output, version/peer checks, OIDC/provenance, and safe handling of partial multi-package publication. The current manually dispatched scaffold publishes core only.
 - [ ] R1.3 Add the first prerelease Changeset, changelog, compatibility requirements, and actual usage examples.
 - [ ] R1.4 Enable release readiness in a reviewed change; keep experimental versions on `next`.
 - [ ] R1.5 Validate the tagged commit, packed artifacts, independent review, and hosted CI before dispatching the release workflow.
 - [ ] R1.6 Verify registry metadata, provenance, and a clean installation from npm after publication.
+- [ ] R1.7 Verify the released JS/TS and Angular examples work without server companion, Redis or streaming packages; document the supported subset, provisional extension interfaces and future compatibility/migration policy. Do not imply that demo-only forms helpers or planned timers are public features.
 
 No npm publish is part of F0. The scaffold does not reserve an npm name or configure an npm account.
 
@@ -122,7 +158,7 @@ No npm publish is part of F0. The scaffold does not reserve an npm name or confi
 
 Planned product goal; depends on P3.8 and a continue decision in P5. Design alongside E2. See [the contract and acceptance criteria](../PLAN.md#e1-real-time-stream-cohesion).
 
-- [ ] E1.0 Notify the user before streaming implementation and review the expanded server-driven invalidation/data-sync design together.
+- [ ] E1.0 Notify the user before streaming implementation and review the concrete protocol/defaults against the agreed October 20 direction. The vision discussion is complete; this is a focused implementation review.
 - [ ] E1.1 Define a validated, scoped event envelope and reusable routing from subscription/custom payloads to canonical resource/record/field addresses.
 - [ ] E1.2 Feed pushes through the same ordering/commit/notification path as reads, without per-component cache reducers.
 - [ ] E1.3 Define explicit list membership operations and safe invalidation when filter/path routing cannot be inferred.
@@ -131,6 +167,8 @@ Planned product goal; depends on P3.8 and a continue decision in P5. Design alon
 - [ ] E1.6 Compare application code against Apollo automatic normalized updates and explicit list updates, including required adapter mappings on both sides.
 - [ ] E1.7 Add configurable invalidation-only and data-update modes over WebSocket/SSE; keep client-only invalidation/fetch behavior available without a server companion.
 - [ ] E1.8 Define bounded retention of invalidation tokens for inactive resources, on-demand reacquisition, revision handshakes/replay, and gap-triggered validation.
+- [ ] E1.9 Aggregate active interests from views, services and commands; treat visibility as priority, update server subscriptions where supported, and prioritize active recovery without advancing skipped coverage checkpoints.
+- [ ] E1.10 Implement coherent baseline-to-stream handoff and bounded replay/buffering; distinguish delivery cursor from covered data revisions, handle expanded selections and expired history, and preserve streaming-off/HTTP fallback behavior.
 
 Exit: ordinary field pushes update all interested consumers through one declared binding; list and reconnect semantics are explicit and tested.
 
@@ -144,6 +182,7 @@ Planned product goal; depends on P3.6 and a continue decision in P5. Define the 
 - [ ] E2.4 Distinguish replacement snapshots from dependent deltas; implement deduplication, bounded gap handling, and authoritative resynchronization.
 - [ ] E2.5 Exercise HTTP/poll/push/command-ack reordering, duplicates, missing predecessors, clock ties/skew, epoch changes, and missing revision metadata with deterministic sources.
 - [ ] E2.6 Expose drop/conflict/resync diagnostics and document the conditional consistency guarantee.
+- [ ] E2.7 Default to coordinated authoritative scalar revisions; document vector clocks as an advanced independent-writer extension requiring conflict policy, not a prerequisite or a graph-diff algorithm.
 
 Exit: comparable newer data cannot be rolled back by older overlapping updates; unsupported ordering cannot silently claim success or absolute consistency.
 
@@ -163,16 +202,19 @@ Exit: persisted reads recover predictably; supported queued commands replay unde
 
 ## E4 Adapter-based server event companion
 
-Planned extension requested October 20, 2026; design with E1/E2 after the user discussion. See [server contracts and acceptance criteria](../PLAN.md#e4-adapter-based-server-event-companion).
+Planned extension requested October 20, 2026; deliver the minimal usable slice with E1/E2 in stage C and distributed integrations through A2 in stage D. See [server contracts and acceptance criteria](../PLAN.md#e4-adapter-based-server-event-companion).
 
 - [ ] E4.1 Define separate event-input, routing/projection, and delivery interfaces; keep server/database dependencies outside portable core.
 - [ ] E4.2 Implement business-event input and a deterministic database-change-feed example, publishing committed changes with event IDs and revision coverage.
 - [ ] E4.3 Route scoped invalidation tokens or data updates through WebSocket/SSE delivery, with server authorization and safe fallback for computed fields/filtered lists.
 - [ ] E4.4 Define durable publication options, replay, backpressure, gaps, and resynchronization without promising atomic database/event delivery from ordinary callbacks.
 - [ ] E4.5 Demonstrate both modes end to end, including inactive pages, deletes, duplicate/out-of-order events, reconnect, scope changes, and client-only fallback.
+- [ ] E4.6 Apply A1's shared configuration primitives and recognizable setup pattern on the server, while keeping authorization and tenant isolation server-owned. Pair client/server documentation and lifecycle tests.
+- [ ] E4.7 Allow resource-specific authorized database projections or business-service processing; validate computed/filter-sensitive changes and fall back to invalidation when mapping is insufficient.
+- [ ] E4.8 Implement an online command round trip with operation identity, declared revision preconditions, validation, committed change publication and acknowledgement/event-echo correlation. Keep local drafts and optional later durable replay distinct.
 
 Exit: adapters translate declared committed server changes into authorized client updates or invalidations under an explicit delivery/ordering contract.
 
 ## Other later extensions
 
-React adapter, full RxJS adapter, production REST source, pagination, global entity normalization, and SSR each require a separate task proposal after the core experiment. E1–E4 track stream, ordering, offline, and server event-companion goals explicitly. Preserve their execution/commit boundaries now; none of these roadmap items is implemented or a new prerequisite for R1 by default.
+React adapter, full RxJS adapter, pagination, global entity normalization, and SSR each require a separate task proposal. A1/A2 and E1–E4 track configuration, REST/transport/infrastructure integrations, stream ordering, offline recovery and the server companion. Preserve their boundaries now; none is implemented or a new prerequisite for R1 by default. Managed hosting is not assumed. Each later publication must add a useful tested capability while retaining the standalone client mode.
