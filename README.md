@@ -4,7 +4,7 @@
 
 GraphQL-first state management built around composable definitions and selective field refresh.
 
-**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent scheduling and StateQL's Angular adapter remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
+**Status: working Apollo baseline and StateQL selective refresh.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent reads share identical work, protect newer fields from late responses, and cancel when their last interested owner leaves. Retries and StateQL's Angular adapter remain planned; there is no published or production-ready package. The baseline establishes what Apollo already does before testing whether StateQL reduces application coordination work.
 
 With a schema-generated invoice definition and client:
 

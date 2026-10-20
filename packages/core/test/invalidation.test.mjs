@@ -178,7 +178,7 @@ test('invalidation during initial acquisition survives its response even before 
   assert.equal(handle.getSnapshot().stale, false);
 });
 
-test('default invalidation waits for a new read; an earlier full refresh cannot clear it', async (t) => {
+test('default invalidation starts a newer read; an earlier full refresh cannot overwrite it', async (t) => {
   const blocked = gate(),
     began = gate();
   let calls = 0;
@@ -195,7 +195,7 @@ test('default invalidation waits for a new read; an earlier full refresh cannot 
   const full = client.watch(source);
   const duplicate = client.watch(source);
   await Promise.all([full.ready, duplicate.ready]);
-  const oldRefresh = full.refresh();
+  const oldRefresh = assert.rejects(full.refresh(), /superseded/);
   await began.promise;
   const pending = duplicate.invalidate('accountId');
   assert.equal(full.getSnapshot().stale, true);
@@ -209,8 +209,7 @@ test('default invalidation waits for a new read; an earlier full refresh cannot 
   });
   blocked.resolve();
   await Promise.all([oldRefresh, pending]);
-  assert.ok(observations.some(([value, stale]) => value === 2 && stale));
-  assert.ok(!observations.some(([value, stale]) => value === 2 && !stale));
+  assert.ok(!observations.some(([value]) => value === 2));
   assert.deepEqual(
     { ...full.getSnapshot().records[0].data },
     { accountId: 3, amount: 2 },

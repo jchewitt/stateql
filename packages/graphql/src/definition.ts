@@ -10,8 +10,10 @@ import {
   type ResolvedField,
   type ResourceScope,
   type AcquisitionSource,
+  type AcquisitionContext,
 } from '@jchewitt/stateql-core';
 import { decodeAcquisition, validateAcquisition } from './decoder.js';
+import type { GraphQLTransport } from './client.js';
 import { compileOperation, type PreparedOperation } from './operation.js';
 import {
   containsList,
@@ -202,12 +204,18 @@ export class BoundDefinition<R> {
   }
 
   /** Provisional execution boundary; read coverage is always a validated subset. */
-  asSource(
-    transport: (operation: PreparedOperation) => Promise<unknown>,
-  ): AcquisitionSource {
+  asSource(transport: GraphQLTransport): AcquisitionSource {
     validateAcquisition(this.context, this.path, this.selection);
     // Validate the initial operation (including list identities) before scheduling work.
     this.prepare();
+    const prepare = (fields: readonly ResolvedField[]) =>
+      compileOperation(
+        this.context,
+        this.path,
+        this.segments,
+        narrowFields(this.selection, fields),
+        this.stateAddress,
+      );
     const last = this.path.at(-1)!;
     return Object.freeze({
       stateAddress: this.stateAddress,
@@ -215,21 +223,28 @@ export class BoundDefinition<R> {
       collection: containsList(
         fieldAt(this.context, last.parentType, last.name),
       ),
-      read: async (fields: readonly ResolvedField[]) => {
-        const selection = narrowFields(this.selection, fields);
-        const operation = compileOperation(
-          this.context,
-          this.path,
-          this.segments,
-          selection,
-          this.stateAddress,
+      fingerprint: (fields: readonly ResolvedField[]) =>
+        prepare(fields).fingerprint,
+      read: async (
+        fields: readonly ResolvedField[],
+        context: AcquisitionContext,
+      ) => {
+        const operation = prepare(fields);
+        const controller = new AbortController();
+        const unsubscribe = context.signal.subscribe(() =>
+          controller.abort(context.signal.reason),
         );
-        return decodeAcquisition(
-          this.context,
-          this.path,
-          operation,
-          await transport(operation),
-        );
+        try {
+          if (controller.signal.aborted) throw controller.signal.reason;
+          return decodeAcquisition(
+            this.context,
+            this.path,
+            operation,
+            await transport(operation, { signal: controller.signal }),
+          );
+        } finally {
+          unsubscribe();
+        }
       },
     });
   }

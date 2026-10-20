@@ -199,7 +199,7 @@ test('disposing a client rejects late work and isolates a new client', async () 
   client.dispose();
   const frozen = handle.getSnapshot();
   release();
-  await assert.rejects(handle.ready, /owners/);
+  await assert.rejects(handle.ready, /disposed/);
   assert.equal(handle.getSnapshot(), frozen);
   assert.throws(() => client.watch(base.bind(args, scope)), /disposed/);
 });

@@ -324,6 +324,26 @@ export class StateStore {
       dispose: () => view.dispose(),
     });
   }
+  /** Coordinator structural guard; no snapshot mutation or resource creation. */
+  matchesObject(
+    address: string,
+    record: RecordIdentity,
+    path: FieldPath,
+    objectIdentity?: RecordIdentity,
+  ): boolean {
+    this.assertActive();
+    const cell = this.resources
+      .get(address)
+      ?.records.get(canonicalInput(identity(record)))
+      ?.cells.get(key(pathTokens(path)));
+    return (
+      cell?.kind === 'object' &&
+      cell.identity ===
+        (objectIdentity === undefined
+          ? undefined
+          : canonicalInput(identity(objectIdentity)))
+    );
+  }
   /** Apply one validated batch atomically. Membership must precede writes to newly admitted records. */
   commit(address: string, changes: readonly StateChange[]): void {
     const resource = this.resource(address);
