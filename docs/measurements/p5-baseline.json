@@ -1,0 +1,292 @@
+{
+  "formatVersion": 1,
+  "measuredAt": "2026-10-20T21:02:05.280Z",
+  "sourceCommit": "093fa869d719512aa78ab6d9d05993f5487d0d20",
+  "sourceDirty": true,
+  "environment": {
+    "node": "v24.2.0",
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "AMD Ryzen 9 7900X 12-Core Processor            ",
+    "esbuild": "0.28.1"
+  },
+  "versions": {
+    "apollo": "4.3.4",
+    "graphql": "16.14.2",
+    "angular": "21.2.25",
+    "apolloAngular": "14.2.0"
+  },
+  "declarationsByCategory": {
+    "apolloReadDocuments": {
+      "file": "apps/billing-demo/src/data/operations.ts",
+      "names": [
+        "INVOICE_IDENTITY",
+        "INVOICE_DETAILS",
+        "BILLING_INVOICES",
+        "INVOICE_ACCOUNTS"
+      ],
+      "nonblankLines": 49,
+      "utf8Bytes": 887
+    },
+    "apolloResponseTypes": {
+      "file": "apps/billing-demo/src/data/operations.ts",
+      "names": [
+        "BillingVariables",
+        "Invoice",
+        "BillingResult",
+        "AccountInvoice",
+        "AccountResult"
+      ],
+      "nonblankLines": 35,
+      "utf8Bytes": 869
+    },
+    "stateqlSelections": {
+      "file": "apps/billing-demo/src/data/stateql-definitions.ts",
+      "names": ["billingInvoices", "accountMonitor"],
+      "nonblankLines": 12,
+      "utf8Bytes": 302
+    },
+    "apolloReadPanelMembers": {
+      "file": "apps/billing-demo/src/invoice-panel.ts",
+      "names": ["InvoicePanel"],
+      "nonblankLines": 44,
+      "utf8Bytes": 1545
+    },
+    "stateqlReadPanelMembers": {
+      "file": "apps/billing-demo/src/stateql-panel.ts",
+      "names": ["StateQLPanel"],
+      "nonblankLines": 60,
+      "utf8Bytes": 1875
+    },
+    "apolloFormsBinding": {
+      "file": "apps/billing-demo/src/forms/sources.ts",
+      "names": ["apolloEditorSource"],
+      "nonblankLines": 83,
+      "utf8Bytes": 2638
+    },
+    "stateqlFormsBinding": {
+      "file": "apps/billing-demo/src/forms/sources.ts",
+      "names": ["stateqlEditorSource", "stateField"],
+      "nonblankLines": 55,
+      "utf8Bytes": 1693
+    }
+  },
+  "sourceFiles": {
+    "apps/billing-demo/src/data/generated/billing.ts": {
+      "nonblankLines": 54,
+      "utf8Bytes": 1824
+    },
+    "scripts/generate-billing.ts": {
+      "nonblankLines": 29,
+      "utf8Bytes": 1041
+    },
+    "apps/billing-demo/src/data/cache.ts": {
+      "nonblankLines": 11,
+      "utf8Bytes": 384
+    },
+    "apps/billing-demo/src/stateql-client.ts": {
+      "nonblankLines": 18,
+      "utf8Bytes": 565
+    },
+    "apps/billing-demo/src/billing.service.ts": {
+      "nonblankLines": 26,
+      "utf8Bytes": 890
+    },
+    "apps/billing-demo/src/main.ts": {
+      "nonblankLines": 31,
+      "utf8Bytes": 1182
+    },
+    "apps/billing-demo/src/forms/draft.ts": {
+      "nonblankLines": 234,
+      "utf8Bytes": 7509
+    },
+    "apps/billing-demo/src/forms/save-account.ts": {
+      "nonblankLines": 66,
+      "utf8Bytes": 2122
+    },
+    "apps/billing-demo/src/forms/invoice-editor.ts": {
+      "nonblankLines": 105,
+      "utf8Bytes": 3314
+    },
+    "apps/billing-demo/src/forms/invoice-editor.html": {
+      "nonblankLines": 69,
+      "utf8Bytes": 2235
+    },
+    "apps/billing-demo/src/forms/billing-editors.ts": {
+      "nonblankLines": 23,
+      "utf8Bytes": 776
+    }
+  },
+  "bundles": [
+    {
+      "entry": "apollo",
+      "minifiedBytes": 203745,
+      "gzipBytes": 61049,
+      "externalImports": []
+    },
+    {
+      "entry": "stateql",
+      "minifiedBytes": 172401,
+      "gzipBytes": 45143,
+      "externalImports": []
+    },
+    {
+      "entry": "apollo-angular",
+      "minifiedBytes": 213198,
+      "gzipBytes": 62771,
+      "externalImports": ["@angular/core", "@angular/common/http"]
+    },
+    {
+      "entry": "stateql-angular",
+      "minifiedBytes": 175503,
+      "gzipBytes": 46219,
+      "externalImports": ["@angular/core"]
+    }
+  ],
+  "packages": [
+    {
+      "directory": "packages/core",
+      "archiveBytes": 20617,
+      "unpackedSourceBytes": 84933,
+      "files": 29
+    },
+    {
+      "directory": "packages/graphql",
+      "archiveBytes": 14500,
+      "unpackedSourceBytes": 54645,
+      "files": 27
+    },
+    {
+      "directory": "packages/angular/dist",
+      "archiveBytes": 7828,
+      "unpackedSourceBytes": 30776,
+      "files": 7
+    }
+  ],
+  "timings": [
+    {
+      "name": "stateql runtime schema initialization",
+      "warmup": 100,
+      "batches": 9,
+      "iterationsPerBatch": 200,
+      "medianBatchMeanUs": 131.09699999999975,
+      "minBatchMeanUs": 105.1825000000008,
+      "maxBatchMeanUs": 187.20850000000155,
+      "batchMeanMicroseconds": [
+        183.77499999999824, 131.09699999999975, 141.1609999999996,
+        142.19249999999874, 187.20850000000155, 122.94799999999896,
+        121.25150000000076, 105.1825000000008, 126.87449999999899
+      ]
+    },
+    {
+      "name": "stateql bind definition",
+      "warmup": 100,
+      "batches": 9,
+      "iterationsPerBatch": 200,
+      "medianBatchMeanUs": 6.871499999999742,
+      "minBatchMeanUs": 6.334000000001652,
+      "maxBatchMeanUs": 8.16899999999805,
+      "batchMeanMicroseconds": [
+        8.109499999998206, 7.3299999999994725, 6.967499999998381,
+        6.871499999999742, 6.664499999999407, 6.334000000001652,
+        6.338499999999385, 8.16899999999805, 6.727499999999509
+      ]
+    },
+    {
+      "name": "stateql prepare full (construct + validate + print + freeze)",
+      "warmup": 100,
+      "batches": 9,
+      "iterationsPerBatch": 200,
+      "medianBatchMeanUs": 108.95400000000109,
+      "minBatchMeanUs": 104.59350000000086,
+      "maxBatchMeanUs": 128.30050000000028,
+      "batchMeanMicroseconds": [
+        128.30050000000028, 115.1279999999997, 119.51900000000023,
+        108.95400000000109, 104.59350000000086, 106.28950000000032,
+        105.98849999999857, 119.06450000000177, 105.25200000000041
+      ]
+    },
+    {
+      "name": "stateql prepare accountId (construct + validate + print + freeze)",
+      "warmup": 100,
+      "batches": 9,
+      "iterationsPerBatch": 200,
+      "medianBatchMeanUs": 83.94399999999678,
+      "minBatchMeanUs": 80.92499999999745,
+      "maxBatchMeanUs": 85.8239999999978,
+      "batchMeanMicroseconds": [
+        83.14699999999903, 85.27849999999944, 83.94399999999678,
+        85.8239999999978, 85.28499999999894, 83.73450000000048,
+        84.4340000000011, 80.92499999999745, 81.83399999999892
+      ]
+    },
+    {
+      "name": "apollo cached transform + print predeclared full document",
+      "warmup": 100,
+      "batches": 9,
+      "iterationsPerBatch": 200,
+      "medianBatchMeanUs": 26.406999999999243,
+      "minBatchMeanUs": 25.23649999999634,
+      "maxBatchMeanUs": 32.41100000000188,
+      "batchMeanMicroseconds": [
+        32.41100000000188, 29.227500000001783, 29.83850000000075,
+        26.366500000003725, 26.406999999999243, 25.246000000001914,
+        25.49149999999827, 26.516999999998916, 25.23649999999634
+      ]
+    },
+    {
+      "name": "apollo cached transform + print predeclared narrow document",
+      "warmup": 100,
+      "batches": 9,
+      "iterationsPerBatch": 200,
+      "medianBatchMeanUs": 16.637000000000626,
+      "minBatchMeanUs": 16.230000000000473,
+      "maxBatchMeanUs": 18.40650000000096,
+      "batchMeanMicroseconds": [
+        16.79650000000038, 16.730500000003303, 18.40650000000096,
+        16.230000000000473, 16.25949999999648, 17.228000000000065,
+        16.637000000000626, 16.329000000000633, 16.43699999999626
+      ]
+    }
+  ],
+  "network": [
+    {
+      "mode": "apollo",
+      "operations": [
+        {
+          "query": "query BillingInvoices($tenantId: ID!) {\n  billing(tenantId: $tenantId) {\n    tenantId\n    invoices {\n      ...InvoiceDetails\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment InvoiceDetails on Invoice {\n  ...InvoiceIdentity\n  accountId\n  amountCents\n  status\n  user {\n    id\n    tenantId\n    name\n    __typename\n  }\n  __typename\n}\n\nfragment InvoiceIdentity on Invoice {\n  id\n  tenantId\n  __typename\n}",
+          "variables": {
+            "tenantId": "A"
+          },
+          "responseBytes": 453
+        },
+        {
+          "query": "query InvoiceAccounts($tenantId: ID!) {\n  billing(tenantId: $tenantId) {\n    tenantId\n    invoices {\n      ...InvoiceIdentity\n      accountId\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment InvoiceIdentity on Invoice {\n  id\n  tenantId\n  __typename\n}",
+          "variables": {
+            "tenantId": "A"
+          },
+          "responseBytes": 235
+        }
+      ]
+    },
+    {
+      "mode": "stateql",
+      "operations": [
+        {
+          "query": "query StateQLRead($v0: ID!) {\n  billing(tenantId: $v0) {\n    __typename\n    invoices {\n      __typename\n      accountId\n      amountCents\n      id\n      status\n      tenantId\n      user {\n        __typename\n        id\n        name\n        tenantId\n      }\n    }\n    tenantId\n  }\n}",
+          "variables": {
+            "v0": "A"
+          },
+          "responseBytes": 453
+        },
+        {
+          "query": "query StateQLRead($v0: ID!) {\n  billing(tenantId: $v0) {\n    __typename\n    invoices {\n      __typename\n      accountId\n      id\n      tenantId\n    }\n    tenantId\n  }\n}",
+          "variables": {
+            "v0": "A"
+          },
+          "responseBytes": 235
+        }
+      ]
+    }
+  ]
+}
