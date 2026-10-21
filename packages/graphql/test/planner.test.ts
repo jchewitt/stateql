@@ -7,7 +7,7 @@ import {
   resourceAddress,
   freezeFields,
   mergeFields,
-} from '@launch-echo/stateql-core';
+} from '@tandrove/core';
 import { schema as generated } from '../../../examples/query-planner/src/generated/billing.js';
 import {
   schema,

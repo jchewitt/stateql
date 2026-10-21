@@ -16,6 +16,15 @@ import { randomUUID } from 'node:crypto';
 import { checkAngularPackage } from './check-angular-package.mjs';
 
 const root = realpathSync(fileURLToPath(new URL('../', import.meta.url)));
+const arguments_ = process.argv.slice(2);
+assert.ok(
+  arguments_.every((argument) => argument === '--registry'),
+  'Only --registry is supported by this consumer check.',
+);
+const registry = arguments_.includes('--registry');
+const version = JSON.parse(
+  readFileSync(join(root, 'packages/core/package.json'), 'utf8'),
+).version;
 const artifacts = join(root, '.artifacts', randomUUID());
 mkdirSync(artifacts, { recursive: true });
 const manager = process.env.npm_execpath;
@@ -109,7 +118,9 @@ assert.equal(dirname(graphqlPacked.filename), artifacts);
 
 // Outside the repository so Node/TypeScript cannot resolve undeclared workspace dependencies.
 const tempRoot = realpathSync(tmpdir());
-const consumer = realpathSync(mkdtempSync(join(tempRoot, 'stateql-consumer-')));
+const consumer = realpathSync(
+  mkdtempSync(join(tempRoot, 'tandrove-consumer-')),
+);
 try {
   const relativeConsumer = relative(root, consumer);
   assert.ok(
@@ -127,24 +138,27 @@ try {
       '--no-audit',
       '--no-fund',
       '--no-package-lock',
-      join(artifacts, packed.filename),
-      graphqlPacked.filename,
+      '--registry=https://registry.npmjs.org/',
+      registry ? `@tandrove/core@${version}` : join(artifacts, packed.filename),
+      registry ? `@tandrove/graphql@${version}` : graphqlPacked.filename,
       'graphql@16.14.2',
     ],
     consumer,
   );
   const coreManifest = JSON.parse(
     readFileSync(
-      join(consumer, 'node_modules/@launch-echo/stateql-core/package.json'),
+      join(consumer, 'node_modules/@tandrove/core/package.json'),
       'utf8',
     ),
   );
   const graphqlManifest = JSON.parse(
     readFileSync(
-      join(consumer, 'node_modules/@launch-echo/stateql-graphql/package.json'),
+      join(consumer, 'node_modules/@tandrove/graphql/package.json'),
       'utf8',
     ),
   );
+  assert.equal(coreManifest.name, '@tandrove/core');
+  assert.equal(graphqlManifest.name, '@tandrove/graphql');
   for (const manifest of [coreManifest, graphqlManifest]) {
     assert.notEqual(manifest.private, true);
     assert.equal(
@@ -154,7 +168,7 @@ try {
     );
     assert.equal(
       manifest.repository.url,
-      'git+https://github.com/jchewitt/stateql.git',
+      'git+https://github.com/jchewitt/tandrove.git',
     );
     assert.equal(manifest.publishConfig.tag, 'next');
   }
@@ -190,10 +204,10 @@ try {
       '--input-type=module',
       '-e',
       `
-      const { createSchema, createGraphQLClient } = await import('@launch-echo/stateql-graphql');
-      const { StateStore, AcquisitionCancelledError, AcquisitionSupersededError, ReadTransportError } = await import('@launch-echo/stateql-core');
+      const { createSchema, createGraphQLClient } = await import('@tandrove/graphql');
+      const { StateStore, AcquisitionCancelledError, AcquisitionSupersededError, ReadTransportError } = await import('@tandrove/core');
       const assert = (await import('node:assert/strict')).default;
-      const { generateSchemaModule } = await import('@launch-echo/stateql-graphql/codegen');
+      const { generateSchemaModule } = await import('@tandrove/graphql/codegen');
       const sdl = 'type Query { item: Item! } type Item { id: ID! name: String }';
       const bound = createSchema(sdl).field('item').select({ name: true }).bind({}, { source: 'test', scope: 'test' });
       if (!bound.prepare('name').query.includes('name')) throw new Error('Packed planner failed.');
@@ -288,7 +302,7 @@ try {
   );
   writeFileSync(
     join(consumer, 'consumer.ts'),
-    "import { AcquisitionCancelledError, AcquisitionSupersededError, type AcquisitionContext, type CancellationSignal, type StoreReader } from '@launch-echo/stateql-core';\n" +
+    "import { AcquisitionCancelledError, AcquisitionSupersededError, type AcquisitionContext, type CancellationSignal, type StoreReader } from '@tandrove/core';\n" +
       'declare const reader: StoreReader<Readonly<{ id: string }>>;\n' +
       'const id: string = reader.getSnapshot().id;\nvoid id;\n' +
       '// @ts-expect-error undeclared fields must not be inferred as any\nreader.getSnapshot().missing;\n' +
@@ -302,8 +316,8 @@ try {
   writeFileSync(
     join(consumer, 'planner.ts'),
     `
-    import { createSchema, createGraphQLClient, type FieldType, type ObjectRef, type ResultOf, type GraphQLTransportContext } from '@launch-echo/stateql-graphql';
-    import { ReadTransportError, type ReadRetryPolicy, type RetryScheduler, type AcquisitionClientOptions, type AcquiredPatch, type AcquisitionSource, type AcquisitionClient } from '@launch-echo/stateql-core';
+    import { createSchema, createGraphQLClient, type FieldType, type ObjectRef, type ResultOf, type GraphQLTransportContext } from '@tandrove/graphql';
+    import { ReadTransportError, type ReadRetryPolicy, type RetryScheduler, type AcquisitionClientOptions, type AcquiredPatch, type AcquisitionSource, type AcquisitionClient } from '@tandrove/core';
     declare const core: AcquisitionClient;
     declare const source: AcquisitionSource;
     declare const patch: AcquiredPatch;
@@ -364,12 +378,12 @@ try {
     },
   );
   console.log(
-    `Packed artifact and isolated ESM/TypeScript consumer passed: ${packed.filename}`,
+    `${registry ? 'Public registry' : 'Packed artifact'} isolated ESM/TypeScript consumer passed: @tandrove/core and @tandrove/graphql ${version}`,
   );
 } finally {
   // Delete only this exact generated temporary directory, never an unchecked path.
   assert.equal(dirname(consumer), tempRoot);
-  assert.ok(basename(consumer).startsWith('stateql-consumer-'));
+  assert.ok(basename(consumer).startsWith('tandrove-consumer-'));
   rmSync(consumer, { recursive: true, force: true });
 }
 
@@ -378,4 +392,5 @@ checkAngularPackage({
   artifacts,
   coreTarball: join(artifacts, packed.filename),
   npm,
+  registry,
 });

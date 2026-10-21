@@ -3,8 +3,8 @@ import {
   createEnvironmentInjector,
   runInInjectionContext,
 } from '@angular/core';
-import { StateStore, resourceAddress } from '@launch-echo/stateql-core';
-import { stateqlSignal } from '@launch-echo/stateql-angular';
+import { StateStore, resourceAddress } from '@tandrove/core';
+import { tandroveSignal } from '@tandrove/angular';
 
 const store = new StateStore();
 const address = resourceAddress({ source: 'packed', scope: 'A' }, [
@@ -14,7 +14,7 @@ const view = store.watch(address, [
   { name: 'name', responseName: 'name', arguments: {}, children: [] },
 ]);
 const injector = createEnvironmentInjector([]);
-const snapshot = runInInjectionContext(injector, () => stateqlSignal(view));
+const snapshot = runInInjectionContext(injector, () => tandroveSignal(view));
 const write = (value) => ({
   kind: 'write',
   record: { id: '1' },

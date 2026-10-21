@@ -33,7 +33,7 @@ test('published entrypoints match the declaration build and explicit package all
   assert.equal(manifest.license, 'MIT');
   assert.equal(
     manifest.repository.url,
-    'git+https://github.com/jchewitt/stateql.git',
+    'git+https://github.com/jchewitt/tandrove.git',
   );
 });
 
@@ -41,14 +41,14 @@ test('release packages share scope, alpha version, repository metadata and compa
   const core = json('packages/core/package.json');
   for (const name of ['core', 'graphql', 'angular']) {
     const manifest = json(`packages/${name}/package.json`);
-    assert.equal(manifest.name, `@launch-echo/stateql-${name}`);
+    assert.equal(manifest.name, `@tandrove/${name}`);
     assert.equal(manifest.version, core.version);
     assert.match(manifest.version, /^0\.[1-9]\d*\.\d+-alpha\.\d+$/);
     assert.notEqual(manifest.private, true);
     assert.equal(manifest.license, 'MIT');
     assert.equal(
       manifest.repository.url,
-      'git+https://github.com/jchewitt/stateql.git',
+      'git+https://github.com/jchewitt/tandrove.git',
     );
     assert.equal(manifest.repository.directory, `packages/${name}`);
     assert.deepEqual(manifest.publishConfig, {
@@ -66,7 +66,7 @@ test('release packages share scope, alpha version, repository metadata and compa
     core.version,
   );
   assert.deepEqual(json('.changeset/config.json').fixed, [
-    [core.name, '@launch-echo/stateql-graphql', '@launch-echo/stateql-angular'],
+    [core.name, '@tandrove/graphql', '@tandrove/angular'],
   ]);
 });
 

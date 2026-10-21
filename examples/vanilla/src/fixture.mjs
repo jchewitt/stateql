@@ -16,9 +16,9 @@ export const identities = {
 export function createFixture() {
   const schema = buildSchema(sdl);
   let version = 1;
-  /** @type {import('@launch-echo/stateql-graphql').PreparedOperation[]} */
+  /** @type {import('@tandrove/graphql').PreparedOperation[]} */
   const requests = [];
-  /** @type {import('@launch-echo/stateql-graphql').GraphQLTransport} */
+  /** @type {import('@tandrove/graphql').GraphQLTransport} */
   const transport = async (operation) => {
     requests.push(operation);
     return execute({

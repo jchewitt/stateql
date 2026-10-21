@@ -1,10 +1,10 @@
 import type { DestroyRef, Signal } from '@angular/core';
-import type { StoreReader } from '@launch-echo/stateql-core';
-import { stateqlSignal } from '../src/public-api.js';
+import type { StoreReader } from '@tandrove/core';
+import { tandroveSignal } from '../src/public-api.js';
 
 declare const reader: StoreReader<Readonly<{ count: number }>>;
 declare const destroyRef: DestroyRef;
-const state: Signal<Readonly<{ count: number }>> = stateqlSignal(reader, {
+const state: Signal<Readonly<{ count: number }>> = tandroveSignal(reader, {
   destroyRef,
 });
 const count: number = state().count;

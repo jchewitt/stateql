@@ -3,7 +3,7 @@ import {
   type QueryHandle,
   type AcquisitionSource,
   type AcquisitionClientOptions,
-} from '@launch-echo/stateql-core';
+} from '@tandrove/core';
 import type { PreparedOperation } from './operation.js';
 import type { FieldPaths } from './types.js';
 import { httpTransport } from './http-transport.js';

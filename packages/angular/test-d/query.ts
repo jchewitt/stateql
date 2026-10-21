@@ -1,12 +1,12 @@
 import { InjectionToken, type Injector } from '@angular/core';
-import type { QueryHandle } from '@launch-echo/stateql-core';
-import { injectStateQuery, provideStateQLClient } from '../src/public-api.js';
+import type { QueryHandle } from '@tandrove/core';
+import { injectStateQuery, provideTandroveClient } from '../src/public-api.js';
 import {
   createSchema,
   type GraphQLClient,
   type FieldType,
   type ObjectRef,
-} from '@launch-echo/stateql-graphql';
+} from '@tandrove/graphql';
 
 interface Client {
   watch(id: string): QueryHandle<'name' | 'user.name'>;
@@ -15,9 +15,9 @@ interface Client {
 const token = new InjectionToken<Client>('typed client');
 declare const client: Client;
 declare const injector: Injector;
-provideStateQLClient(token, () => client);
+provideTandroveClient(token, () => client);
 // @ts-expect-error the factory must return the token's client type
-provideStateQLClient(token, () => ({ dispose() {} }));
+provideTandroveClient(token, () => ({ dispose() {} }));
 const query = injectStateQuery(
   () => 'A',
   (id) => client.watch(id),

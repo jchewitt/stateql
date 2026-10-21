@@ -3,17 +3,17 @@
   "distTag": "next",
   "packages": [
     {
-      "packageName": "@launch-echo/stateql-core",
+      "packageName": "@tandrove/core",
       "packageDirectory": "packages/core",
       "publishDirectory": "packages/core"
     },
     {
-      "packageName": "@launch-echo/stateql-graphql",
+      "packageName": "@tandrove/graphql",
       "packageDirectory": "packages/graphql",
       "publishDirectory": "packages/graphql"
     },
     {
-      "packageName": "@launch-echo/stateql-angular",
+      "packageName": "@tandrove/angular",
       "packageDirectory": "packages/angular",
       "publishDirectory": "packages/angular/dist"
     }

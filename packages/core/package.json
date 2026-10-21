@@ -1,18 +1,18 @@
 {
-  "name": "@launch-echo/stateql-core",
+  "name": "@tandrove/core",
   "version": "0.1.0-alpha.0",
-  "description": "Framework-independent StateQL shared-state runtime and selective refresh contracts.",
+  "description": "Framework-independent Tandrove shared-state runtime and selective refresh contracts.",
   "type": "module",
   "license": "MIT",
   "author": "Jon Hewitt",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jchewitt/stateql.git",
+    "url": "git+https://github.com/jchewitt/tandrove.git",
     "directory": "packages/core"
   },
-  "homepage": "https://github.com/jchewitt/stateql#readme",
+  "homepage": "https://github.com/jchewitt/tandrove#readme",
   "bugs": {
-    "url": "https://github.com/jchewitt/stateql/issues"
+    "url": "https://github.com/jchewitt/tandrove/issues"
   },
   "sideEffects": false,
   "files": [

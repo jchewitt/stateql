@@ -1,6 +1,6 @@
-# StateQL core
+# Tandrove core
 
-Experimental foundation for StateQL's framework-independent runtime.
+Experimental foundation for Tandrove's framework-independent runtime.
 
 Exports observation contracts, portable canonical addresses, immutable selection composition, a provisional `StateStore`, and `AcquisitionClient`. Acquisition reuses shared fresh fields and asks a source for missing selections. Query handles support field/branch invalidation, mark-only invalidation, forced refresh, and explicit keyed-list membership refresh. Decoded partial failures retain successful fields, while structural nulls discard obsolete descendants. Snapshots distinguish unknown, null, and populated/empty resources and expose shared field/resource errors. Concurrent acquisition deduplicates identical work, filters superseded writes using local generations, and cancels work after its final interested owner leaves. Optional bounded read retries use an injected scheduler and explicit transport-failure classification.
 
@@ -9,23 +9,23 @@ Exports observation contracts, portable canonical addresses, immutable selection
 The initial release candidate is `0.1.0-alpha.0`. Once published, install with:
 
 ```sh
-npm install @launch-echo/stateql-core@0.1.0-alpha.0
+npm install @tandrove/core@0.1.0-alpha.0
 ```
 
-Use matching StateQL alpha versions. Core is portable ESM JavaScript with optional TypeScript declarations and no runtime dependencies. The repository tests Node 22.14+ and Node 24; browser integration is tested through Angular 21.2.25. For ordinary GraphQL applications, start with the [assembled GraphQL client](https://github.com/jchewitt/stateql/tree/main/packages/graphql) rather than constructing an acquisition source manually.
+Use matching Tandrove alpha versions. Core is portable ESM JavaScript with optional TypeScript declarations and no runtime dependencies. The repository tests Node 22.14+ and Node 24; browser integration is tested through Angular 21.2.25. For ordinary GraphQL applications, start with the [assembled GraphQL client](https://github.com/jchewitt/tandrove/tree/main/packages/graphql) rather than constructing an acquisition source manually.
 
-This is an experimental alpha, not a stable API promise. Extension contracts and JSON snapshot projection types remain provisional. Polling, automatic freshness/retention timers, WebSockets, persistence, a server companion and durable writes are planned separately. Alpha changes may require migrations; review each changelog and keep packages on the same version. See [release status and publishing](https://github.com/jchewitt/stateql/blob/main/docs/RELEASING.md).
+This is an experimental alpha, not a stable API promise. Extension contracts and JSON snapshot projection types remain provisional. Polling, automatic freshness/retention timers, WebSockets, persistence, a server companion and durable writes are planned separately. Alpha changes may require migrations; review each changelog and keep packages on the same version. See [release status and publishing](https://github.com/jchewitt/tandrove/blob/main/docs/RELEASING.md).
 
 The observation interface has no Angular, React, RxJS, GraphQL, DOM, or Node dependencies. Runtime snapshots must be immutable; TypeScript callers supply an immutable snapshot type. Framework adapters will subscribe to this same runtime rather than maintain a separate cache.
 
-See the [store guide](https://github.com/jchewitt/stateql/blob/main/docs/STORE.md) for commit semantics and the boundary between storage and request coordination.
+See the [store guide](https://github.com/jchewitt/tandrove/blob/main/docs/STORE.md) for commit semantics and the boundary between storage and request coordination.
 
-The [concurrency contract](https://github.com/jchewitt/stateql/blob/main/docs/CONCURRENCY.md) describes ownership, cancellation signals, and `AcquisitionSupersededError`. Local request ordering does not establish server revision ordering.
+The [concurrency contract](https://github.com/jchewitt/tandrove/blob/main/docs/CONCURRENCY.md) describes ownership, cancellation signals, and `AcquisitionSupersededError`. Local request ordering does not establish server revision ordering.
 
-The [retry contract](https://github.com/jchewitt/stateql/blob/main/docs/RETRIES.md) covers `ReadRetryPolicy`, `RetryScheduler`, `ReadTransportError`, and terminal field errors. Portable core defaults to no retries; enabling them requires a scheduler. No automatic write retry or request timeout is implemented.
+The [retry contract](https://github.com/jchewitt/tandrove/blob/main/docs/RETRIES.md) covers `ReadRetryPolicy`, `RetryScheduler`, `ReadTransportError`, and terminal field errors. Portable core defaults to no retries; enabling them requires a scheduler. No automatic write retry or request timeout is implemented.
 
-See the [project plan](https://github.com/jchewitt/stateql/blob/main/PLAN.md) and [task list](https://github.com/jchewitt/stateql/blob/main/docs/TASKS.md).
+See the [project plan](https://github.com/jchewitt/tandrove/blob/main/PLAN.md) and [task list](https://github.com/jchewitt/tandrove/blob/main/docs/TASKS.md).
 
-Provisional `AcquisitionClient.ingest(source, patch)` applies validated patches to existing acquired records through the same reconciliation and commit path as reads. It requires active ownership, cannot change membership, and protects accepted fields from older local reads. The [vanilla guide](https://github.com/jchewitt/stateql/blob/main/docs/VANILLA.md) documents constraints and simulated adapters. This is not server revision ordering or a production socket protocol.
+Provisional `AcquisitionClient.ingest(source, patch)` applies validated patches to existing acquired records through the same reconciliation and commit path as reads. It requires active ownership, cannot change membership, and protects accepted fields from older local reads. The [vanilla guide](https://github.com/jchewitt/tandrove/blob/main/docs/VANILLA.md) documents constraints and simulated adapters. This is not server revision ordering or a production socket protocol.
 
 The package ships ESM JavaScript and optional TypeScript declarations. JavaScript consumers do not need a compiler or TypeScript loader.

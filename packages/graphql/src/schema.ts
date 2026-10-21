@@ -20,7 +20,7 @@ import {
   freezeFields,
   type InputObject,
   type ResolvedField,
-} from '@launch-echo/stateql-core';
+} from '@tandrove/core';
 
 export interface SchemaOptions {
   readonly identities?: Readonly<Record<string, readonly string[]>>;

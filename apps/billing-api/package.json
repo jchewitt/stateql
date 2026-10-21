@@ -1,5 +1,5 @@
 {
-  "name": "@stateql-demo/billing-api",
+  "name": "@tandrove-demo/billing-api",
   "version": "0.0.0",
   "private": true,
   "type": "module",

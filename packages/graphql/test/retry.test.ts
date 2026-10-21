@@ -5,7 +5,7 @@ import {
   AcquisitionCancelledError,
   ReadTransportError,
   type RetryScheduler,
-} from '@launch-echo/stateql-core';
+} from '@tandrove/core';
 import {
   createGraphQLClient,
   createSchema,

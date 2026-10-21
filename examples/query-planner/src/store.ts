@@ -1,4 +1,4 @@
-import { StateStore, type StateChange } from '@launch-echo/stateql-core';
+import { StateStore, type StateChange } from '@tandrove/core';
 import { schema } from './generated/billing.js';
 
 const base = schema

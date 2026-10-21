@@ -3,7 +3,7 @@ import {
   createSchema,
   type FieldType,
   type ObjectRef,
-} from '@launch-echo/stateql-graphql';
+} from '@tandrove/graphql';
 export type GeneratedTypes = {
   Billing: {
     readonly tenantId: FieldType<string, {}>;

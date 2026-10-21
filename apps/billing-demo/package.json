@@ -1,10 +1,10 @@
 {
-  "name": "@stateql-demo/billing-demo",
+  "name": "@tandrove-demo/billing-demo",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @launch-echo/stateql-angular... --filter @launch-echo/stateql-graphql... build && ng serve --host 127.0.0.1 --port 4200",
+    "dev": "pnpm --filter @tandrove/angular... --filter @tandrove/graphql... build && ng serve --host 127.0.0.1 --port 4200",
     "build": "ng build",
     "typecheck": "ngc -p tsconfig.app.json --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test": "tsx --test test/*.test.ts"
@@ -16,9 +16,9 @@
     "@angular/forms": "21.2.25",
     "@angular/platform-browser": "21.2.25",
     "@apollo/client": "4.3.4",
-    "@launch-echo/stateql-angular": "workspace:*",
-    "@launch-echo/stateql-core": "workspace:*",
-    "@launch-echo/stateql-graphql": "workspace:*",
+    "@tandrove/angular": "workspace:*",
+    "@tandrove/core": "workspace:*",
+    "@tandrove/graphql": "workspace:*",
     "apollo-angular": "14.2.0",
     "graphql": "16.14.2",
     "rxjs": "7.8.2",

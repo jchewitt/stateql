@@ -1,10 +1,10 @@
-# StateQL Architecture and Proof of Concept Plan
+# Tandrove Architecture and Proof of Concept Plan
 
 Approved implementation direction · October 16, 2026 · End-to-end and incremental-release direction updated October 20, 2026
 
-Implementation is tracked in [docs/TASKS.md](docs/TASKS.md). P1–P5 are complete, and the [comparison](docs/COMPARISON.md) supports continuing the independent runtime as an experiment. R1 prepares the standalone `@launch-echo` core/GraphQL/Angular release set at `0.1.0-alpha.0`; account-owner bootstrap and registry acceptance remain pending. See the [release handoff](docs/RELEASING.md). Examples and future contracts below remain proposals unless their tasks are complete; no npm package has been published.
+Implementation is tracked in [docs/TASKS.md](docs/TASKS.md). P1–P5 are complete, and the [comparison](docs/COMPARISON.md) supports continuing the independent runtime as an experiment. R1 prepares the standalone `@tandrove` core/GraphQL/Angular release set at `0.1.0-alpha.0`; account-owner bootstrap and registry acceptance remain pending. See the [release handoff](docs/RELEASING.md). Examples and future contracts below remain proposals unless their tasks are complete; no npm package has been published.
 
-StateQL uses composable data definitions to derive requests, address shared cached state, and target refreshes. Its proof of concept combines a framework-independent TypeScript runtime, a GraphQL source adapter, an Angular integration, and a small billing application. An equivalent Apollo implementation measures application wiring and correctness without assuming general feature parity.
+Tandrove uses composable data definitions to derive requests, address shared cached state, and target refreshes. Its proof of concept combines a framework-independent TypeScript runtime, a GraphQL source adapter, an Angular integration, and a small billing application. An equivalent Apollo implementation measures application wiring and correctness without assuming general feature parity.
 
 Angular is the confirmed first UI. Plain TypeScript usage is part of the proof of concept. React, REST, WebSockets, and a possible Node server companion are later extensions; their requirements shape the boundaries now.
 
@@ -19,13 +19,13 @@ const invoices = client.watch(billing.invoices, variables);
 await invoices.invalidate('accountId');
 ```
 
-StateQL retains the existing scoped invoice state, generates a request for accountId plus required context and identity fields, merges the successful response into that state, and updates affected consumers. Other values and their freshness remain unchanged. A consumer can derive a subset or extension of a central definition without introducing a new, independently managed cache key.
+Tandrove retains the existing scoped invoice state, generates a request for accountId plus required context and identity fields, merges the successful response into that state, and updates affected consumers. Other values and their freshness remain unchanged. A consumer can derive a subset or extension of a central definition without introducing a new, independently managed cache key.
 
 The proposed advantage is a unified workflow for selection, identity, and refresh. Caching, reactivity, retries, and GraphQL generation are supporting mechanisms. The project succeeds if ordinary application code no longer has to coordinate separate definitions for fetching a field, locating its cached value, and keeping consumers synchronized.
 
 Apollo can merge fields from separate operations into the same normalized object and notify watchers. Its documented field invalidation workflow identifies queries to refetch. The comparison must include a narrow Apollo query that achieves the same network result, not just a full-query refetch. [Apollo caching](https://www.apollographql.com/docs/react/caching/overview), [Apollo refetching](https://www.apollographql.com/docs/react/data/refetching)
 
-Relay generates refetch queries for declared fragments, and Genql generates GraphQL from JavaScript selections. These are relevant precedents. StateQL's candidate distinction is runtime composition and field refresh through a stable state definition with fewer application-owned declarations. No ecosystem-wide uniqueness claim is assumed. [Relay refetchable fragments](https://relay.dev/docs/tutorial/refetchable-fragments/), [Genql](https://genql.dev/docs)
+Relay generates refetch queries for declared fragments, and Genql generates GraphQL from JavaScript selections. These are relevant precedents. Tandrove's candidate distinction is runtime composition and field refresh through a stable state definition with fewer application-owned declarations. No ecosystem-wide uniqueness claim is assumed. [Relay refetchable fragments](https://relay.dev/docs/tutorial/refetchable-fragments/), [Genql](https://genql.dev/docs)
 
 The product roadmap also targets three related problems: repeated application code for stream-to-cache updates, stale updates arriving across different transports, and framework-independent offline recovery. These are planned capabilities, not implemented guarantees. Their contracts and evaluation criteria appear in [Stream cohesion, ordering, and offline recovery](#stream-cohesion-ordering-and-offline-recovery). Prefer proving stream cohesion and ordering together before expanding into durable write replay.
 
@@ -48,7 +48,7 @@ Field polling is a small follow-on milestone after the core comparison. It is no
 
 ## Architecture boundaries
 
-StateQL is GraphQL-first in its public API and default setup. The default client bundles the GraphQL source and HTTP transport; application developers do not assemble adapters for ordinary GraphQL usage. Definitions deliberately follow GraphQL field, argument, and selection semantics.
+Tandrove is GraphQL-first in its public API and default setup. The default client bundles the GraphQL source and HTTP transport; application developers do not assemble adapters for ordinary GraphQL usage. Definitions deliberately follow GraphQL field, argument, and selection semantics.
 
 One authoritative, schema-resolved selection structure drives both cache addressing and GraphQL generation. Invalidation selects nodes from that same structure. There is no separately maintained generic query language or key-to-GraphQL mapping model. Optional naming aliases resolve once into canonical field references used by both consumers of the structure.
 
@@ -59,7 +59,7 @@ Angular adapter       Plain TypeScript       React adapter later
        \                    |                    /
         Shared handles, snapshots, and subscriptions
                             |
-                    StateQL core runtime
+                    Tandrove core runtime
      definitions / cache / freshness / planning / scheduling
                             |
                       Source adapter
@@ -82,7 +82,7 @@ The core asks what fields need updating. The source adapter determines what oper
 | GraphQL source  | Schema metadata, path and argument resolution, operation construction, identity selections, response/error-path decoding          | UI signals, component lifetimes, an independent cache         |
 | Transport       | Request execution, headers, cancellation, connection concerns                                                                     | Cache identity, field selection semantics, form state         |
 | Angular adapter | DI, signals, reactive argument changes, automatic disposal                                                                        | Its own fetch or retry engine                                 |
-| Server demo     | Billing schema, fixtures, deterministic delays/errors and mutations                                                               | StateQL-specific requirements on an ordinary GraphQL server   |
+| Server demo     | Billing schema, fixtures, deterministic delays/errors and mutations                                                               | Tandrove-specific requirements on an ordinary GraphQL server  |
 
 Keep these as module boundaries even where they share a package. Avoid publishing a package for every interface before a second implementation demonstrates the need. Keep the source interface internal and provisional during the proof of concept. Do not weaken GraphQL's supported semantics to accommodate hypothetical REST limitations or build a public plugin framework before a real second source requires it.
 
@@ -105,7 +105,7 @@ Adapter bindings/configuration resolve before work starts and remain immutable f
 
 Use capability-specific contracts for data acquisition/decoding, message transport, event routing, checkpoint storage, retained replay history, and command execution. A package may implement several capabilities over one shared connection, but snapshot storage, live messaging and replay are not interchangeable. Custom adapters use the same interfaces, validation and contract tests as official adapters; neither can bypass revision checks or mutate cached state through a privileged path. Validate unsupported combinations before starting work, including requesting replay from an adapter that cannot provide it.
 
-Registered providers are reused according to explicit scope and reference ownership. Resource bindings may have different immutable options/namespaces while sharing infrastructure. One resource's disposal releases its interests/listeners, not another resource's work. Infrastructure created by StateQL is closed by its owning runtime; injected application-owned connections remain application-owned. Async initialization failure cleans up only owned partial resources. Server globals may share connections but must preserve tenant/request authorization boundaries; SSR state remains request/session-isolated.
+Registered providers are reused according to explicit scope and reference ownership. Resource bindings may have different immutable options/namespaces while sharing infrastructure. One resource's disposal releases its interests/listeners, not another resource's work. Infrastructure created by Tandrove is closed by its owning runtime; injected application-owned connections remain application-owned. Async initialization failure cleans up only owned partial resources. Server globals may share connections but must preserve tenant/request authorization boundaries; SSR state remains request/session-isolated.
 
 Keep advanced capabilities opt-in and separately importable. The default GraphQL client requires no registry boilerplate, Redis, socket server or server companion. Official adapter packages may expose separate client/server entry points; verify browser bundles cannot import server drivers or secrets. Publish integrations only with runnable behavior and compatibility tests, not empty extension shells. Establish a public contract through a working official implementation plus a custom/application-owned integration without core edits. Configuration syntax and package names beyond the initial release set remain provisional.
 
@@ -208,7 +208,7 @@ The returned promise settles after the requested refresh, rejecting on failure w
 
 After a successful response, only committed fields become fresh. Subscribers receive updates when their projected values or relevant loading/error/freshness metadata change. Adding fields to shared storage does not widen another consumer's declared result type.
 
-A view may therefore contain fields observed at different times. Related fields that must be consistent should be refreshed as a group; StateQL does not promise a transactional server snapshot from separate reads.
+A view may therefore contain fields observed at different times. Related fields that must be consistent should be refreshed as a group; Tandrove does not promise a transactional server snapshot from separate reads.
 
 ### Merge and failure behavior
 
@@ -240,7 +240,7 @@ The core subscription API is sufficient for both signals and Observables. Start 
 
 The demo uses a read-only summary and an editable form. Form values are drafts. Bind fresh server values into pristine controls; preserve dirty controls and expose a conflict indication if their server baseline changes. Use a small explicit demo binding, not a new form framework. Saving performs one mutation, then targeted invalidation after success. Writes are not automatically retried.
 
-The [forms contract](docs/FORMS.md) separates editor-owned baseline/draft/latest values from shared accepted server data and the immutable payload of a pending command. Typing cannot update peers or send writes by default. Explicit Save must preserve edits made while it is pending, distinguish confirmed success from a later refresh failure, and never apply an old outcome to a new scope/record. Reset uses the latest valid server value. Future socket delivery changes the transport, not these ownership rules; authoritative conflicts require server revisions/preconditions. P4.4/P4.5 will test these cases equally for Apollo and StateQL.
+The [forms contract](docs/FORMS.md) separates editor-owned baseline/draft/latest values from shared accepted server data and the immutable payload of a pending command. Typing cannot update peers or send writes by default. Explicit Save must preserve edits made while it is pending, distinguish confirmed success from a later refresh failure, and never apply an old outcome to a new scope/record. Reset uses the latest valid server value. Future socket delivery changes the transport, not these ownership rules; authoritative conflicts require server revisions/preconditions. P4.4/P4.5 will test these cases equally for Apollo and Tandrove.
 
 ### Plain JavaScript and React
 
@@ -254,7 +254,7 @@ A REST source declares endpoint resolution and response field mappings where nec
 
 The future REST source consumes the planned structured selection before GraphQL document generation. It need not generate a GraphQL string and parse it back into REST calls. Any endpoint mappings belong to that source, leaving the default GraphQL flow direct.
 
-Distinguish requested fields, fetched fields, and committed fields. A whole-resource endpoint can return an entire invoice while StateQL commits only the requested accountId update, preserving the selective-update contract. A configurable whole-resource commit policy may later accept all returned fields; it must also update their freshness and notify their consumers honestly.
+Distinguish requested fields, fetched fields, and committed fields. A whole-resource endpoint can return an entire invoice while Tandrove commits only the requested accountId update, preserving the selective-update contract. A configurable whole-resource commit policy may later accept all returned fields; it must also update their freshness and notify their consumers honestly.
 
 Structural nulls, deletion responses, and incompatible identity changes require structural handling even during a narrow request. They cannot safely be hidden by a field mask. The adapter reports those conditions to the core. REST support offers selective state updates; network payload savings depend on server support for sparse fields or equivalent filtering.
 
@@ -266,7 +266,7 @@ Future event envelopes need scoped resource/record identity, change kind, affect
 
 The core can run in Node without an Angular or browser dependency. A server companion would be a separate package for publishing events and sharing generated definitions; it is not required for the GraphQL prototype. Server authorization remains server-owned. SSR use must create an isolated client per request/session rather than share a global cache between users. Persistent server caching and distributed coherence need their own later design.
 
-Support official default transports and optional integrations with infrastructure developers already own. A Socket.IO adapter must bind an existing client connection or server namespace, use StateQL-specific handlers without interfering with unrelated traffic, and follow the same provider/group/resource pattern on both sides. Socket.IO has its own protocol and is not wire-compatible with plain WebSockets. Its reconnection/recovery features should report into StateQL rather than compete with a second transport reconnect loop. Transport recovery may fail; StateQL still owns state-level baseline/replay reconciliation. [Socket.IO protocol](https://socket.io/docs/v4/), [connection recovery](https://socket.io/docs/v4/connection-state-recovery/)
+Support official default transports and optional integrations with infrastructure developers already own. A Socket.IO adapter must bind an existing client connection or server namespace, use Tandrove-specific handlers without interfering with unrelated traffic, and follow the same provider/group/resource pattern on both sides. Socket.IO has its own protocol and is not wire-compatible with plain WebSockets. Its reconnection/recovery features should report into Tandrove rather than compete with a second transport reconnect loop. Transport recovery may fail; Tandrove still owns state-level baseline/replay reconciliation. [Socket.IO protocol](https://socket.io/docs/v4/), [connection recovery](https://socket.io/docs/v4/connection-state-recovery/)
 
 ## Stream cohesion, ordering, and offline recovery
 
@@ -276,9 +276,9 @@ Added October 19 and expanded October 20, 2026. P5 is complete; first publish th
 
 Problem: HTTP reads, subscription messages, and custom events often require separate application logic to locate shared state, merge updates, and keep views synchronized. The desired workflow is one reusable source binding into the same validation, ordering, commit, and notification path used by reads.
 
-Apollo already supports subscriptions and caching. Its `subscribeToMore` documentation includes `updateQuery` for incorporating newly added list items; that does not mean every update to an existing normalized entity requires a reducer. Compare StateQL against ordinary normalized entity updates as well as list insertion/removal and custom event envelopes. [Apollo subscriptions](https://www.apollographql.com/docs/react/data/subscriptions), [Apollo normalization](https://www.apollographql.com/docs/react/caching/overview)
+Apollo already supports subscriptions and caching. Its `subscribeToMore` documentation includes `updateQuery` for incorporating newly added list items; that does not mean every update to an existing normalized entity requires a reducer. Compare Tandrove against ordinary normalized entity updates as well as list insertion/removal and custom event envelopes. [Apollo subscriptions](https://www.apollographql.com/docs/react/data/subscriptions), [Apollo normalization](https://www.apollographql.com/docs/react/caching/overview)
 
-StateQL should decode and validate a declared event envelope into scoped canonical addresses, record identities, affected fields, and an explicit change kind. The adapter owns protocol parsing and any reusable envelope mapping. Core applies those changes and notifies interested consumers; UI components should not rewrite cached query trees. Stable addresses do not identify the meaning of arbitrary payloads automatically. With path-scoped storage, an entity-only event also needs a declared routing/invalidation policy for affected resource paths and argument sets; global entity fan-out is not implied.
+Tandrove should decode and validate a declared event envelope into scoped canonical addresses, record identities, affected fields, and an explicit change kind. The adapter owns protocol parsing and any reusable envelope mapping. Core applies those changes and notifies interested consumers; UI components should not rewrite cached query trees. Stable addresses do not identify the meaning of arbitrary payloads automatically. With path-scoped storage, an entity-only event also needs a declared routing/invalidation policy for affected resource paths and argument sets; global entity fan-out is not implied.
 
 Acceptance: an HTTP-loaded view and two consumers receive a field push with no component-level reducer; unrelated fields remain unchanged. List membership uses explicit insert/remove/replacement semantics or invalidation when filters cannot be evaluated safely. Duplicate events, reconnect gaps, malformed envelopes, source errors, scope changes, and final-owner cleanup are tested. A bounded reconnect policy resumes from a cursor or refreshes a baseline. No network operation or persisted event may cross an authorization scope. Use one real GraphQL subscription example and one fake custom event source before claiming transport independence.
 
@@ -357,7 +357,7 @@ Polling and retry timers share a scheduler so a poll does not spawn another retr
 
 ## Workspace and implementation sequence
 
-The TypeScript workspace and Node GraphQL fixture are implemented; dependencies are pinned and the library does not depend on the fixture server framework. The repository is `jchewitt/stateql`. The user selected the npm scope `@launch-echo` on October 20; package migration and registry ownership verification are R1 work.
+The TypeScript workspace and Node GraphQL fixture are implemented; dependencies are pinned and the library does not depend on the fixture server framework. The repository is now `jchewitt/tandrove`. On October 21 the user selected Tandrove and confirmed securing the `@tandrove` npm scope. The prepublication rename supersedes earlier StateQL package names and release artifacts; see D025 in the decisions log.
 
 ```text
 stateql/
@@ -367,7 +367,7 @@ stateql/
     angular/              DI and signal integration
   apps/
     billing-api/          deterministic GraphQL fixture server
-    billing-demo/         StateQL and Apollo views of the same scenario
+    billing-demo/         Tandrove and Apollo views of the same scenario
   examples/
     vanilla/              core plus GraphQL without Angular
   tests/
@@ -386,7 +386,7 @@ The structure above describes module boundaries, not an exact directory manifest
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | 0. Settle the contract            | Review definition examples, identity rules, supported schema subset, schema generation, invalidation defaults, and benchmark workload | Small API examples and executable acceptance specifications ready to implement               |
 | 1. Establish Apollo baseline      | Fixture server, central GraphQL fragments, two consumers, narrow refresh query, one save, errors and inspector                        | Same narrow network behavior and shared updates demonstrated using idiomatic Apollo          |
-| 2. Build vertical StateQL slice   | Core plus GraphQL adapter; central definition, subset/extension, scalar and nested invalidation, list identity, vanilla consumer      | Valid generated documents; same scoped cache enriched and updated; race and merge tests pass |
+| 2. Build vertical Tandrove slice  | Core plus GraphQL adapter; central definition, subset/extension, scalar and nested invalidation, list identity, vanilla consumer      | Valid generated documents; same scoped cache enriched and updated; race and merge tests pass |
 | 3. Integrate Angular              | Signal adapter, reactive arguments, cleanup, demo form and second consumer                                                            | Browser acceptance scenarios pass and no duplicate state engine exists in the adapter        |
 | 4. Evaluate the hypothesis        | Compare declarations, coordination code, payloads, request counts, and correctness; test fake alternate source/event ingress          | Written continue, narrow, or stop decision with measurements and tradeoffs                   |
 | 5. Add field polling if warranted | Shared polling interests and global/local retry policies                                                                              | Fake-clock tests prove deduplication, teardown, and retry/poll coordination                  |
@@ -408,7 +408,7 @@ These are capability gates and sequencing, not reserved version numbers or claim
 | E. Persisted reads                                 | Restore scoped cached state/checkpoints across PWA restarts and reconnect safely, with or without streaming.                                                                                          | E3.1–E3.3 plus applicable recovery/isolation tests. Exercise schema migration, corrupted/expired storage and restore-versus-live-update races. No implicit write replay.                                                                                    |
 | F. Durable commands                                | Opt-in offline commands with explicit idempotency, preconditions, conflict and uncertain-acknowledgement handling.                                                                                    | E3.4–E3.7 and server command support. Crash/restart, duplicate delivery, expired idempotency windows, scope changes and multi-tab ownership tests; preserve unsaved drafts separately.                                                                      |
 
-The core/GraphQL/Angular names selected for stage A are `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql`, and `@launch-echo/stateql-angular`. Existing manifests still use `@jchewitt` until R1 migrates them together with imports, peers, generated code, fixtures and release checks. Scope access, exact versions and trusted publishing remain to verify/configure; this plan does not enable publication. Server/adapter package names are chosen only when implemented packages are ready.
+The core/GraphQL/Angular names selected for stage A are `@tandrove/core`, `@tandrove/graphql`, and `@tandrove/angular`, initially versioned `0.1.0-alpha.0` on `next`. R1 migrates imports, peers, generated code, fixtures and release checks together. Registry publication, installed-package verification and trusted-publisher configuration remain separate acceptance steps. Server/adapter package names are chosen only when implemented packages are ready.
 
 Release acceptance always includes independent review before commit, `pnpm check`, relevant browser/transport recovery scenarios, clean installed-package examples, dependency-boundary checks, and passing hosted CI. Do not publish empty server/adapter packages in anticipation of later hosting functionality. Self-hosted server integration is optional; managed hosting is not a prerequisite or an assumed deliverable. Document the two sides together with parallel setup examples as soon as the server slice ships, including provider registration, groups, overrides, ownership, diagnostics and cleanup.
 
@@ -443,13 +443,13 @@ Use focused unit tests for canonicalization, selection composition, valid operat
 
 ## Comparison and decision criteria
 
-Use identical fixture data, server delay, failure cases, and consumer requirements. Apollo receives sensible normalization policies and reusable fragments. Include both its standard broad refetch and the narrow-query version that meets StateQL's payload goal. Keep dependency code, generated code, application declarations, and coordination glue separately accounted for.
+Use identical fixture data, server delay, failure cases, and consumer requirements. Apollo receives sensible normalization policies and reusable fragments. Include both its standard broad refetch and the narrow-query version that meets Tandrove's payload goal. Keep dependency code, generated code, application declarations, and coordination glue separately accounted for.
 
 Measure network operations and selected fields, payload bytes, application-owned query/mapping definitions, manual merge/update orchestration, and the steps required to add a new refreshable field. Report generation/planning time and browser bundle cost separately; do not claim performance superiority from a contrived loop benchmark or mock delay. Compare serializable outputs for the shared scenarios and explain any differences in scope.
 
-Continue if StateQL removes repeated narrow-query/key/update wiring, maintains typed composition, and passes the correctness scenarios without routine per-form special cases. A change to one refresh target should not require editing a separate GraphQL document, cache key, and mapping function.
+Continue if Tandrove removes repeated narrow-query/key/update wiring, maintains typed composition, and passes the correctness scenarios without routine per-form special cases. A change to one refresh target should not require editing a separate GraphQL document, cache key, and mapping function.
 
-Narrow the project to a compiler/planner layer over an existing cache if that delivers most of the benefit with less maintenance. Stop or redesign if ordinary Apollo helpers provide comparably simple behavior, or if StateQL's configuration merely relocates the same complexity. A smaller public API is valuable only when its behavior is also predictable.
+Narrow the project to a compiler/planner layer over an existing cache if that delivers most of the benefit with less maintenance. Stop or redesign if ordinary Apollo helpers provide comparably simple behavior, or if Tandrove's configuration merely relocates the same complexity. A smaller public API is valuable only when its behavior is also predictable.
 
 ## Current decisions and next delivery
 
@@ -457,4 +457,4 @@ Confirmed direction: Angular first, framework-independent core, GraphQL first, s
 
 Preserve schema-informed definitions with optional generated types, path/argument-scoped sharing, identity-required selective list updates, active-handle refetch on invalidation, and editor-local drafts. The future product uses consistent client/server provider registration and global/group/resource configuration, with optional acquisition, transport, persistence and server integrations.
 
-Next delivery is R1: migrate to the selected `@launch-echo` scope, finish compatible three-package publication, validate packed/installed consumers, and hand off the exact trusted-publisher settings before attempting publication. Subsequent releases follow the usable capability gates above. This planning update implements no new adapters, timers, streams or release automation.
+Next delivery is R1: publish the renamed `@tandrove` release set after review and CI, verify registry-installed consumers, and configure trusted publishing for subsequent alphas. Subsequent releases follow the usable capability gates above. The rename introduces no new adapters, timers or streaming behavior.

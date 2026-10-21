@@ -1,5 +1,11 @@
 # Architecture decisions
 
+## D025 Tandrove prepublication name and npm scope
+
+On October 21 the user selected Tandrove and confirmed securing `@tandrove`. The release packages are `@tandrove/core`, `@tandrove/graphql` and `@tandrove/angular`. None of the old StateQL packages were published, so the first Tandrove candidate remains `0.1.0-alpha.0` on `next`. Rename current APIs, generated imports, examples, package metadata, Angular APF output and release checks together. Angular's branded APIs become `tandroveSignal` and `provideTandroveClient`; this is a prepublication rename, not a compatibility alias layer.
+
+The user renamed the GitHub repository from `jchewitt/stateql` to `jchewitt/tandrove` before publication. Update current URLs, provenance metadata, release guards and trusted-publisher settings together, verifying the canonical repository name before tagging. Use a new `tandrove-v<VERSION>` tag and newly built artifacts; preserve the old tag and historical review/measurement evidence without republishing or relabeling their bytes. Historical decisions below retain their original names. Superseded StateQL release instructions must not be used. No Weftlet implementation is part of this repository.
+
 ## D001 GraphQL first with an execution boundary
 
 One schema-informed definition drives selection, canonical state addresses, and GraphQL generation. The boundary lies where a planned selection becomes an executable operation. GraphQL is the default assembled experience. Keep the source interface internal during the proof of concept. Future REST and event adapters must not force a second query language or mapping model into the default flow.

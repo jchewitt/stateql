@@ -4,7 +4,7 @@ import type {
   InputValue,
   ResolvedField,
   ResourceScope,
-} from '@launch-echo/stateql-core';
+} from '@tandrove/core';
 import type { GraphQLTransport } from './client.js';
 import type { PreparedOperation } from './operation.js';
 

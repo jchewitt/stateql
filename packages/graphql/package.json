@@ -1,9 +1,9 @@
 {
-  "name": "@launch-echo/stateql-graphql",
+  "name": "@tandrove/graphql",
   "version": "0.1.0-alpha.0",
   "type": "module",
   "license": "MIT",
-  "description": "GraphQL definitions, operation planning and HTTP acquisition for StateQL.",
+  "description": "GraphQL definitions, operation planning and HTTP acquisition for Tandrove.",
   "files": [
     "dist",
     "README.md",
@@ -27,7 +27,7 @@
     "prepublishOnly": "node ../../scripts/publish-from-artifacts-only.mjs"
   },
   "dependencies": {
-    "@launch-echo/stateql-core": "workspace:*"
+    "@tandrove/core": "workspace:*"
   },
   "peerDependencies": {
     "graphql": "^16.14.2"
@@ -41,12 +41,12 @@
   "author": "Jon Hewitt",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jchewitt/stateql.git",
+    "url": "git+https://github.com/jchewitt/tandrove.git",
     "directory": "packages/graphql"
   },
-  "homepage": "https://github.com/jchewitt/stateql#readme",
+  "homepage": "https://github.com/jchewitt/tandrove#readme",
   "bugs": {
-    "url": "https://github.com/jchewitt/stateql/issues"
+    "url": "https://github.com/jchewitt/tandrove/issues"
   },
   "publishConfig": {
     "access": "public",

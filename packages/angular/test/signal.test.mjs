@@ -7,8 +7,8 @@ import {
   inject,
   runInInjectionContext,
 } from '@angular/core';
-import { StateStore, resourceAddress } from '@launch-echo/stateql-core';
-import { stateqlSignal } from '../dist/fesm2022/launch-echo-stateql-angular.mjs';
+import { StateStore, resourceAddress } from '@tandrove/core';
+import { tandroveSignal } from '../dist/fesm2022/tandrove-angular.mjs';
 
 function lifetime() {
   const injector = createEnvironmentInjector([]);
@@ -53,7 +53,7 @@ test('reads immediately, preserves snapshot identity and freezes observation at 
   const owner = lifetime();
   const reader = fixture();
   const state = runInInjectionContext(owner.injector, () =>
-    stateqlSignal(reader),
+    tandroveSignal(reader),
   );
   assert.equal(state(), reader.getSnapshot());
   assert.equal(state.set, undefined);
@@ -83,8 +83,8 @@ test('explicit lifetime works outside injection context and two owners remain in
   const a = lifetime();
   const b = lifetime();
   const reader = fixture();
-  const first = stateqlSignal(reader, { destroyRef: a.ref });
-  const second = stateqlSignal(reader, { destroyRef: b.ref });
+  const first = tandroveSignal(reader, { destroyRef: a.ref });
+  const second = tandroveSignal(reader, { destroyRef: b.ref });
   a.destroy();
   reader.change(2);
   assert.equal(first().value, 1);
@@ -99,15 +99,15 @@ test('explicit lifetime works outside injection context and two owners remain in
 
 test('rejects missing/destroyed lifetime and reactive construction before subscribing', () => {
   const reader = fixture();
-  assert.throws(() => stateqlSignal(reader), /injection context/);
+  assert.throws(() => tandroveSignal(reader), /injection context/);
   const owner = lifetime();
   assert.throws(
-    () => computed(() => stateqlSignal(reader, { destroyRef: owner.ref }))(),
+    () => computed(() => tandroveSignal(reader, { destroyRef: owner.ref }))(),
     /reactive context/,
   );
   owner.destroy();
   assert.throws(
-    () => stateqlSignal(reader, { destroyRef: owner.ref }),
+    () => tandroveSignal(reader, { destroyRef: owner.ref }),
     /destroyed/,
   );
   assert.equal(reader.counts().subscriptions, 0);
@@ -128,7 +128,7 @@ test('rechecks after subscribing and accepts synchronous notifications', () => {
         };
       },
     };
-    const state = stateqlSignal(reader, { destroyRef: owner.ref });
+    const state = tandroveSignal(reader, { destroyRef: owner.ref });
     assert.equal(state().value, 2);
     owner.destroy();
     assert.equal(removals, 1);
@@ -161,7 +161,7 @@ test('cleans subscription if construction fails after subscribing', () => {
             },
           }
         : owner.ref;
-    assert.throws(() => stateqlSignal(reader, { destroyRef: ref }));
+    assert.throws(() => tandroveSignal(reader, { destroyRef: ref }));
     assert.equal(removals, 1);
     if (!owner.ref.destroyed) owner.destroy();
     assert.equal(removals, 1);
@@ -187,7 +187,7 @@ test('propagates initial read/subscription failures without retaining a destroy 
         throw new Error('subscribe failed');
       },
     };
-    assert.throws(() => stateqlSignal(reader, { destroyRef: ref }), /failed/);
+    assert.throws(() => tandroveSignal(reader, { destroyRef: ref }), /failed/);
     assert.equal(registrations, 0);
   }
 });
@@ -212,7 +212,7 @@ test('a synchronous notification cannot strand cleanup when the next snapshot re
     },
   };
   assert.throws(
-    () => stateqlSignal(reader, { destroyRef: owner.ref }),
+    () => tandroveSignal(reader, { destroyRef: owner.ref }),
     /notification read failed/,
   );
   assert.equal(listeners.size, 0);
@@ -234,7 +234,7 @@ test('real shared core views update atomically and remain usable after Angular d
   }));
   const view = store.watch(address, fields);
   const owner = lifetime();
-  const state = stateqlSignal(view, { destroyRef: owner.ref });
+  const state = tandroveSignal(view, { destroyRef: owner.ref });
   const write = (name, value) => ({
     kind: 'write',
     record: { id: '1' },

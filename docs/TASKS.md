@@ -1,4 +1,4 @@
-# StateQL task breakdown
+# Tandrove task breakdown
 
 Complete each chunk with its focused tests, independent agent review, and a passing `pnpm check`. Keep later package APIs internal until a concrete use case exercises them. P1–P5 are complete; R1 is the next delivery. Later work follows [usable incremental releases](../PLAN.md#usable-incremental-releases), with a runnable vertical slice at every publication and continued support for standalone client operation.
 
@@ -25,7 +25,7 @@ Depends on F0. Implemented; see the [demo guide](DEMO.md) and automated scenario
 - [x] P1.4 Implement both normal refetch and a narrow field query that merges through Apollo's cache.
 - [x] P1.5 Add request inspection and scenario evidence: selected fields, variables, request count, and shared updates.
 
-Exit: two consumers update correctly from a narrow request; reordering fixtures and switching accounts do not corrupt data. This establishes the comparison before StateQL is measured.
+Exit: two consumers update correctly from a narrow request; reordering fixtures and switching accounts do not corrupt data. This establishes the comparison before Tandrove is measured.
 
 ## P2 Typed definitions and GraphQL operation generation
 
@@ -64,9 +64,9 @@ Depends on P3.
 
 - [x] P4.1 Add the actual Angular library, appropriate peer dependencies, and Angular Package Format build/pack checks. A non-owning readonly signal bridge is implemented; see [the Angular guide](ANGULAR.md).
 - [x] P4.2 Implement DI, signal snapshots, reactive argument replacement, and destruction cleanup. Typed client providers own the client; owned query views gate obsolete snapshots/commands and release only their handles. See [the Angular contract](ANGULAR.md).
-- [x] P4.3 Add StateQL views beside the Apollo baseline with central and feature-derived definitions. Both modes use the shared fixture inspector; StateQL demonstrates narrow field refresh, explicit list refresh, scoped arguments, and owned consumers. Focused browser coverage is included; P4.4/P4.5 below add the forms/parity matrix. See [the demo guide](DEMO.md).
+- [x] P4.3 Add Tandrove views beside the Apollo baseline with central and feature-derived definitions. Both modes use the shared fixture inspector; Tandrove demonstrates narrow field refresh, explicit list refresh, scoped arguments, and owned consumers. Focused browser coverage is included; P4.4/P4.5 below add the forms/parity matrix. See [the demo guide](DEMO.md).
 - [x] P4.4 Demonstrate isolated form drafts, pristine-field refresh, dirty conflicts and explicit save with targeted invalidation. Apply the [forms contract](FORMS.md): immutable submitted payloads, edits during save, confirmed-save/failed-refresh distinction, reset to latest server data, scope/record isolation, unavailable records, and no automatic write retries.
-- [x] P4.5 Add browser tests for shared updates, narrow requests, account switching, errors, and cleanup; cover the P4.4 draft/save cases with the same policy for Apollo and StateQL.
+- [x] P4.5 Add browser tests for shared updates, narrow requests, account switching, errors, and cleanup; cover the P4.4 draft/save cases with the same policy for Apollo and Tandrove.
 
 Exit: the same fixture scenarios pass in both implementations and the adapter contains no second cache engine.
 
@@ -129,7 +129,7 @@ Stage B, with paired server examples completed as part of stage C. See [the shar
 
 Stage D after the recoverable live-state slice, independently releasable per useful integration. Adapter package names remain provisional; publish no empty shells.
 
-- [ ] A2.1 Add a Socket.IO client/server transport integration using the existing connection/namespace, isolated handlers and borrowed ownership. Reuse transport reconnect/recovery signals; failed recovery triggers StateQL resynchronization.
+- [ ] A2.1 Add a Socket.IO client/server transport integration using the existing connection/namespace, isolated handlers and borrowed ownership. Reuse transport reconnect/recovery signals; failed recovery triggers Tandrove resynchronization.
 - [ ] A2.2 Pass shared streaming/recovery scenarios using official defaults and an application-owned/custom transport without changing core. Document protocol compatibility and optional peer dependencies.
 - [ ] A2.3 Add Redis-backed checkpoint storage, live distribution and retained-history capabilities with separate contracts, shared infrastructure where safe, and global/group/resource assignment. Validate retention/replay/durability capabilities explicitly.
 - [ ] A2.4 Demonstrate reconnect to another server instance using shared history or authoritative baseline; cover epoch changes, expired history, authorization, cleanup and bounded backpressure. Document transport-specific load-balancer requirements separately.
@@ -140,10 +140,11 @@ Stage D after the recoverable live-state slice, independently releasable per use
 
 Depends on a useful implemented package, P5, and registry setup.
 
-Stage A publishes the implemented foundation, independently usable before any server/hosting integration. The selected packages are `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql` and `@launch-echo/stateql-angular`, with initial candidate `0.1.0-alpha.0` on `next`. The [release handoff](RELEASING.md) separates completed preparation from account-owner bootstrap, trusted publishing and registry acceptance. No package has been published by this preparation change.
+Stage A publishes the implemented foundation, independently usable before any server/hosting integration. The selected packages are `@tandrove/core`, `@tandrove/graphql` and `@tandrove/angular`, with initial candidate `0.1.0-alpha.0` on `next`. The [release handoff](RELEASING.md) separates completed preparation from account-owner bootstrap, trusted publishing and registry acceptance. No package has been published by this preparation change.
 
 - [x] R1.0 Notify the user when P4/P5 and package acceptance are complete, identify the release packages/versions, and provide the exact trusted-publisher configuration for the user to set up. The October 21 handoff is documented in `RELEASING.md`; no publication has been attempted.
-- [ ] R1.1 Verify npm identity/access to the selected `@launch-echo` scope. The local check returned `ENEEDAUTH`; the account owner must log in and confirm publication rights.
+- [ ] R1.1 Verify npm identity/access to the selected `@tandrove` scope. The user confirmed securing the scope; this machine returned `ENEEDAUTH` and needs account-owner login.
+- [ ] R1.1b Complete the Tandrove prepublication rename, review, hosted CI and a fresh `tandrove-v0.1.0-alpha.0` artifact set. Old StateQL tarballs and the old tag are superseded and must not be published.
 - [x] R1.1a Migrate all three manifests, imports, peer dependencies, generated modules, fixtures, checks, Changesets configuration and release metadata together.
 - [ ] R1.2 Configure npm trust for all three packages after bootstrap. Current npm flow is documented; GitHub environment `npm` exists. Account-owner npm setup remains pending.
 - [x] R1.2a Implement automated CI publication for the approved release set, including dependency order, Angular APF output, version/peer checks, OIDC/provenance metadata, and safe handling of partial multi-package publication.

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { ApolloClient, ApolloLink, Observable } from '@apollo/client/core';
 import { execute, print, type DocumentNode } from 'graphql';
-import { createGraphQLClient } from '@launch-echo/stateql-graphql';
+import { createGraphQLClient } from '@tandrove/graphql';
 import { BillingFixture } from '../../billing-api/src/fixture.js';
 import { schema, createRoot } from '../../billing-api/src/schema.js';
 import { createBillingCache } from '../src/data/cache.js';
@@ -9,12 +9,12 @@ import { BILLING_INVOICES, INVOICE_ACCOUNTS } from '../src/data/operations.js';
 import {
   billingInvoices,
   billingScope,
-} from '../src/data/stateql-definitions.js';
+} from '../src/data/tandrove-definitions.js';
 
 /** Observe actual client-emitted operations, with no HTTP or artificial delay. */
 export async function compareNetwork() {
   const measurements = [];
-  for (const mode of ['apollo', 'stateql'] as const) {
+  for (const mode of ['apollo', 'tandrove'] as const) {
     const fixture = new BillingFixture();
     const operations: {
       query: string;

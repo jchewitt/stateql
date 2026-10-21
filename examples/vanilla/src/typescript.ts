@@ -5,7 +5,7 @@ import {
   type FieldType,
   type ObjectRef,
   type ResultOf,
-} from '@launch-echo/stateql-graphql';
+} from '@tandrove/graphql';
 import { createFixture, sdl, identities } from './fixture.mjs';
 
 // A generated schema can supply this model in a real app. Types add editor checks;

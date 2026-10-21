@@ -1,9 +1,7 @@
 import semver from 'semver';
 
 export const registry = 'https://registry.npmjs.org/';
-const names = ['core', 'graphql', 'angular'].map(
-  (part) => `@launch-echo/stateql-${part}`,
-);
+const names = ['core', 'graphql', 'angular'].map((part) => `@tandrove/${part}`);
 
 /** npm provenance uses the workflow revision, so checkout must match it. */
 export function validateWorkflowRevision({ head, workflowSha }) {
@@ -33,7 +31,7 @@ export function validateRelease({ manifests, config, tag }) {
     typeof prerelease[1] !== 'number'
   )
     throw new Error('Only alpha.N prereleases at or above 0.1.0 are enabled.');
-  if (tag !== `stateql-v${version}`)
+  if (tag !== `tandrove-v${version}`)
     throw new Error('Release tag must exactly match the package version.');
   for (const [index, manifest] of manifests.entries()) {
     const entry = config.packages[index];
@@ -69,7 +67,7 @@ export function validateManifest(manifest, name, version) {
     );
   if (
     manifest.license !== 'MIT' ||
-    manifest.repository?.url !== 'git+https://github.com/jchewitt/stateql.git'
+    manifest.repository?.url !== 'git+https://github.com/jchewitt/tandrove.git'
   )
     throw new Error(
       'Published packages require the MIT license and source repository metadata.',
@@ -119,7 +117,10 @@ export function validateDependencies(manifests, version, workspace = false) {
       ...manifest.peerDependencies,
       ...manifest.optionalDependencies,
     })) {
-      if (name.startsWith('@jchewitt/stateql-'))
+      if (
+        name.startsWith('@jchewitt/stateql-') ||
+        name.startsWith('@launch-echo/stateql-')
+      )
         throw new Error('Old-scope dependencies cannot be published.');
       if (!workspace && range.startsWith('workspace:'))
         throw new Error('Workspace dependency ranges cannot be published.');
@@ -131,10 +132,7 @@ export function validatePackedPackage({ manifest, files, entry, version }) {
   validateManifest(manifest, entry.packageName, version);
   const angular = entry.packageName === names[2];
   const required = angular
-    ? [
-        'fesm2022/launch-echo-stateql-angular.mjs',
-        'types/launch-echo-stateql-angular.d.ts',
-      ]
+    ? ['fesm2022/tandrove-angular.mjs', 'types/tandrove-angular.d.ts']
     : ['dist/index.js', 'dist/index.d.ts'];
   if (entry.packageName === names[1])
     required.push('dist/codegen.js', 'dist/codegen.d.ts');
@@ -149,10 +147,8 @@ export function validatePackedPackage({ manifest, files, entry, version }) {
     throw new Error('Unexpected file in published package.');
   if (angular) {
     if (
-      manifest.exports?.['.']?.default !==
-        './fesm2022/launch-echo-stateql-angular.mjs' ||
-      manifest.exports?.['.']?.types !==
-        './types/launch-echo-stateql-angular.d.ts' ||
+      manifest.exports?.['.']?.default !== './fesm2022/tandrove-angular.mjs' ||
+      manifest.exports?.['.']?.types !== './types/tandrove-angular.d.ts' ||
       manifest.scripts ||
       manifest.devDependencies
     )

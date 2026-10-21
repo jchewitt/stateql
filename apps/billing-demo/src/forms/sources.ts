@@ -1,9 +1,9 @@
 import { inject, InjectionToken } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { firstValueFrom } from 'rxjs';
-import type { QueryHandle } from '@launch-echo/stateql-core';
-import { BILLING_CLIENT } from '../stateql-client';
-import { accountMonitor, billingScope } from '../data/stateql-definitions';
+import type { QueryHandle } from '@tandrove/core';
+import { BILLING_CLIENT } from '../tandrove-client';
+import { accountMonitor, billingScope } from '../data/tandrove-definitions';
 import { BILLING_INVOICES, INVOICE_ACCOUNTS } from '../data/operations';
 import type { EditorSource, EditorTarget, ServerField } from './draft';
 import { saveAccount } from './save-account';
@@ -43,7 +43,7 @@ function stateField(handle: QueryHandle, target: EditorTarget): ServerField {
   return { available: true, value };
 }
 
-export function stateqlEditorSource(): EditorSource {
+export function tandroveEditorSource(): EditorSource {
   const client = inject(BILLING_CLIENT);
   return {
     save: saveAccount,

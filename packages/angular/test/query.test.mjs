@@ -15,15 +15,12 @@ import {
   ServerTestingModule,
   platformServerTesting,
 } from '@angular/platform-server/testing';
-import { AcquisitionClient, resourceAddress } from '@launch-echo/stateql-core';
-import {
-  createSchema,
-  createGraphQLClient,
-} from '@launch-echo/stateql-graphql';
+import { AcquisitionClient, resourceAddress } from '@tandrove/core';
+import { createSchema, createGraphQLClient } from '@tandrove/graphql';
 import {
   injectStateQuery,
-  provideStateQLClient,
-} from '../dist/fesm2022/launch-echo-stateql-angular.mjs';
+  provideTandroveClient,
+} from '../dist/fesm2022/tandrove-angular.mjs';
 
 TestBed.initTestEnvironment(ServerTestingModule, platformServerTesting());
 afterEach(() => TestBed.resetTestingModule());
@@ -100,7 +97,7 @@ test('provider lazily owns one client per providing injector, inherited by child
       },
     };
   };
-  const root = scope([provideStateQLClient(token, factory)]);
+  const root = scope([provideTandroveClient(token, factory)]);
   const child = createEnvironmentInjector([], root);
   assert.equal(creates, 0);
   assert.equal(root.get(token), child.get(token));
@@ -108,7 +105,7 @@ test('provider lazily owns one client per providing injector, inherited by child
   child.destroy();
   assert.equal(disposals, 0);
   const override = createEnvironmentInjector(
-    [provideStateQLClient(token, factory)],
+    [provideTandroveClient(token, factory)],
     root,
   );
   assert.notEqual(override.get(token), root.get(token));
@@ -122,7 +119,7 @@ test('provider disposes a client returned after its creation destroys the owning
   const token = new InjectionToken('reentrant client');
   let disposals = 0;
   const owner = scope([
-    provideStateQLClient(token, () => {
+    provideTandroveClient(token, () => {
       owner.destroy();
       return {
         dispose() {
@@ -356,7 +353,7 @@ test('missing, destroyed and reactive construction contexts reject before openin
 test('shared core acquisition survives one argument switch and late data stays under its own scope', async () => {
   const token = new InjectionToken('acquisition');
   const root = scope([
-    provideStateQLClient(token, () => new AcquisitionClient()),
+    provideTandroveClient(token, () => new AcquisitionClient()),
   ]);
   const a = createEnvironmentInjector([], root);
   const b = createEnvironmentInjector([], root);
@@ -418,7 +415,7 @@ test('GraphQL definitions retain alias invalidation and cached siblings through 
     .field('item')
     .select({ name: { as: 'label' }, amount: true });
   const root = scope([
-    provideStateQLClient(token, () =>
+    provideTandroveClient(token, () =>
       createGraphQLClient({
         transport: async (operation) => {
           requests.push(operation.query);

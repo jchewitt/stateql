@@ -1,11 +1,11 @@
 # Angular integration
 
-The experimental `@launch-echo/stateql-angular` package provides readonly observation, environment-owned client providers, and reactive query ownership. StateQL billing views sit beside the Apollo baseline; see [the demo guide](DEMO.md). Demo-owned form drafts and explicit saves use the same editing policy for both clients; these helpers are not exported by the library.
+The experimental `@tandrove/angular` package provides readonly observation, environment-owned client providers, and reactive query ownership. Tandrove billing views sit beside the Apollo baseline; see [the demo guide](DEMO.md). Demo-owned form drafts and explicit saves use the same editing policy for both clients; these helpers are not exported by the library.
 
-The initial release candidate is `0.1.0-alpha.0`, tested with Angular 21.2.25 and RxJS 7.8.2. Once published, install matching StateQL versions into an Angular 21 application:
+The initial release candidate is `0.1.0-alpha.0`, tested with Angular 21.2.25 and RxJS 7.8.2. Once published, install matching Tandrove versions into an Angular 21 application:
 
 ```sh
-npm install @launch-echo/stateql-core@0.1.0-alpha.0 @launch-echo/stateql-graphql@0.1.0-alpha.0 @launch-echo/stateql-angular@0.1.0-alpha.0 graphql@^16.14.2
+npm install @tandrove/core@0.1.0-alpha.0 @tandrove/graphql@0.1.0-alpha.0 @tandrove/angular@0.1.0-alpha.0 graphql@^16.14.2
 ```
 
 The Angular package uses partial compilation and requires Angular core `^21.2.25`; older Angular majors are not supported. The core peer is exact during alpha. See [release status](RELEASING.md) before installing a version that has not yet been published.
@@ -16,21 +16,15 @@ Declare one typed Angular token for a client configuration. The adapter does not
 
 ```ts
 import { inject, InjectionToken, signal } from '@angular/core';
-import {
-  createGraphQLClient,
-  type GraphQLClient,
-} from '@launch-echo/stateql-graphql';
-import {
-  injectStateQuery,
-  provideStateQLClient,
-} from '@launch-echo/stateql-angular';
+import { createGraphQLClient, type GraphQLClient } from '@tandrove/graphql';
+import { injectStateQuery, provideTandroveClient } from '@tandrove/angular';
 
 export const BILLING_CLIENT = new InjectionToken<GraphQLClient>(
-  'Billing StateQL',
+  'Billing Tandrove',
 );
 
 // Add to application or route environment providers.
-export const billingProvider = provideStateQLClient(BILLING_CLIENT, () =>
+export const billingProvider = provideTandroveClient(BILLING_CLIENT, () =>
   createGraphQLClient({ endpoint: 'http://localhost:4100/graphql' }),
 );
 
@@ -47,7 +41,7 @@ const query = injectStateQuery(
 );
 ```
 
-`provideStateQLClient(token, create)` creates a client lazily, once per providing environment injector. Descendants share it unless they explicitly override that token. The providing injector disposes it once on destruction. The factory must create a client owned by that injector, not borrow a globally shared instance whose lifetime belongs elsewhere. The typed token determines the factory's required type. Existing applications may use their own Angular providers instead if they manage client ownership themselves.
+`provideTandroveClient(token, create)` creates a client lazily, once per providing environment injector. Descendants share it unless they explicitly override that token. The providing injector disposes it once on destruction. The factory must create a client owned by that injector, not borrow a globally shared instance whose lifetime belongs elsewhere. The typed token determines the factory's required type. Existing applications may use their own Angular providers instead if they manage client ownership themselves.
 
 `injectStateQuery(parameters, open, { injector? })` owns a fresh query handle returned by `open` for each binding. Both callbacks are synchronous. The parameter getter is pure and reads the signals that should select the query; use immutable parameter values. Only those dependencies trigger replacement. It reevaluates a binding when its tracked dependencies invalidate, without deep-equality, debounce, or canonical-address comparison. Core still decides cache reuse and request deduplication. Do not read unrelated signals in the parameter getter.
 
@@ -71,24 +65,24 @@ Destroying the current injection scope, or calling `query.dispose()`, stops its 
 ## Observe an externally owned reader
 
 ```ts
-import { stateqlSignal } from '@launch-echo/stateql-angular';
+import { tandroveSignal } from '@tandrove/angular';
 
 // During component/service construction, with a reader owned by the caller:
-const snapshot = stateqlSignal(queryHandle);
+const snapshot = tandroveSignal(queryHandle);
 // snapshot() returns the current immutable snapshot.
 ```
 
-`stateqlSignal(reader, options?)` accepts core's portable `StoreReader<T>` and returns a readonly Angular `Signal<T>`. The reader supplies stable immutable snapshots. The adapter reads synchronously, subscribes, and rechecks to close a possible read/subscribe gap. It adds no fetching, caching, polling, retries, invalidation, or writable state API.
+`tandroveSignal(reader, options?)` accepts core's portable `StoreReader<T>` and returns a readonly Angular `Signal<T>`. The reader supplies stable immutable snapshots. The adapter reads synchronously, subscribes, and rechecks to close a possible read/subscribe gap. It adds no fetching, caching, polling, retries, invalidation, or writable state API.
 
 By default, it uses the current Angular injection context's `DestroyRef`. An explicit `{ destroyRef }` allows use outside an injection context. Construct the bridge once per intended lifetime, outside `computed` or effects; reactive-context construction is rejected to avoid accumulating subscriptions. An already-destroyed scope also rejects.
 
-Destroying that scope unsubscribes and leaves the signal at its last observed snapshot. It does **not** dispose the reader, query handle, or client. The caller retains ownership of those resources. A service created in the application injector naturally observes for that application's lifetime, not for each consuming component's lifetime. The readonly signal prevents assigning a different snapshot through the adapter; it does not deep-freeze arbitrary third-party reader values. StateQL's own snapshots already enforce immutability.
+Destroying that scope unsubscribes and leaves the signal at its last observed snapshot. It does **not** dispose the reader, query handle, or client. The caller retains ownership of those resources. A service created in the application injector naturally observes for that application's lifetime, not for each consuming component's lifetime. The readonly signal prevents assigning a different snapshot through the adapter; it does not deep-freeze arbitrary third-party reader values. Tandrove's own snapshots already enforce immutability.
 
-The package has Angular core and StateQL core peers so the host supplies the shared runtime. It imports no GraphQL or forms implementation. Angular 21.2.25 is the tested baseline, and the peer range stays within Angular 21. TypeScript declarations preserve the source snapshot type; the runtime remains JavaScript.
+The package has Angular core and Tandrove core peers so the host supplies the shared runtime. It imports no GraphQL or forms implementation. Angular 21.2.25 is the tested baseline, and the peer range stays within Angular 21. TypeScript declarations preserve the source snapshot type; the runtime remains JavaScript.
 
 ## Packaging and verification
 
-Build with `pnpm build` or `pnpm --filter @launch-echo/stateql-angular build` after building core. The build uses ng-packagr with Angular partial compilation and produces the Angular Package Format under `packages/angular/dist`. The workspace package points to that output; the build removes those workspace-only paths from the generated package manifest, retaining ng-packagr's exports, module and declaration entries.
+Build with `pnpm build` or `pnpm --filter @tandrove/angular build` after building core. The build uses ng-packagr with Angular partial compilation and produces the Angular Package Format under `packages/angular/dist`. The workspace package points to that output; the build removes those workspace-only paths from the generated package manifest, retaining ng-packagr's exports, module and declaration entries.
 
 Pack the generated `dist` directory, not the source package directory. The initial alpha is prepared for the three-package publication workflow; account setup and actual registry publication are tracked in [releasing](RELEASING.md).
 

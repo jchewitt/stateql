@@ -69,13 +69,13 @@ importers:
       '@apollo/client':
         specifier: 4.3.4
         version: 4.3.4(graphql@16.14.2)(rxjs@7.8.2)
-      '@launch-echo/stateql-angular':
+      '@tandrove/angular':
         specifier: workspace:*
         version: link:../../packages/angular
-      '@launch-echo/stateql-core':
+      '@tandrove/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@launch-echo/stateql-graphql':
+      '@tandrove/graphql':
         specifier: workspace:*
         version: link:../../packages/graphql
       apollo-angular:
@@ -115,10 +115,10 @@ importers:
 
   examples/query-planner:
     dependencies:
-      '@launch-echo/stateql-core':
+      '@tandrove/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@launch-echo/stateql-graphql':
+      '@tandrove/graphql':
         specifier: workspace:*
         version: link:../../packages/graphql
       graphql:
@@ -137,10 +137,10 @@ importers:
 
   examples/vanilla:
     dependencies:
-      '@launch-echo/stateql-core':
+      '@tandrove/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@launch-echo/stateql-graphql':
+      '@tandrove/graphql':
         specifier: workspace:*
         version: link:../../packages/graphql
       graphql:
@@ -181,10 +181,10 @@ importers:
       '@angular/platform-server':
         specifier: 21.2.25
         version: 21.2.25(@angular/common@21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/compiler@21.2.25)(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2))(@angular/platform-browser@21.2.25(@angular/common@21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)))(rxjs@7.8.2)
-      '@launch-echo/stateql-core':
+      '@tandrove/core':
         specifier: workspace:*
         version: link:../core
-      '@launch-echo/stateql-graphql':
+      '@tandrove/graphql':
         specifier: workspace:*
         version: link:../graphql
       graphql:
@@ -204,7 +204,7 @@ importers:
 
   packages/graphql:
     dependencies:
-      '@launch-echo/stateql-core':
+      '@tandrove/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
