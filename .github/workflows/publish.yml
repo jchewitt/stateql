@@ -1,10 +1,10 @@
-name: Publish experimental StateQL
+name: Publish experimental Tandrove
 
 on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Reviewed stateql-v0.x.y-alpha.N tag at the current main commit
+        description: Reviewed tandrove-v0.x.y-alpha.N tag at the current main commit
         required: true
         type: string
 
@@ -51,3 +51,5 @@ jobs:
           retention-days: 30
       - name: Publish using npm trusted publishing
         run: pnpm release:publish
+      - name: Verify installed public registry consumers
+        run: pnpm pack:check --registry

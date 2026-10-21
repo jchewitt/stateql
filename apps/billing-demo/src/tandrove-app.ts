@@ -3,14 +3,14 @@ import { Component, inject, signal, viewChild } from '@angular/core';
 import type { TenantId } from './data/operations';
 import { FixtureService } from './fixture.service';
 import { RequestInspector } from './request-inspector';
-import { StateQLPanel } from './stateql-panel';
+import { TandrovePanel } from './tandrove-panel';
 
 @Component({
   selector: 'billing-app',
-  imports: [StateQLPanel, RequestInspector, BillingEditors],
-  templateUrl: './stateql-app.html',
+  imports: [TandrovePanel, RequestInspector, BillingEditors],
+  templateUrl: './tandrove-app.html',
 })
-export class StateQLApp {
+export class TandroveApp {
   readonly fixture = inject(FixtureService);
   readonly tenantId = signal<TenantId>('A');
   readonly busy = signal(false);
@@ -18,7 +18,7 @@ export class StateQLApp {
   readonly message = signal('Two definitions. Shared invoice state.');
   readonly showMonitor = signal(true);
   readonly delayed = signal(false);
-  readonly workspace = viewChild(StateQLPanel);
+  readonly workspace = viewChild(TandrovePanel);
   private scopeGeneration = 0;
 
   selectTenant(event: Event): void {

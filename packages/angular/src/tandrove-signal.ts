@@ -5,26 +5,26 @@ import {
   signal,
   type Signal,
 } from '@angular/core';
-import type { StoreReader } from '@launch-echo/stateql-core';
+import type { StoreReader } from '@tandrove/core';
 import { observeReader } from './observe-reader.js';
 
-export interface StateQLSignalOptions {
+export interface TandroveSignalOptions {
   /** Defaults to the current injection context's lifetime. */
   readonly destroyRef?: DestroyRef;
 }
 
 /**
- * Observe immutable StateQL snapshots without taking ownership of the reader.
+ * Observe immutable Tandrove snapshots without taking ownership of the reader.
  * Destroying the Angular scope unsubscribes; the caller still owns its handle.
  */
-export function stateqlSignal<T>(
+export function tandroveSignal<T>(
   reader: StoreReader<T>,
-  options: StateQLSignalOptions = {},
+  options: TandroveSignalOptions = {},
 ): Signal<T> {
-  assertNotInReactiveContext(stateqlSignal);
+  assertNotInReactiveContext(tandroveSignal);
   const destroyRef = options.destroyRef ?? inject(DestroyRef);
   if (destroyRef.destroyed)
-    throw new Error('Cannot observe StateQL in a destroyed Angular scope.');
+    throw new Error('Cannot observe Tandrove in a destroyed Angular scope.');
   const snapshot = signal(reader.getSnapshot());
   const cleanup = observeReader(reader, (value) => {
     if (!destroyRef.destroyed) snapshot.set(value);

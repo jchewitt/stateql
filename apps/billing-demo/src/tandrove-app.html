@@ -1,13 +1,13 @@
 <main>
   <header>
-    <a class="brand" href="https://github.com/jchewitt/stateql"
-      >StateQL <span>/ lab</span></a
+    <a class="brand" href="https://github.com/jchewitt/tandrove"
+      >Tandrove <span>/ lab</span></a
     >
-    <span class="milestone">02 · StateQL views</span>
+    <span class="milestone">02 · Tandrove views</span>
   </header>
   <nav aria-label="Client comparison">
     <a href="/">Apollo</a
-    ><a aria-current="page" href="/?client=stateql">StateQL</a>
+    ><a aria-current="page" href="/?client=tandrove">Tandrove</a>
   </nav>
   <section class="intro">
     <p class="eyebrow">The selective refresh experiment</p>
@@ -79,9 +79,9 @@
     </details>
   </section>
   <div class="consumers">
-    <stateql-panel [tenantId]="tenantId()" title="Billing workspace" />
+    <tandrove-panel [tenantId]="tenantId()" title="Billing workspace" />
     @if (showMonitor()) {
-    <stateql-panel
+    <tandrove-panel
       [tenantId]="tenantId()"
       title="Account monitor"
       [compact]="true"
@@ -92,7 +92,7 @@
   <billing-editors [tenantId]="tenant" /> }
   <request-inspector [fixture]="fixture" />
   <footer>
-    StateQL views · Central and feature-derived definitions share one scoped
+    Tandrove views · Central and feature-derived definitions share one scoped
     resource. Form drafts stay local until an explicit save. Switching clients
     reloads their caches; fixture server data and the request log remain until
     reset.

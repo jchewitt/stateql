@@ -1,22 +1,22 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { injectStateQuery } from '@launch-echo/stateql-angular';
-import type { InputValue } from '@launch-echo/stateql-core';
+import { injectStateQuery } from '@tandrove/angular';
+import type { InputValue } from '@tandrove/core';
 import {
   accountMonitor,
   billingInvoices,
   billingScope,
-} from './data/stateql-definitions';
+} from './data/tandrove-definitions';
 import type { TenantId } from './data/operations';
 import { FixtureService } from './fixture.service';
-import { BILLING_CLIENT } from './stateql-client';
+import { BILLING_CLIENT } from './tandrove-client';
 
 @Component({
-  selector: 'stateql-panel',
+  selector: 'tandrove-panel',
   imports: [CurrencyPipe],
-  templateUrl: './stateql-panel.html',
+  templateUrl: './tandrove-panel.html',
 })
-export class StateQLPanel {
+export class TandrovePanel {
   readonly tenantId = input.required<TenantId>();
   readonly title = input.required<string>();
   readonly compact = input(false);

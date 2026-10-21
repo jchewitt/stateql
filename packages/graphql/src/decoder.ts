@@ -17,7 +17,7 @@ import {
   type InputObject,
   type InputValue,
   type ResolvedField,
-} from '@launch-echo/stateql-core';
+} from '@tandrove/core';
 import { fieldAt, containsList, type SchemaContext } from './schema.js';
 import type { PathNode } from './definition.js';
 import type { PreparedOperation } from './operation.js';

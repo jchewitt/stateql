@@ -1,6 +1,6 @@
 import {
   EDITOR_SOURCE,
-  stateqlEditorSource,
+  tandroveEditorSource,
   apolloEditorSource,
 } from './forms/sources';
 import { provideHttpClient } from '@angular/common/http';
@@ -10,17 +10,17 @@ import { provideApollo } from 'apollo-angular';
 import { HttpLink } from 'apollo-angular/http';
 import { createBillingCache } from './data/cache';
 import { App } from './app';
-import { StateQLApp } from './stateql-app';
-import { provideBillingClient } from './stateql-client';
+import { TandroveApp } from './tandrove-app';
+import { provideBillingClient } from './tandrove-client';
 
-const stateql =
-  new URLSearchParams(window.location.search).get('client') === 'stateql';
+const tandrove =
+  new URLSearchParams(window.location.search).get('client') === 'tandrove';
 
-void bootstrapApplication(stateql ? StateQLApp : App, {
-  providers: stateql
+void bootstrapApplication(tandrove ? TandroveApp : App, {
+  providers: tandrove
     ? [
         provideBillingClient(new URL('/graphql', window.location.href).href),
-        { provide: EDITOR_SOURCE, useFactory: stateqlEditorSource },
+        { provide: EDITOR_SOURCE, useFactory: tandroveEditorSource },
       ]
     : [
         provideHttpClient(),

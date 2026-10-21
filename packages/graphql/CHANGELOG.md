@@ -1,10 +1,12 @@
-# @launch-echo/stateql-graphql
+# @tandrove/graphql
 
 ## 0.1.0-alpha.0
 
+- Rename the unpublished StateQL candidate to Tandrove: packages are `@tandrove/core`, `@tandrove/graphql` and `@tandrove/angular`. Angular APIs are `tandroveSignal` and `provideTandroveClient`. This is the first public version, with no old-name compatibility aliases.
+
 ### Minor Changes
 
-- Prepare the first usable standalone alpha under the @launch-echo scope: portable shared state, schema-driven GraphQL acquisition and selective refresh, and Angular signals/providers/owned query views. Ship ESM JavaScript with optional TypeScript declarations and an Angular partial-compilation package. Install matching alpha versions together; no server companion or streaming infrastructure is required. Extension interfaces and runtime snapshot typing remain experimental.
+- Prepare the first usable standalone alpha under the @tandrove scope: portable shared state, schema-driven GraphQL acquisition and selective refresh, and Angular signals/providers/owned query views. Ship ESM JavaScript with optional TypeScript declarations and an Angular partial-compilation package. Install matching alpha versions together; no server companion or streaming infrastructure is required. Extension interfaces and runtime snapshot typing remain experimental.
 
 ### Patch Changes
 
@@ -18,4 +20,4 @@
 - Updated dependencies [75587d5]
 - Updated dependencies [1d50674]
 - Updated dependencies [b30c6e2]
-  - @launch-echo/stateql-core@0.1.0-alpha.0
+  - @tandrove/core@0.1.0-alpha.0

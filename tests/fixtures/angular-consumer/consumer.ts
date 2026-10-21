@@ -4,15 +4,15 @@ import {
   resourceAddress,
   type StoreReader,
   type QueryHandle,
-} from '@launch-echo/stateql-core';
+} from '@tandrove/core';
 import {
-  stateqlSignal,
+  tandroveSignal,
   injectStateQuery,
-  provideStateQLClient,
-} from '@launch-echo/stateql-angular';
+  provideTandroveClient,
+} from '@tandrove/angular';
 
 const CLIENT = new InjectionToken<AcquisitionClient>('packed client');
-export const providers = provideStateQLClient(
+export const providers = provideTandroveClient(
   CLIENT,
   () => new AcquisitionClient(),
 );
@@ -29,7 +29,7 @@ const reader: StoreReader<Readonly<{ value: string }>> = {
     '<span>{{ snapshot().value }}</span>@if (query.state(); as current) { @if (current.status === "active") { <span>{{ current.snapshot.fetching }}</span> } }',
 })
 export class Consumer {
-  readonly snapshot = stateqlSignal(reader);
+  readonly snapshot = tandroveSignal(reader);
   private readonly client = inject(CLIENT);
   readonly query = injectStateQuery(
     () => 'A',
@@ -62,4 +62,4 @@ void typed.invalidate('name');
 // @ts-expect-error target literals must survive packed declarations
 void typed.invalidate('missing');
 // @ts-expect-error token type controls the provider's factory
-provideStateQLClient(CLIENT, () => ({ dispose() {} }));
+provideTandroveClient(CLIENT, () => ({ dispose() {} }));

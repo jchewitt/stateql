@@ -1,38 +1,41 @@
 # Experimental npm releases
 
-The first release candidate is **0.1.0-alpha.0** for `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql` and `@launch-echo/stateql-angular`, published in that order to **next**. These are functioning standalone libraries; server companions, streaming and hosting are not prerequisites. Publication and npm account setup remain separate from preparing and reviewing the candidate.
+Tandrove is the library previously developed as StateQL. The user secured the `@tandrove` scope before any package publication. The GitHub repository is now `jchewitt/tandrove`, including repository metadata and trusted-publisher settings. The older `stateql-v0.1.0-alpha.0` tag and its saved tarballs are superseded preparation artifacts: do not publish them. Use only the new `tandrove-v0.1.0-alpha.0` release set below.
 
-All three packages ship ESM JavaScript and optional TypeScript declarations. Core has no framework/platform dependencies. GraphQL requires GraphQL 16.14.2 or a compatible 16.x release; Angular requires Angular 21.2.25 or a compatible 21.x release and the matching StateQL core alpha. Node tooling requires Node >=22.14.0; release CI uses Node 24 and pnpm 10.18.2. See the [GraphQL subset](PLANNER.md#supported-boundary), [JavaScript examples](VANILLA.md), [Angular integration](ANGULAR.md) and [comparison](COMPARISON.md).
+The first release candidate is **0.1.0-alpha.0** for `@tandrove/core`, `@tandrove/graphql` and `@tandrove/angular`, published in that order to **next**. These are functioning standalone libraries; server companions, streaming and hosting are not prerequisites. Publication and npm account setup remain separate from preparing and reviewing the candidate.
 
-The alpha supports shared caching, generated GraphQL reads, field/branch invalidation, explicit list refresh, local request race protection, bounded read retries and Angular observation/query ownership. Snapshot payloads are immutable JSON projections. Low-level source/ingest interfaces remain provisional. Forms draft helpers belong to the demo, not the public library. Polling/stale timers, real socket delivery, server revisions, persistence, offline writes, React and production REST/server adapters remain planned. Alpha changes may break APIs; each release must document changes and migration requirements. Keep dependent StateQL packages on the same tested alpha.
+All three packages ship ESM JavaScript and optional TypeScript declarations. Core has no framework/platform dependencies. GraphQL requires GraphQL 16.14.2 or a compatible 16.x release; Angular requires Angular 21.2.25 or a compatible 21.x release and the matching Tandrove core alpha. Node tooling requires Node >=22.14.0; release CI uses Node 24 and pnpm 10.18.2. See the [GraphQL subset](PLANNER.md#supported-boundary), [JavaScript examples](VANILLA.md), [Angular integration](ANGULAR.md) and [comparison](COMPARISON.md).
+
+The alpha supports shared caching, generated GraphQL reads, field/branch invalidation, explicit list refresh, local request race protection, bounded read retries and Angular observation/query ownership. Snapshot payloads are immutable JSON projections. Low-level source/ingest interfaces remain provisional. Forms draft helpers belong to the demo, not the public library. Polling/stale timers, real socket delivery, server revisions, persistence, offline writes, React and production REST/server adapters remain planned. Alpha changes may break APIs; each release must document changes and migration requirements. Keep dependent Tandrove packages on the same tested alpha.
 
 Follow the [usable incremental release gates](../PLAN.md#usable-incremental-releases). Publish integrations only with runnable behavior and installed-consumer acceptance, while preserving standalone client usage.
 
 ## First publication: account-owner handoff
 
-No new clone is required when using the prepared checkout. From another computer, clone `https://github.com/jchewitt/stateql.git`, fetch tags, check out `stateql-v0.1.0-alpha.0`, install with `pnpm install --frozen-lockfile`, and prepare the artifacts as below. Use Node 24 and pnpm 10.18.2.
+No new clone is required when using the prepared checkout. From another computer, clone `https://github.com/jchewitt/tandrove.git`, fetch tags, check out `tandrove-v0.1.0-alpha.0`, install with `pnpm install --frozen-lockfile`, and prepare the artifacts as below. Use Node 24 and pnpm 10.18.2.
 
-1. Sign in to npm with an account authorized to publish public packages in `@launch-echo`. If this is an organization scope, its owner must grant that access. Enable account 2FA. Scope selection alone does not prove ownership.
+1. Sign in to npm with an account authorized to publish public packages in `@tandrove`. If this is an organization scope, its owner must grant that access. Enable account 2FA. Scope selection alone does not prove ownership.
 2. In your own terminal, run `npm login --registry=https://registry.npmjs.org/` and `npm whoami --registry=https://registry.npmjs.org/`. Complete npm's browser/2FA prompts; never put credentials in Git or chat.
 3. Use the reviewed tagged checkout and prepare the release. PowerShell commands from the repository root:
 
    ```powershell
-   $env:RELEASE_TAG = 'stateql-v0.1.0-alpha.0'
+   $env:RELEASE_TAG = 'tandrove-v0.1.0-alpha.0'
    pnpm release:prepare
    ```
 
-   This runs release preflight and the full checks, then writes tarballs and their source revision/SHA512 manifest to `.artifacts/release/stateql-v0.1.0-alpha.0/`. Preparation does not publish. If the handoff already prepared this directory at the same clean commit, use those artifacts.
+   This runs release preflight and the full checks, then writes tarballs and their source revision/SHA512 manifest to `.artifacts/release/tandrove-v0.1.0-alpha.0/`. Preparation does not publish. If the handoff already prepared this directory at the same clean commit, use those artifacts.
 
 4. Publish the reviewed artifacts interactively:
 
    ```powershell
    pnpm release:bootstrap
    pnpm release:verify
+   pnpm pack:check --registry
    ```
 
    Bootstrap checks every existing registry version before publishing any missing package, then publishes core, GraphQL and Angular in dependency order with public access and the `next` tag. Complete any npm 2FA prompts. This is the step that makes the packages public. It publishes the saved tarballs; Angular uses its built APF output, never the source workspace directory.
 
-5. Return the command outcome so registry installation checks can finish. `release:verify` checks registry versions/integrity; it does not replace a clean JS/TS/Angular install from npm. Until those checks pass, R1 registry acceptance remains open.
+5. Return the command outcomes. `release:verify` checks registry versions/integrity; `pack:check --registry` installs the exact alpha versions from the public registry in isolated JavaScript, TypeScript and Angular consumers, without substituting local tarballs. Until both checks pass, R1 registry acceptance remains open.
 
 The first local publication does **not** have GitHub build provenance. Do not describe it as OIDC-published or attempt to republish the same version through CI. Later versions use the trusted workflow and provenance. Never publish a `0.0.0` scaffold just to create package settings.
 
@@ -45,12 +48,12 @@ In npm's Settings → Trusted Publisher for **each** of the three packages, choo
 | Setting              | Value                                |
 | -------------------- | ------------------------------------ |
 | Organization or user | `jchewitt`                           |
-| Repository           | `stateql`                            |
+| Repository           | `tandrove`                           |
 | Workflow filename    | `publish.yml`                        |
 | Environment name     | `npm`                                |
 | Allowed action       | Direct publishing with `npm publish` |
 
-The GitHub environment `npm` has been created in `jchewitt/stateql`. A required reviewer can be configured by the repository owner if desired. No npm token secret is needed. The default stage-only permission in newer npm settings is insufficient for this direct-publish workflow.
+The GitHub environment `npm` has been created in `jchewitt/tandrove`. A required reviewer can be configured by the repository owner if desired. No npm token secret is needed. The default stage-only permission in newer npm settings is insufficient for this direct-publish workflow.
 
 Configure trust when the next reviewed alpha is ready: npm currently requires a newly configured publisher to complete its first successful publish within **two days**, or it must be recreated. Do not manufacture or republish an existing version merely to validate trust. Check these settings against [npm's current trusted-publishing documentation](https://docs.npmjs.com/trusted-publishers/) when setting them up. The workflow's npm 11.6.2 and Node 24 exceed the documented minimum versions.
 
@@ -59,9 +62,9 @@ Configure trust when the next reviewed alpha is ready: npm currently requires a 
 1. Add Changesets for package behavior/API changes. The initial release enters prerelease mode `alpha`; retain it for subsequent alphas. Run `pnpm version:packages`, review versions and changelogs, and update exact prerelease peers consistently. See [.changeset/README.md](../.changeset/README.md).
 2. Keep the three packages as one tested release set. Check all manifests, packed dependencies and Angular APF metadata. Stable versions and `latest` require a separately reviewed policy change.
 3. Run `pnpm check`, obtain independent agent review, and merge the release PR only after hosted CI passes. Readiness in `release.config.json` permits only validated alpha candidates; it does not trigger publication.
-4. Tag the reviewed main commit `stateql-v<VERSION>` and push the tag. Never move a published tag.
-5. Dispatch **Publish experimental StateQL** from `main`, supplying that exact tag. The tag must identify the current main commit at dispatch; if main has advanced, create another reviewed release candidate instead of publishing with misleading provenance.
-6. The workflow installs locked dependencies, runs `release:prepare`, publishes the saved tarballs with OIDC/provenance, and verifies registry integrity. It never runs on ordinary pushes or PRs. Check the run and provenance for all three packages, then run the clean registry consumers before announcing the release.
+4. Tag the reviewed main commit `tandrove-v<VERSION>` and push the tag. Never move a published tag.
+5. Dispatch **Publish experimental Tandrove** from `main`, supplying that exact tag. The tag must identify the current main commit at dispatch; if main has advanced, create another reviewed release candidate instead of publishing with misleading provenance.
+6. The workflow installs locked dependencies, runs `release:prepare`, publishes the saved tarballs with OIDC/provenance, verifies registry integrity, and runs `pnpm pack:check --registry` for clean installed consumers. It never runs on ordinary pushes or PRs. Check the run and provenance for all three packages before announcing the release.
 
 The guard requires a clean checkout, a version-matching tag contained in `origin/main`, and, in GitHub Actions, a checked-out commit equal to the workflow's `GITHUB_SHA`. This ties provenance to the actual source. Core/GraphQL ship their compiled modules; Angular ships `packages/angular/dist` with partial compilation and matching core peer metadata.
 

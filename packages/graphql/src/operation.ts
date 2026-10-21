@@ -19,7 +19,7 @@ import {
   type FieldSegment,
   type InputObject,
   type ResolvedField,
-} from '@launch-echo/stateql-core';
+} from '@tandrove/core';
 import { containsList, fieldAt, type SchemaContext } from './schema.js';
 import type { PathNode } from './definition.js';
 
@@ -147,7 +147,7 @@ export function compileOperation(
       {
         kind: Kind.OPERATION_DEFINITION,
         operation: OperationTypeNode.QUERY,
-        name: name('StateQLRead'),
+        name: name('TandroveRead'),
         variableDefinitions: definitions,
         selectionSet: { kind: Kind.SELECTION_SET, selections: [root] },
       },

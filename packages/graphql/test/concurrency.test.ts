@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import {
   AcquisitionCancelledError,
   AcquisitionSupersededError,
-} from '@launch-echo/stateql-core';
+} from '@tandrove/core';
 import {
   createSchema,
   createGraphQLClient,

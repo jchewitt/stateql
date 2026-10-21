@@ -10,13 +10,13 @@ const workspace = (page: Page) =>
 const account = (page: Page) =>
   workspace(page).getByTestId('invoice-INV-1').getByTestId('account-id');
 
-for (const mode of ['apollo', 'stateql']) {
+for (const mode of ['apollo', 'tandrove']) {
   test.describe(`${mode} form policy`, () => {
     test.beforeEach(async ({ page, request }) => {
       await request.post('http://127.0.0.1:4100/__fixture/control', {
         data: { action: 'reset' },
       });
-      await page.goto(mode === 'apollo' ? '/' : '/?client=stateql');
+      await page.goto(mode === 'apollo' ? '/' : '/?client=tandrove');
       await expect(draft(editor(page))).toHaveValue('A-ledger-1-v1');
       await expect(draft(editor(page, 'Editor two'))).toHaveValue(
         'A-ledger-1-v1',

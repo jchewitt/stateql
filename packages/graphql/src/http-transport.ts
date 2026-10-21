@@ -1,4 +1,4 @@
-import { ReadTransportError } from '@launch-echo/stateql-core';
+import { ReadTransportError } from '@tandrove/core';
 import type { GraphQLTransport } from './client.js';
 
 const transientStatuses = new Set([408, 429, 500, 502, 503, 504]);

@@ -1,12 +1,12 @@
-# StateQL
+# Tandrove
 
-[![CI](https://github.com/jchewitt/stateql/actions/workflows/ci.yml/badge.svg)](https://github.com/jchewitt/stateql/actions/workflows/ci.yml)
+[![CI](https://github.com/jchewitt/tandrove/actions/workflows/ci.yml/badge.svg)](https://github.com/jchewitt/tandrove/actions/workflows/ci.yml)
 
 GraphQL-first state management built around composable definitions and selective field refresh.
 
-**Status: proof of concept evaluated; continuing toward an experimental alpha.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent reads share identical work, protect newer fields from late responses, and cancel when their last interested owner leaves. Bounded retries recover classified transient transport failures. StateQL's Angular package provides client DI, readonly signals and owned queries with reactive argument replacement. Both demo modes demonstrate isolated form drafts, conflict resolution and explicit saves; there is no published or production-ready package.
+**Status: proof of concept evaluated; continuing toward an experimental alpha.** Typed definitions generate GraphQL requests and feed a shared record store with stable consumer snapshots. The client reuses cached fields, fetches missing selections over HTTP, supports field/branch invalidation, reconciles keyed-list membership with `refreshList()`, and retains successful fields from partial GraphQL responses with explicit error/null state. Concurrent reads share identical work, protect newer fields from late responses, and cancel when their last interested owner leaves. Bounded retries recover classified transient transport failures. Tandrove's Angular package provides client DI, readonly signals and owned queries with reactive argument replacement. Both demo modes demonstrate isolated form drafts, conflict resolution and explicit saves; there is no published or production-ready package.
 
-The [P5 comparison](docs/COMPARISON.md) found equal network payloads to a narrow Apollo query. StateQL derives that query from the central definition, removing a separate authored document. Representative consumer bundles were smaller, but runtime operation generation costs more than printing predeclared documents, and some UI code is longer because snapshots still expose generic values. The decision is to continue the independent runtime as a bounded experiment around field freshness and explicit membership semantics, with no overall speed or Apollo feature-parity claim. Run `pnpm compare` for the reproducible measurements and limitations.
+The [P5 comparison](docs/COMPARISON.md) found equal network payloads to a narrow Apollo query. Tandrove derives that query from the central definition, removing a separate authored document. Representative consumer bundles were smaller, but runtime operation generation costs more than printing predeclared documents, and some UI code is longer because snapshots still expose generic values. The decision is to continue the independent runtime as a bounded experiment around field freshness and explicit membership semantics, with no overall speed or Apollo feature-parity claim. Run `pnpm compare` for the reproducible measurements and limitations.
 
 With a schema-generated invoice definition and client:
 
@@ -23,13 +23,13 @@ The generated request fetches the selected field plus necessary identity/context
 Use Node 24 (CI also checks Node 22.14+) and pnpm 10.18.2. Install pnpm if needed with `npm install --global pnpm@10.18.2`.
 
 ```sh
-git clone https://github.com/jchewitt/stateql.git
-cd stateql
+git clone https://github.com/jchewitt/tandrove.git
+cd tandrove
 pnpm install --frozen-lockfile
 pnpm check
 ```
 
-`pnpm check` verifies formatting, strict TypeScript contracts and Angular templates, tooling and API/Apollo/StateQL integration tests, production builds, and the actual packed library artifact installed into an isolated ESM/TypeScript consumer. Build products and package-check artifacts are ignored by Git.
+`pnpm check` verifies formatting, strict TypeScript contracts and Angular templates, tooling and API/Apollo/Tandrove integration tests, production builds, and the actual packed library artifact installed into an isolated ESM/TypeScript consumer. Build products and package-check artifacts are ignored by Git.
 
 The library ships JavaScript with optional TypeScript declarations. Plain JavaScript consumers can use runtime GraphQL SDL without generated types or a TypeScript loader. After building, run `pnpm demo:vanilla`, `pnpm demo:typescript`, or `pnpm demo:adapters`. The [vanilla guide](docs/VANILLA.md) explains the examples, editor checks, and the limits of the simulated event adapter.
 
@@ -41,7 +41,7 @@ The [Angular foundation](docs/ANGULAR.md) observes shared snapshots as readonly 
 pnpm demo
 ```
 
-Open http://127.0.0.1:4200 for Apollo or http://127.0.0.1:4200/?client=stateql for StateQL. The navigation links switch between them with a fresh client cache. Click **Change server data**, then **Refresh account IDs**: both views update while amounts and names stay cached. **Refetch full query** (Apollo) or **Refresh all fields** (StateQL) updates those remaining fields. StateQL has a separate **Refresh list membership** control for adopting server order. Expand a request in the inspector to see the actual document, variables, and response size. Ports 4100 and 4200 must be free.
+Open http://127.0.0.1:4200 for Apollo or http://127.0.0.1:4200/?client=tandrove for Tandrove. The navigation links switch between them with a fresh client cache. Click **Change server data**, then **Refresh account IDs**: both views update while amounts and names stay cached. **Refetch full query** (Apollo) or **Refresh all fields** (Tandrove) updates those remaining fields. Tandrove has a separate **Refresh list membership** control for adopting server order. Expand a request in the inspector to see the actual document, variables, and response size. Ports 4100 and 4200 must be free.
 
 The [demo guide](docs/DEMO.md) explains tenant isolation, forms, save outcomes, failure/recovery, delay, order changes, and the limits of the comparison. The fixture contains synthetic data and local development controls; it is not a production server.
 
@@ -56,9 +56,9 @@ pnpm test:browser
 
 Run `pnpm demo:planner` after `pnpm check` to inspect generated full and narrow requests. The [planner guide](docs/PLANNER.md) covers schema generation, composition, addresses, and current limitations.
 
-Run `pnpm demo:store` to see shared StateQL records update two differently selected consumers. The [store guide](docs/STORE.md) explains this first runtime chunk and the execution work still ahead.
+Run `pnpm demo:store` to see shared Tandrove records update two differently selected consumers. The [store guide](docs/STORE.md) explains this first runtime chunk and the execution work still ahead.
 
-Run `pnpm demo:acquire` for actual StateQL HTTP requests against an isolated fixture, including shared loading, missing-field fetching, account ID invalidation that preserves cached amounts, and explicit list refresh that adopts server order. The [acquisition guide](docs/ACQUISITION.md) documents the API and supported response subset.
+Run `pnpm demo:acquire` for actual Tandrove HTTP requests against an isolated fixture, including shared loading, missing-field fetching, account ID invalidation that preserves cached amounts, and explicit list refresh that adopts server order. The [acquisition guide](docs/ACQUISITION.md) documents the API and supported response subset.
 
 | Location                 | Current role                                                                 |
 | ------------------------ | ---------------------------------------------------------------------------- |
@@ -66,12 +66,12 @@ Run `pnpm demo:acquire` for actual StateQL HTTP requests against an isolated fix
 | `packages/graphql`       | Schema tooling, operation planner, decoder and HTTP acquisition client       |
 | `packages/angular`       | APF package, client DI, signals and reactive query ownership                 |
 | `apps/billing-api`       | Local GraphQL billing fixture and deterministic controls                     |
-| `apps/billing-demo`      | Apollo and StateQL views with independent consumers and a shared inspector   |
+| `apps/billing-demo`      | Apollo and Tandrove views with independent consumers and a shared inspector  |
 | `examples/query-planner` | Runnable plain TypeScript operation planning example                         |
 | `examples/vanilla`       | JavaScript/TypeScript consumers and fake whole-resource/event adapters       |
 | `scripts`, `tests`       | Package/release checks and Angular browser scenarios                         |
 
-Core has no runtime, UI-framework, GraphQL, or platform dependency. The first release candidates are `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql` and `@launch-echo/stateql-angular`, all at `0.1.0-alpha.0`. Publication and npm account setup are tracked in the [release guide](docs/RELEASING.md). Once published, install matching alpha versions together; see the [GraphQL quick start](packages/graphql/README.md) and [Angular integration](docs/ANGULAR.md).
+Core has no runtime, UI-framework, GraphQL, or platform dependency. The first release candidates are `@tandrove/core`, `@tandrove/graphql` and `@tandrove/angular`, all at `0.1.0-alpha.0`. Publication and npm account setup are tracked in the [release guide](docs/RELEASING.md). Once published, install matching alpha versions together; see the [GraphQL quick start](packages/graphql/README.md) and [Angular integration](docs/ANGULAR.md).
 
 ## Plan and delivery
 
@@ -89,4 +89,4 @@ GitHub Actions checks Linux and Windows. A manually dispatched prerelease workfl
 
 ## License
 
-[MIT](LICENSE), the same license type used by [TanStack Query](https://github.com/TanStack/query/blob/main/LICENSE) and [Apollo Client](https://github.com/apollographql/apollo-client/blob/main/LICENSE). StateQL is an independent project and is not affiliated with either.
+[MIT](LICENSE), the same license type used by [TanStack Query](https://github.com/TanStack/query/blob/main/LICENSE) and [Apollo Client](https://github.com/apollographql/apollo-client/blob/main/LICENSE). Tandrove is an independent project and is not affiliated with either.

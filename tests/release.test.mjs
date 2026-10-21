@@ -12,16 +12,14 @@ import {
 } from '../scripts/release-policy.mjs';
 
 const version = '0.1.0-alpha.0';
-const names = ['core', 'graphql', 'angular'].map(
-  (part) => '@launch-echo/stateql-' + part,
-);
+const names = ['core', 'graphql', 'angular'].map((part) => '@tandrove/' + part);
 function candidate() {
   return {
     manifests: names.map((name, index) => ({
       name,
       version,
       license: 'MIT',
-      repository: { url: 'git+https://github.com/jchewitt/stateql.git' },
+      repository: { url: 'git+https://github.com/jchewitt/tandrove.git' },
       publishConfig: {
         tag: 'next',
         access: 'public',
@@ -39,7 +37,7 @@ function candidate() {
         publishDirectory: 'packages/' + part + (index === 2 ? '/dist' : ''),
       })),
     },
-    tag: 'stateql-v' + version,
+    tag: 'tandrove-v' + version,
   };
 }
 
@@ -61,11 +59,16 @@ for (const [name, change] of [
   ['unready scaffold', (c) => (c.config.ready = false)],
   ['private package', (c) => (c.manifests[1].private = true)],
   ['different scope', (c) => (c.manifests[0].name = '@jchewitt/stateql-core')],
+  [
+    'superseded scope',
+    (c) => (c.manifests[0].name = '@launch-echo/stateql-core'),
+  ],
+  ['superseded release tag', (c) => (c.tag = 'stateql-v' + version)],
   ['bootstrap version', (c) => (c.manifests[0].version = '0.0.0')],
   ['stable release', (c) => (c.manifests[0].version = '1.0.0')],
   ['unapproved beta', (c) => (c.manifests[0].version = '0.1.0-beta.0')],
   ['invalid semver', (c) => (c.manifests[0].version = '0.1.0-alpha.01')],
-  ['mismatched tag', (c) => (c.tag = 'stateql-v0.2.0-alpha.0')],
+  ['mismatched tag', (c) => (c.tag = 'tandrove-v0.2.0-alpha.0')],
   ['missing tag', (c) => (c.tag = undefined)],
   ['latest distribution tag', (c) => (c.config.distTag = 'latest')],
   [
@@ -100,8 +103,14 @@ test('packed dependencies require resolved exact versions', () => {
   assert.throws(() => validateDependencies(manifests, version));
   manifests[1].dependencies[names[0]] = version;
   assert.doesNotThrow(() => validateDependencies(manifests, version));
-  manifests[1].dependencies['@jchewitt/stateql-core'] = version;
-  assert.throws(() => validateDependencies(manifests, version));
+  for (const obsolete of [
+    '@jchewitt/stateql-core',
+    '@launch-echo/stateql-core',
+  ]) {
+    manifests[1].dependencies[obsolete] = version;
+    assert.throws(() => validateDependencies(manifests, version));
+    delete manifests[1].dependencies[obsolete];
+  }
 });
 
 function packedAngular() {
@@ -111,8 +120,8 @@ function packedAngular() {
       ...c.manifests[2],
       exports: {
         '.': {
-          default: './fesm2022/launch-echo-stateql-angular.mjs',
-          types: './types/launch-echo-stateql-angular.d.ts',
+          default: './fesm2022/tandrove-angular.mjs',
+          types: './types/tandrove-angular.d.ts',
         },
       },
     },
@@ -122,8 +131,8 @@ function packedAngular() {
       'package.json',
       'README.md',
       'LICENSE',
-      'fesm2022/launch-echo-stateql-angular.mjs',
-      'types/launch-echo-stateql-angular.d.ts',
+      'fesm2022/tandrove-angular.mjs',
+      'types/tandrove-angular.d.ts',
     ],
   };
 }
@@ -133,7 +142,7 @@ test('Angular publication validates generated APF metadata and shipping files', 
     (c) => (c.manifest.scripts = { build: 'ng-packagr' }),
     (c) =>
       (c.manifest.exports['.'].default =
-        './dist/fesm2022/launch-echo-stateql-angular.mjs'),
+        './dist/fesm2022/tandrove-angular.mjs'),
     (c) => c.files.pop(),
     (c) => c.files.push('src/public-api.ts'),
     (c) => c.files.push('types/../secret'),

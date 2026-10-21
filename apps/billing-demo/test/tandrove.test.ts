@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createGraphQLClient } from '@launch-echo/stateql-graphql';
+import { createGraphQLClient } from '@tandrove/graphql';
 import { listen, type RequestRecord } from '../../billing-api/src/server.js';
 import {
   accountMonitor,
   billingInvoices,
   billingScope,
-} from '../src/data/stateql-definitions.js';
+} from '../src/data/tandrove-definitions.js';
 
 test('demo domain and derived feature share state, narrow requests and explicit list refresh', async (t) => {
   const api = await listen(0);

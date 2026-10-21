@@ -11,7 +11,7 @@ import {
   type ResourceScope,
   type AcquisitionSource,
   type AcquisitionContext,
-} from '@launch-echo/stateql-core';
+} from '@tandrove/core';
 import { decodeAcquisition, validateAcquisition } from './decoder.js';
 import type { GraphQLTransport } from './client.js';
 import type { RuntimeResource } from './runtime-types.js';

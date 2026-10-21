@@ -1,6 +1,6 @@
-export { stateqlSignal } from './stateql-signal.js';
-export type { StateQLSignalOptions } from './stateql-signal.js';
-export { provideStateQLClient } from './provide-client.js';
+export { tandroveSignal } from './tandrove-signal.js';
+export type { TandroveSignalOptions } from './tandrove-signal.js';
+export { provideTandroveClient } from './provide-client.js';
 export { injectStateQuery } from './inject-query.js';
 export type {
   StateQuery,

@@ -2,13 +2,13 @@
   "mode": "pre",
   "tag": "alpha",
   "initialVersions": {
-    "@stateql-demo/billing-api": "0.0.0",
-    "@stateql-demo/billing-demo": "0.0.0",
-    "@stateql-demo/query-planner": "0.0.0",
-    "@stateql-demo/vanilla": "0.0.0",
-    "@launch-echo/stateql-angular": "0.0.0",
-    "@launch-echo/stateql-core": "0.0.0",
-    "@launch-echo/stateql-graphql": "0.0.0"
+    "@tandrove-demo/billing-api": "0.0.0",
+    "@tandrove-demo/billing-demo": "0.0.0",
+    "@tandrove-demo/query-planner": "0.0.0",
+    "@tandrove-demo/vanilla": "0.0.0",
+    "@tandrove/angular": "0.0.0",
+    "@tandrove/core": "0.0.0",
+    "@tandrove/graphql": "0.0.0"
   },
   "changesets": [
     "angular-observation-foundation",
@@ -22,6 +22,7 @@
     "selective-invalidation",
     "shared-record-store",
     "typed-definition-addresses",
-    "vanilla-adapter-ingress"
+    "vanilla-adapter-ingress",
+    "tandrove-prepublication-rename"
   ]
 }

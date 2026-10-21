@@ -11,7 +11,13 @@ import {
 import { basename, dirname, isAbsolute, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 
-export function checkAngularPackage({ root, artifacts, coreTarball, npm }) {
+export function checkAngularPackage({
+  root,
+  artifacts,
+  coreTarball,
+  npm,
+  registry = false,
+}) {
   const output = join(root, 'packages/angular/dist');
   mkdirSync(output, { recursive: true });
   writeFileSync(
@@ -30,8 +36,8 @@ export function checkAngularPackage({ root, artifacts, coreTarball, npm }) {
   );
   const files = packed.files.map(({ path }) => path);
   for (const file of [
-    'fesm2022/launch-echo-stateql-angular.mjs',
-    'types/launch-echo-stateql-angular.d.ts',
+    'fesm2022/tandrove-angular.mjs',
+    'types/tandrove-angular.d.ts',
     'package.json',
     'LICENSE',
     'README.md',
@@ -47,21 +53,18 @@ export function checkAngularPackage({ root, artifacts, coreTarball, npm }) {
   );
   assert.notEqual(manifest.private, true);
   assert.equal(manifest.sideEffects, false);
-  assert.equal(
-    manifest.exports['.'].types,
-    './types/launch-echo-stateql-angular.d.ts',
-  );
+  assert.equal(manifest.exports['.'].types, './types/tandrove-angular.d.ts');
   assert.equal(
     manifest.exports['.'].default,
-    './fesm2022/launch-echo-stateql-angular.mjs',
+    './fesm2022/tandrove-angular.mjs',
   );
-  assert.equal(manifest.typings, 'types/launch-echo-stateql-angular.d.ts');
-  assert.equal(manifest.module, 'fesm2022/launch-echo-stateql-angular.mjs');
+  assert.equal(manifest.typings, 'types/tandrove-angular.d.ts');
+  assert.equal(manifest.module, 'fesm2022/tandrove-angular.mjs');
   assert.equal(manifest.main, undefined);
   assert.equal(manifest.types, undefined);
-  assert.equal(manifest.dependencies['@launch-echo/stateql-core'], undefined);
+  assert.equal(manifest.dependencies['@tandrove/core'], undefined);
   assert.equal(
-    manifest.peerDependencies['@launch-echo/stateql-core'],
+    manifest.peerDependencies['@tandrove/core'],
     JSON.parse(readFileSync(join(root, 'packages/core/package.json'), 'utf8'))
       .version,
   );
@@ -73,7 +76,7 @@ export function checkAngularPackage({ root, artifacts, coreTarball, npm }) {
 
   const tempRoot = realpathSync(tmpdir());
   const consumer = realpathSync(
-    mkdtempSync(join(tempRoot, 'stateql-angular-consumer-')),
+    mkdtempSync(join(tempRoot, 'tandrove-angular-consumer-')),
   );
   try {
     const outside = relative(root, consumer);
@@ -89,8 +92,11 @@ export function checkAngularPackage({ root, artifacts, coreTarball, npm }) {
         '--no-audit',
         '--no-fund',
         '--no-package-lock',
-        coreTarball,
-        join(artifacts, packed.filename),
+        '--registry=https://registry.npmjs.org/',
+        registry ? `@tandrove/core@${manifest.version}` : coreTarball,
+        registry
+          ? `@tandrove/angular@${manifest.version}`
+          : join(artifacts, packed.filename),
         '@angular/core@21.2.25',
         '@angular/compiler@21.2.25',
         '@angular/compiler-cli@21.2.25',
@@ -104,6 +110,24 @@ export function checkAngularPackage({ root, artifacts, coreTarball, npm }) {
       ],
       consumer,
     );
+    const installed = JSON.parse(
+      readFileSync(
+        join(consumer, 'node_modules/@tandrove/angular/package.json'),
+        'utf8',
+      ),
+    );
+    assert.equal(installed.name, '@tandrove/angular');
+    assert.equal(installed.version, manifest.version);
+    assert.deepEqual(installed.exports, manifest.exports);
+    assert.deepEqual(installed.peerDependencies, manifest.peerDependencies);
+    const installedCore = JSON.parse(
+      readFileSync(
+        join(consumer, 'node_modules/@tandrove/core/package.json'),
+        'utf8',
+      ),
+    );
+    assert.equal(installedCore.name, '@tandrove/core');
+    assert.equal(installedCore.version, manifest.version);
     const fixtureRoot = join(root, 'tests/fixtures/angular-consumer');
     for (const file of [
       'consumer.mjs',
@@ -140,11 +164,11 @@ export function checkAngularPackage({ root, artifacts, coreTarball, npm }) {
       /ɵɵdefineComponent/,
     );
     console.log(
-      `Angular APF tarball, native ESM observation and AOT template consumer passed: ${packed.filename}`,
+      `${registry ? 'Public registry' : 'Tarball'} Angular APF, native ESM observation and AOT template consumer passed: @tandrove/angular ${manifest.version}`,
     );
   } finally {
     assert.equal(dirname(consumer), tempRoot);
-    assert.ok(basename(consumer).startsWith('stateql-angular-consumer-'));
+    assert.ok(basename(consumer).startsWith('tandrove-angular-consumer-'));
     rmSync(consumer, { recursive: true, force: true });
   }
 }

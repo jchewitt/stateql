@@ -12,7 +12,7 @@ pnpm demo:planner
 
 `pnpm generate:billing` regenerates `examples/query-planner/src/generated/billing.ts` from the fixture SDL and explicit identity configuration. `pnpm check` builds workspace dependencies before checking generated-file drift, types, execution tests, and packed consumers. Run `pnpm build` before standalone type checks/tests in a fresh checkout.
 
-`generateSchemaModule` is exported from `@launch-echo/stateql-graphql/codegen`. Generated types and runtime schema come from the same SDL; applications do not maintain separate query documents or query-key mappings. The prototype embeds SDL and validates it at runtime. Compact generated metadata is a possible later optimization, not an implemented feature.
+`generateSchemaModule` is exported from `@tandrove/graphql/codegen`. Generated types and runtime schema come from the same SDL; applications do not maintain separate query documents or query-key mappings. The prototype embeds SDL and validates it at runtime. Compact generated metadata is a possible later optimization, not an implemented feature.
 
 ## One definition, different request coverage
 

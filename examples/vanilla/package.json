@@ -1,5 +1,5 @@
 {
-  "name": "@stateql-demo/vanilla",
+  "name": "@tandrove-demo/vanilla",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,8 +12,8 @@
     "demo:typescript": "node dist/typescript.js"
   },
   "dependencies": {
-    "@launch-echo/stateql-core": "workspace:*",
-    "@launch-echo/stateql-graphql": "workspace:*",
+    "@tandrove/core": "workspace:*",
+    "@tandrove/graphql": "workspace:*",
     "graphql": "16.14.2"
   },
   "devDependencies": {

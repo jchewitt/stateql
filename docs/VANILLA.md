@@ -10,11 +10,11 @@ pnpm demo:typescript
 pnpm demo:adapters
 ```
 
-These deterministic examples use in-process fixtures. `pnpm demo:acquire` is the HTTP example; `pnpm demo` runs both StateQL and Apollo Angular views.
+These deterministic examples use in-process fixtures. `pnpm demo:acquire` is the HTTP example; `pnpm demo` runs both Tandrove and Apollo Angular views.
 
 ## JavaScript is a supported consumer
 
-StateQL is implemented in TypeScript and ships compiled ESM JavaScript with declaration files. Consuming the packages does not require TypeScript, a TypeScript loader, or generated schema types. Building this repository does use TypeScript. CommonJS packaging and a React adapter are not implemented.
+Tandrove is implemented in TypeScript and ships compiled ESM JavaScript with declaration files. Consuming the packages does not require TypeScript, a TypeScript loader, or generated schema types. Building this repository does use TypeScript. CommonJS packaging and a React adapter are not implemented.
 
 The [native JavaScript example](../examples/vanilla/src/javascript.mjs) uses runtime SDL:
 

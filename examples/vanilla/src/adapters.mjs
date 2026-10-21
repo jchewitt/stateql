@@ -1,9 +1,6 @@
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
-import {
-  AcquisitionClient,
-  AcquisitionSupersededError,
-} from '@launch-echo/stateql-core';
+import { AcquisitionClient, AcquisitionSupersededError } from '@tandrove/core';
 import {
   createWholeResourceFixture,
   createEventFixture,

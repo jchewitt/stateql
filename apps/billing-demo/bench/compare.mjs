@@ -9,14 +9,14 @@ import { performance } from 'node:perf_hooks';
 import { build, version as esbuildVersion } from 'esbuild';
 import ts from 'typescript';
 import { print } from 'graphql';
-import { createSchema } from '@launch-echo/stateql-graphql';
+import { createSchema } from '@tandrove/graphql';
 import { schemaSource } from '../../billing-api/src/schema.js';
 import { BILLING_INVOICES, INVOICE_ACCOUNTS } from '../src/data/operations.js';
 import { createBillingCache } from '../src/data/cache.js';
 import {
   billingInvoices,
   billingScope,
-} from '../src/data/stateql-definitions.js';
+} from '../src/data/tandrove-definitions.js';
 import { compareNetwork } from './network.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
@@ -76,7 +76,7 @@ const declarationsByCategory = {
     'AccountInvoice',
     'AccountResult',
   ]),
-  stateqlSelections: declarations(app + 'data/stateql-definitions.ts', [
+  tandroveSelections: declarations(app + 'data/tandrove-definitions.ts', [
     'billingInvoices',
     'accountMonitor',
   ]),
@@ -85,16 +85,16 @@ const declarationsByCategory = {
     ['InvoicePanel'],
     true,
   ),
-  stateqlReadPanelMembers: declarations(
-    app + 'stateql-panel.ts',
-    ['StateQLPanel'],
+  tandroveReadPanelMembers: declarations(
+    app + 'tandrove-panel.ts',
+    ['TandrovePanel'],
     true,
   ),
   apolloFormsBinding: declarations(app + 'forms/sources.ts', [
     'apolloEditorSource',
   ]),
-  stateqlFormsBinding: declarations(app + 'forms/sources.ts', [
-    'stateqlEditorSource',
+  tandroveFormsBinding: declarations(app + 'forms/sources.ts', [
+    'tandroveEditorSource',
     'stateField',
   ]),
 };
@@ -103,7 +103,7 @@ const sourceFiles = Object.fromEntries(
     app + 'data/generated/billing.ts',
     'scripts/generate-billing.ts',
     app + 'data/cache.ts',
-    app + 'stateql-client.ts',
+    app + 'tandrove-client.ts',
     app + 'billing.service.ts',
     app + 'main.ts',
     ...[
@@ -120,9 +120,9 @@ const sourceFiles = Object.fromEntries(
 const bundles = [];
 for (const entry of [
   'apollo',
-  'stateql',
+  'tandrove',
   'apollo-angular',
-  'stateql-angular',
+  'tandrove-angular',
 ]) {
   const result = await build({
     absWorkingDir: root,
@@ -226,7 +226,7 @@ const bound = billingInvoices.bind(
 const cache = createBillingCache();
 let sink;
 const timings = [
-  measure('stateql runtime schema initialization', () => {
+  measure('tandrove runtime schema initialization', () => {
     sink = createSchema(schemaSource, {
       identities: {
         Billing: ['tenantId'],
@@ -235,17 +235,17 @@ const timings = [
       },
     });
   }),
-  measure('stateql bind definition', () => {
+  measure('tandrove bind definition', () => {
     sink = billingInvoices.bind({ billing: { tenantId: 'A' } }, billingScope);
   }),
   measure(
-    'stateql prepare full (construct + validate + print + freeze)',
+    'tandrove prepare full (construct + validate + print + freeze)',
     () => {
       sink = bound.prepare();
     },
   ),
   measure(
-    'stateql prepare accountId (construct + validate + print + freeze)',
+    'tandrove prepare accountId (construct + validate + print + freeze)',
     () => {
       sink = bound.prepare('accountId');
     },

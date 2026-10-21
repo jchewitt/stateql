@@ -10,7 +10,7 @@ import {
   untracked,
   type EffectRef,
 } from '@angular/core';
-import type { QueryHandle, Unsubscribe } from '@launch-echo/stateql-core';
+import type { QueryHandle, Unsubscribe } from '@tandrove/core';
 import { observeReader } from './observe-reader.js';
 import type {
   StateQuery,
@@ -33,7 +33,7 @@ export function injectStateQuery<P, Target extends string>(
   assertNotInReactiveContext(injectStateQuery);
   const injector = options.injector ?? inject(Injector);
   const lifetime = injector.get(DestroyRef);
-  if (lifetime.destroyed) throw new Error('StateQL query scope is destroyed.');
+  if (lifetime.destroyed) throw new Error('Tandrove query scope is destroyed.');
   // Each reactive evaluation has a descriptor. Do not gate by P equality alone:
   // an intervening observed transition must not expose an obsolete binding.
   const requested = computed<Parameters<P>>(() => {
@@ -142,9 +142,9 @@ export function injectStateQuery<P, Target extends string>(
   ): Promise<void> => {
     try {
       return untracked(() => {
-        if (stopped()) throw new Error('StateQL query is disposed.');
+        if (stopped()) throw new Error('Tandrove query is disposed.');
         if (!handle || binding !== requested())
-          throw new Error('StateQL query has no current binding.');
+          throw new Error('Tandrove query has no current binding.');
         return run(handle);
       });
     } catch (error) {

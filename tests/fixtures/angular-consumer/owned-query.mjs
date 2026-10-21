@@ -12,16 +12,13 @@ import {
   ServerTestingModule,
   platformServerTesting,
 } from '@angular/platform-server/testing';
-import { AcquisitionClient, resourceAddress } from '@launch-echo/stateql-core';
-import {
-  injectStateQuery,
-  provideStateQLClient,
-} from '@launch-echo/stateql-angular';
+import { AcquisitionClient, resourceAddress } from '@tandrove/core';
+import { injectStateQuery, provideTandroveClient } from '@tandrove/angular';
 
 TestBed.initTestEnvironment(ServerTestingModule, platformServerTesting());
 const token = new InjectionToken('packed client');
 const root = createEnvironmentInjector(
-  [provideStateQLClient(token, () => new AcquisitionClient())],
+  [provideTandroveClient(token, () => new AcquisitionClient())],
   TestBed.inject(EnvironmentInjector),
 );
 const owner = createEnvironmentInjector([], root);

@@ -5,10 +5,10 @@ import {
   type EnvironmentProviders,
   type InjectionToken,
 } from '@angular/core';
-import type { Disposable } from '@launch-echo/stateql-core';
+import type { Disposable } from '@tandrove/core';
 
 /** Own one lazily created client per providing environment injector. */
-export function provideStateQLClient<T extends Disposable>(
+export function provideTandroveClient<T extends Disposable>(
   token: InjectionToken<T>,
   create: () => NoInfer<T>,
 ): EnvironmentProviders {
@@ -18,7 +18,7 @@ export function provideStateQLClient<T extends Disposable>(
       useFactory: () => {
         const lifetime = inject(DestroyRef);
         if (lifetime.destroyed)
-          throw new Error('StateQL client scope is destroyed.');
+          throw new Error('Tandrove client scope is destroyed.');
         const client = create();
         let disposed = false;
         const dispose = () => {
@@ -29,7 +29,7 @@ export function provideStateQLClient<T extends Disposable>(
         try {
           if (lifetime.destroyed)
             throw new Error(
-              'StateQL client scope was destroyed during creation.',
+              'Tandrove client scope was destroyed during creation.',
             );
           lifetime.onDestroy(dispose);
         } catch (error) {

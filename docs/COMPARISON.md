@@ -1,5 +1,7 @@
 # P5 comparison and scope decision
 
+Naming update, October 21, 2026: StateQL was renamed to **Tandrove** before publication. The measurements and terminology below preserve the original October 20 baseline; they have not been relabeled or rerun. The current harness uses Tandrove package imports, filenames and report labels and writes new results separately from the recorded baseline.
+
 October 20, 2026. **Continue StateQL as an independent experimental runtime**, scoped to selection-derived field refresh and explicit field/membership reconciliation. The experiment supports a simpler declaration workflow, not a claim that Apollo cannot share narrow results or that StateQL is a general replacement. The next delivery is release preparation for a clearly labeled alpha; polling and real streams remain separate milestones.
 
 ## Reproduce the evidence

@@ -10,7 +10,7 @@ test.beforeEach(async ({ page, request }) => {
   await request.post('http://127.0.0.1:4100/__fixture/control', {
     data: { action: 'reset' },
   });
-  await page.goto('/?client=stateql');
+  await page.goto('/?client=tandrove');
   await expect(invoice(page).getByTestId('account-id')).toHaveText(
     'A-ledger-1-v1',
   );
@@ -20,7 +20,7 @@ test.beforeEach(async ({ page, request }) => {
   await expect(page.getByTestId('request-count')).toHaveText('1 requests');
 });
 
-test('StateQL generates narrow refreshes and updates the derived feature without replacing siblings', async ({
+test('Tandrove generates narrow refreshes and updates the derived feature without replacing siblings', async ({
   page,
 }) => {
   await page.getByRole('button', { name: '1. Change server data' }).click();
@@ -34,7 +34,7 @@ test('StateQL generates narrow refreshes and updates the derived feature without
   await expect(invoice(page).getByTestId('amount')).toHaveText('$125.00');
   await expect(invoice(page).getByTestId('user-name')).toHaveText('Ada 1');
   await expect(page.getByTestId('request-count')).toHaveText('2 requests');
-  const narrow = page.getByTestId('request-StateQLRead').last();
+  const narrow = page.getByTestId('request-TandroveRead').last();
   await narrow.locator('summary').click();
   await expect(narrow).toContainText('accountId');
   await expect(narrow).not.toContainText('amountCents');
@@ -45,7 +45,7 @@ test('StateQL generates narrow refreshes and updates the derived feature without
   await expect(invoice(page).getByTestId('amount')).toHaveText('$135.00');
   await expect(invoice(page).getByTestId('user-name')).toHaveText('Ada 1 v2');
   await page.screenshot({
-    path: 'output/playwright/stateql-desktop.png',
+    path: 'output/playwright/tandrove-desktop.png',
     fullPage: true,
   });
 });
@@ -87,7 +87,7 @@ test('returning to a tenant does not publish an earlier action status', async ({
   await expect(page.getByRole('status')).toHaveText('Viewing tenant A.');
 });
 
-test('StateQL field refresh preserves list order; explicit list refresh replaces it', async ({
+test('Tandrove field refresh preserves list order; explicit list refresh replaces it', async ({
   page,
 }) => {
   await page.getByText('More scenarios', { exact: true }).click();
@@ -110,7 +110,7 @@ test('StateQL field refresh preserves list order; explicit list refresh replaces
   await expect(invoice(page).getByTestId('amount')).toHaveText('$125.00');
 });
 
-test('StateQL failure is visible, retry recovers, and remount reuses shared state', async ({
+test('Tandrove failure is visible, retry recovers, and remount reuses shared state', async ({
   page,
 }) => {
   await page.getByText('More scenarios', { exact: true }).click();
@@ -143,7 +143,7 @@ test('StateQL failure is visible, retry recovers, and remount reuses shared stat
   await expect(page.getByTestId('request-count')).toHaveText('4 requests');
 });
 
-test('StateQL switches tenant during a request, resets every tenant cache, and fits mobile', async ({
+test('Tandrove switches tenant during a request, resets every tenant cache, and fits mobile', async ({
   page,
 }) => {
   await page.getByText('More scenarios', { exact: true }).click();
@@ -184,7 +184,7 @@ test('StateQL switches tenant during a request, resets every tenant cache, and f
     ),
   ).toBe(true);
   await page.screenshot({
-    path: 'output/playwright/stateql-mobile.png',
+    path: 'output/playwright/tandrove-mobile.png',
     fullPage: true,
   });
 });

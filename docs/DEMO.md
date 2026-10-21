@@ -1,6 +1,6 @@
 # Billing comparison demo
 
-The app includes the completed P1 Apollo baseline and P4.3 StateQL views against the same ordinary GraphQL schema. The API and demo are private workspace applications, not published npm libraries. P4.4/P4.5 add a shared forms policy and browser coverage for both modes.
+The app includes the completed P1 Apollo baseline and P4.3 Tandrove views against the same ordinary GraphQL schema. The API and demo are private workspace applications, not published npm libraries. P4.4/P4.5 add a shared forms policy and browser coverage for both modes.
 
 ## Start and inspect
 
@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm demo
 ```
 
-Open http://127.0.0.1:4200 for Apollo or http://127.0.0.1:4200/?client=stateql for StateQL. Navigation links reload the application with a fresh client cache; server fixtures and the request log persist until reset. The dev command builds the workspace libraries before starting Angular, including on a clean checkout. The Angular dev server proxies GraphQL and fixture-control requests to http://127.0.0.1:4100. Stop both with Ctrl+C. These ports must be available; browser tests also use them and start their own servers.
+Open http://127.0.0.1:4200 for Apollo or http://127.0.0.1:4200/?client=tandrove for Tandrove. Navigation links reload the application with a fresh client cache; server fixtures and the request log persist until reset. The dev command builds the workspace libraries before starting Angular, including on a clean checkout. The Angular dev server proxies GraphQL and fixture-control requests to http://127.0.0.1:4100. Stop both with Ctrl+C. These ports must be available; browser tests also use them and start their own servers.
 
 1. Both panels independently call Apollo Angular `watchQuery` with the same reusable document. One initial HTTP request feeds both subscriptions.
 2. **Change server data** advances account IDs, amounts, and user names in the current tenant. It leaves Apollo's cache alone.
@@ -30,13 +30,13 @@ Open http://127.0.0.1:4200 for Apollo or http://127.0.0.1:4200/?client=stateql f
 | Unmount / mount monitor | Disposes/recreates that component's own subscription. The other watcher remains active; remount uses the shared cache.                                                                                                |
 | Reset experiment        | Resets fixtures, delay/failure settings, server request log, and Apollo cache; active queries reload.                                                                                                                 |
 
-## StateQL views
+## Tandrove views
 
-In StateQL mode, the workspace uses `billingInvoices` from `src/data/stateql-definitions.ts`. The monitor derives a smaller view using `billingInvoices.select({ accountId: true }).extend({ status: true })`. This leaves the central definition unchanged. Both bind the same tenant argument and scope, so they address one shared resource. Identity fields come from generated schema metadata. There is no handwritten narrow GraphQL document or separate cache key.
+In Tandrove mode, the workspace uses `billingInvoices` from `src/data/tandrove-definitions.ts`. The monitor derives a smaller view using `billingInvoices.select({ accountId: true }).extend({ status: true })`. This leaves the central definition unchanged. Both bind the same tenant argument and scope, so they address one shared resource. Identity fields come from generated schema metadata. There is no handwritten narrow GraphQL document or separate cache key.
 
-`provideBillingClient` supplies the environment-owned client. Each `StateQLPanel` uses `injectStateQuery` with reactive tenant arguments and owns only its handle. Two mounted views share the initial read; mounting the monitor later reuses cached fields. A focused integration test also mounts the smaller feature first and verifies that adding the workspace fetches only its missing fields. Changing tenants hides the previous projection and replaces the handle. Unmounting the monitor releases its owner while the workspace continues to function.
+`provideBillingClient` supplies the environment-owned client. Each `TandrovePanel` uses `injectStateQuery` with reactive tenant arguments and owns only its handle. Two mounted views share the initial read; mounting the monitor later reuses cached fields. A focused integration test also mounts the smaller feature first and verifies that adding the workspace fetches only its missing fields. Changing tenants hides the previous projection and replaces the handle. Unmounting the monitor releases its owner while the workspace continues to function.
 
-| Control                 | StateQL behavior                                                                                                                                                                          |
+| Control                 | Tandrove behavior                                                                                                                                                                         |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Change server data      | Changes fixture values without touching shared client state.                                                                                                                              |
 | Refresh account IDs     | Calls the workspace's `invalidate('accountId')`; the generated request contains that field plus identity/context. Both views update while amounts and names stay cached.                  |
@@ -48,7 +48,7 @@ In StateQL mode, the workspace uses `billingInvoices` from `src/data/stateql-def
 | Unmount / mount monitor | Destroys/recreates an owned query; the other view stays active and cached data is reused.                                                                                                 |
 | Reset experiment        | Resets the shared fixture then reloads the app, discarding all tenant caches and owners. Starts again at tenant A.                                                                        |
 
-The same inspector displays actual `StateQLRead` documents and response sizes. The app bundles both clients for this lab; its total bundle is not a standalone package-size comparison. Requests/logs from another open tab can affect counts because the fixture is shared. Use one tab and reset before comparing modes. The StateQL panel handles unavailable/incomplete data and field errors without treating missing values as zero or null. Readonly snapshots remain separate from form drafts; both modes have two independent editors below the read panels.
+The same inspector displays actual `TandroveRead` documents and response sizes. The app bundles both clients for this lab; its total bundle is not a standalone package-size comparison. Requests/logs from another open tab can affect counts because the fixture is shared. Use one tab and reset before comparing modes. The Tandrove panel handles unavailable/incomplete data and field errors without treating missing values as zero or null. Readonly snapshots remain separate from form drafts; both modes have two independent editors below the read panels.
 
 ## Boundaries and comparison
 
@@ -56,12 +56,12 @@ The same inspector displays actual `StateQLRead` documents and response sizes. T
 
 With fresh tenant-A fixtures, an initial full read followed by one server advance and an account-ID refresh produced:
 
-| Client                                                     | Initial response | Narrow response | Total operations |
-| ---------------------------------------------------------- | ---------------: | --------------: | ---------------: |
-| Apollo, broad document then `InvoiceAccounts`              |        453 bytes |       235 bytes |                2 |
-| StateQL, central definition then `invalidate('accountId')` |        453 bytes |       235 bytes |                2 |
+| Client                                                      | Initial response | Narrow response | Total operations |
+| ----------------------------------------------------------- | ---------------: | --------------: | ---------------: |
+| Apollo, broad document then `InvoiceAccounts`               |        453 bytes |       235 bytes |                2 |
+| Tandrove, central definition then `invalidate('accountId')` |        453 bytes |       235 bytes |                2 |
 
-These are UTF-8 GraphQL JSON response-body bytes from the local inspector, excluding HTTP headers and request bodies, reproduced by the automated P5 harness. They are a small fixture observation, not a latency or throughput benchmark. Both clients achieve the same narrow network result. StateQL removes the separately maintained narrow query and derives refresh targets from the central definition; schema metadata and its runtime still have costs. See the [completed P5 comparison](COMPARISON.md) for declarations, coordination, generated code, package cost, planning overhead and the decision to continue as an experiment. The shared form policy is needed with either client.
+These are UTF-8 GraphQL JSON response-body bytes from the local inspector, excluding HTTP headers and request bodies, reproduced by the automated P5 harness. They are a small fixture observation, not a latency or throughput benchmark. Both clients achieve the same narrow network result. Tandrove removes the separately maintained narrow query and derives refresh targets from the central definition; schema metadata and its runtime still have costs. See the [completed P5 comparison](COMPARISON.md) for declarations, coordination, generated code, package cost, planning overhead and the decision to continue as an experiment. The shared form policy is needed with either client.
 
 ### Try the editors
 
@@ -73,9 +73,9 @@ Changing tenant or the editor's invoice selection discards that editor's draft. 
 
 Central documents and fragments live in `apps/billing-demo/src/data/operations.ts`; cache identity policies live in `cache.ts`. `BillingService` coordinates Apollo operations. `FixtureService` and `RequestInspector` are shared by both modes and own development fixture controls and network evidence. Each `InvoicePanel` owns its watch subscription and cleanup. There is no second application cache or custom merge engine.
 
-Apollo already supports the important narrow-fetch/shared-update behavior. This implementation explicitly maintains a broad document and a narrow document. StateQL's hypothesis is that one typed definition can derive these operations and refresh targets without that repeated application wiring. This milestone makes no claim that StateQL is superior or that Apollo lacks normalized updates.
+Apollo already supports the important narrow-fetch/shared-update behavior. This implementation explicitly maintains a broad document and a narrow document. Tandrove's hypothesis is that one typed definition can derive these operations and refresh targets without that repeated application wiring. This milestone makes no claim that Tandrove is superior or that Apollo lacks normalized updates.
 
-Apollo's default list semantics also adopt incoming membership/order. StateQL field-refresh semantics preserve membership/order and flag unknown or missing records for a broad refresh. No custom Apollo policy has been added to conceal that difference; the P5 comparison explicitly records it. Read scenarios cover fixed membership and reordering, and forms also exercise removed-record availability; this is not pagination or comprehensive membership parity coverage.
+Apollo's default list semantics also adopt incoming membership/order. Tandrove field-refresh semantics preserve membership/order and flag unknown or missing records for a broad refresh. No custom Apollo policy has been added to conceal that difference; the P5 comparison explicitly records it. Read scenarios cover fixed membership and reordering, and forms also exercise removed-record availability; this is not pagination or comprehensive membership parity coverage.
 
 The schema and fixture are isolated from Apollo. The HTTP server binds loopback only, uses synthetic data, limits JSON bodies to 64 KiB, bounds retained request records to 100, and has no CORS support. Fixture controls are unauthenticated development tools; do not expose the server or dev proxy publicly.
 
@@ -87,10 +87,10 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
-The API suite checks tenant separation, save/null, reset, deterministic request/field failures, error paths, filtering, and malformed requests. The Apollo suite checks document validation, deduplication, independent watcher updates, narrow field coverage, preserved siblings, response size, reordering, tenant isolation, failure recovery, save, delayed scope changes, and owner teardown. StateQL demo tests exercise the actual central/feature definitions, request coverage, shared addresses, cached siblings, missing-field acquisition, and explicit list refresh. Browser scenarios exercise both Angular modes, the inspector, shared updates, error recovery, monitor remounting, tenant replacement, reset, and mobile width. The same form scenarios run for both modes, including conflicts, edits during save, uncertain acknowledgements, read-only recovery, record removal, and disposal during a post-save read. CI runs the normal suite on Linux/Windows and Chromium scenarios on Linux.
+The API suite checks tenant separation, save/null, reset, deterministic request/field failures, error paths, filtering, and malformed requests. The Apollo suite checks document validation, deduplication, independent watcher updates, narrow field coverage, preserved siblings, response size, reordering, tenant isolation, failure recovery, save, delayed scope changes, and owner teardown. Tandrove demo tests exercise the actual central/feature definitions, request coverage, shared addresses, cached siblings, missing-field acquisition, and explicit list refresh. Browser scenarios exercise both Angular modes, the inspector, shared updates, error recovery, monitor remounting, tenant replacement, reset, and mobile width. The same form scenarios run for both modes, including conflicts, edits during save, uncertain acknowledgements, read-only recovery, record removal, and disposal during a post-save read. CI runs the normal suite on Linux/Windows and Chromium scenarios on Linux.
 
 The demo uses supported Angular 21 with TypeScript 5.9, matching the repository's existing Node/TypeScript baseline. Apollo Angular 14 supports this combination. Application source and templates stay strict. Only the demo's external declaration checking uses `skipLibCheck`: Apollo Client 4.3.4's incremental-handler declarations conflict with `exactOptionalPropertyTypes`. The portable core retains full declaration checking. Incremental delivery is outside this demo.
 
-Apollo operation result interfaces remain handwritten for the fixed baseline and validated with real schema/response tests. StateQL uses schema-generated definitions; `pnpm generate:billing` updates the planner example and demo from the same API schema, and `pnpm generate:check` verifies both outputs. No Changeset is needed because this milestone changes private demo applications and tooling, not the public core package.
+Apollo operation result interfaces remain handwritten for the fixed baseline and validated with real schema/response tests. Tandrove uses schema-generated definitions; `pnpm generate:billing` updates the planner example and demo from the same API schema, and `pnpm generate:check` verifies both outputs. No Changeset is needed because this milestone changes private demo applications and tooling, not the public core package.
 
 References: [Apollo Angular setup](https://the-guild.dev/graphql/apollo-angular/docs/get-started), [Apollo normalized caching](https://www.apollographql.com/docs/react/caching/overview), [Angular version compatibility](https://angular.dev/reference/versions).

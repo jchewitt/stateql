@@ -1,12 +1,12 @@
 # Contributing
 
-StateQL has a working Apollo comparison baseline; its own runtime is the next stage. Choose a small task from [the task list](docs/TASKS.md), read the architecture plan, and keep implementation focused on its acceptance criteria.
+Tandrove has a working Apollo comparison baseline; its own runtime is the next stage. Choose a small task from [the task list](docs/TASKS.md), read the architecture plan, and keep implementation focused on its acceptance criteria.
 
 Use a branch and a pull request for subsequent feature work. Explain the resulting behavior and any limits; include examples of generated requests for selection or invalidation changes. Add a Changeset with `pnpm changeset` when changing package behavior or its exported API.
 
 Before each commit, obtain an independent review agent's review, resolve actionable findings, and re-review changed code. Record the outcome. This requirement applies to generated scaffolds and workflow changes as well as runtime code.
 
-Run `pnpm check` and, for demo changes, `pnpm test:browser` (install Chromium once with `pnpm exec playwright install chromium`). Browser tests start their own servers; stop `pnpm demo` first. CI runs both commands. Current behavioral tests establish Apollo's baseline; they do not establish StateQL runtime correctness. As its runtime grows, add behavioral unit tests, schema validation tests, type inference tests, and deterministic concurrency tests.
+Run `pnpm check` and, for demo changes, `pnpm test:browser` (install Chromium once with `pnpm exec playwright install chromium`). Browser tests start their own servers; stop `pnpm demo` first. CI runs both commands. Current behavioral tests establish Apollo's baseline; they do not establish Tandrove runtime correctness. As its runtime grows, add behavioral unit tests, schema validation tests, type inference tests, and deterministic concurrency tests.
 
 `pnpm format` applies formatting. `pnpm build` cleans the package output and compiles declarations and ESM. `pnpm pack:check` keeps tarballs under ignored `.artifacts/` and installs one into a temporary consumer outside the repository so workspace dependencies cannot mask packaging defects. It removes the temporary consumer afterward.
 

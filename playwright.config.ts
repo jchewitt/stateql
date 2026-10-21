@@ -18,13 +18,13 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'pnpm --filter @stateql-demo/billing-api dev',
+      command: 'pnpm --filter @tandrove-demo/billing-api dev',
       url: 'http://127.0.0.1:4100/health',
       reuseExistingServer: false,
       timeout: 60000,
     },
     {
-      command: 'pnpm --filter @stateql-demo/billing-demo dev',
+      command: 'pnpm --filter @tandrove-demo/billing-demo dev',
       url: 'http://127.0.0.1:4200',
       reuseExistingServer: false,
       timeout: 60000,
