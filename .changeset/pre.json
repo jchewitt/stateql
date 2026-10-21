@@ -22,6 +22,7 @@
     "partial-errors-and-nulls",
     "selective-invalidation",
     "shared-record-store",
+    "shared-request-deadlines",
     "tandrove-prepublication-rename",
     "trusted-publishing-acceptance",
     "typed-definition-addresses",
