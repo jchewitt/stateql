@@ -351,7 +351,7 @@ Use explicit milliseconds. Group identical state-and-field polling interests; th
 
 Proposed read defaults are two retries after the first attempt, exponential backoff with jitter, and a bounded timeout. Retry transient transport failures and configured retryable responses; do not automatically retry schema/validation errors, authorization failures, cancellations, or ordinary business errors. Global defaults are inherited and overridable. No automatic write retries without an explicit idempotency contract.
 
-P3.7 implements client-level bounded attempts and injected retry scheduling. GraphQL defaults to two additional attempts for explicitly classified transient transport failures; portable core requires an injected scheduler to enable retries. Per-definition/consumer policy inheritance, request timeouts, and timed cache retention remain separate follow-on tasks. One deduplicated request has one immutable retry policy; introducing narrower overrides later requires a defined rule for conflicting owners. Bounded attempts alone do not bound how long an individual transport request can remain pending.
+P3.7 implements client-level bounded attempts and injected retry scheduling. GraphQL defaults to two additional attempts for explicitly classified transient transport failures; portable core requires an injected scheduler to enable retries. Stage B adds opt-in shared request deadlines and timeout-policy inheritance; timed cache retention and narrower retry overrides remain follow-on tasks. One deduplicated request has one immutable retry policy; introducing narrower retry overrides later requires a defined rule for conflicting owners. Bounded attempts alone do not bound how long an individual transport request can remain pending.
 
 Polling and retry timers share a scheduler so a poll does not spawn another retry chain while its previous read is recovering. Field errors coexist with unaffected data. Advanced partial-error retry and combining unequal polling schedules are later optimizations.
 
@@ -413,6 +413,29 @@ The core/GraphQL/Angular names selected for stage A are `@tandrove/core`, `@tand
 Release acceptance always includes independent review before commit, `pnpm check`, relevant browser/transport recovery scenarios, clean installed-package examples, dependency-boundary checks, and passing hosted CI. Do not publish empty server/adapter packages in anticipation of later hosting functionality. Self-hosted server integration is optional; managed hosting is not a prerequisite or an assumed deliverable. Document the two sides together with parallel setup examples as soon as the server slice ships, including provider registration, groups, overrides, ownership, diagnostics and cleanup.
 
 The long-term server/client product must demonstrate failure behavior as part of its feature, not postpone it to a later robustness release: tunnel disconnection, reconnect to another instance, HTTP response after newer push, replay gaps, duplicate events, server epoch change, inactive-resource return, and command acknowledgement loss. Whether this reduces developer coordination is measured against equivalent existing integrations; no ecosystem-wide uniqueness claim follows from the architecture alone.
+
+## Alpha exit and stable release gates
+
+Stage B is the target scope for the standalone client's alpha exit. Leaving alpha means a beta with a settled public API; declaring stable requires subsequent real-application validation. These gates do not change the current alpha-only publishing policy.
+
+- [ ] Complete P7 timing/retention, A1's client-side configuration and provider ownership, and P6 polling as independently usable, reviewed slices. A1's server examples follow the server release.
+- [ ] Review and freeze the intended beta surface: definitions and typed result projections, partial/missing/error states, resource policies, ownership/disposal and the supported custom-adapter contracts. Mark remaining internal contracts clearly; record migration notes for alpha changes.
+- [ ] Pass deterministic lifecycle, overlapping-owner, cancellation, retry/deadline and scope-isolation scenarios, plus installed JavaScript/TypeScript/Angular consumers. Preserve default GraphQL setup and client-only operation.
+- [ ] Exercise an application beyond the billing demo, including navigation, account switching, failures and long-running sessions. Record larger-schema/record-count, browser memory and lower-powered-device measurements; set evidence-backed acceptance budgets rather than claim scale from the small demo.
+- [ ] Complete supported-feature/compatibility documentation, examples, diagnostics and migration policy; resolve critical correctness findings and independently review the beta candidate.
+- [ ] Review changes to prerelease validation, Changesets mode and registry tags before enabling beta. Keep prereleases on `next` and test the same reviewed-release automation.
+
+For stable, run a beta validation period driven by the real application's scenarios and issue evidence, resolve release-blocking defects without recurring API redesign, and publish a compatibility/deprecation policy. A separate reviewed change enables stable versions and `latest`; do not merely remove `-alpha` from a manifest. Stable standalone core/GraphQL/Angular can precede optional streaming, server, Redis, persistence, React and hosting releases. Track the concrete work in [Stage B slices and release gates](docs/TASKS.md#stage-b-reviewed-slices).
+
+## Timing and policy contracts
+
+P7 separates three concepts: freshness age of successfully committed field coverage, retention after the final active owner leaves, and the deadline of one shared acquisition request. Expiry preserves cached values; eviction releases inactive state; a deadline settles pending work and aborts the transport/retry wait. One duration must never substitute for another. Portable core receives scheduling capabilities; platform timers remain outside core.
+
+The first slice implements only `requestTimeoutMs`: default disabled, positive integer milliseconds up to 2147483647, with `false` explicitly disabling an inherited value. Resolve defaults → one named group → resource binding. Capture policy values and scheduler methods; compare effective policy values for owners sharing a canonical address. Reject conflicts before attaching a view or starting I/O. Group names never become cache keys. The binding remains immutable while its cached scope exists (currently until client disposal); a later retention implementation may end it by evicting that scope.
+
+The deadline begins when a shared request starts execution, includes all attempts and retry backoff, and is not reset by joining owners. An `ensure()` that needs sequential requests does not gain one combined call-wide deadline. Timeout is terminal for that request; an explicit later `ensure()`/refresh starts a fresh budget. Generation checks protect newer data from timed-out older requests, and cached values remain readable with eligible field errors. Cleanup covers success, failure, timeout, supersession and final-owner/client disposal. Request deadlines are disabled by default to preserve the existing alpha behavior; enable them explicitly.
+
+Subsequent slices define freshness revalidation modes, field/membership timestamp coverage and zero-duration behavior before implementing stale-time or retention settings. Do not expose accepted-but-ineffective configuration keys. Provider registration, async factories and connection ownership are separate A1 slices, rather than hidden prerequisites of the first timer feature.
 
 ## Acceptance scenarios
 

@@ -8,9 +8,12 @@ pnpm build
 pnpm demo:vanilla
 pnpm demo:typescript
 pnpm demo:adapters
+pnpm demo:deadline
 ```
 
 These deterministic examples use in-process fixtures. `pnpm demo:acquire` is the HTTP example; `pnpm demo` runs both Tandrove and Apollo Angular views.
+
+The [deadline example](../examples/vanilla/src/deadline.mjs) configures a named request-policy group and two consumers sharing one timed request. A controlled scheduler triggers the deadline; both consumers settle and the GraphQL transport signal aborts. It runs in isolated installed-package acceptance too. See [policy and lifetime details](DEADLINES.md).
 
 ## JavaScript is a supported consumer
 

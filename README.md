@@ -75,6 +75,8 @@ Core has no runtime, UI-framework, GraphQL, or platform dependency. The package 
 
 ## Plan and delivery
 
+Stage B is underway: this checkout adds opt-in [shared request deadlines and timeout policies](docs/DEADLINES.md). The [reviewed task slices](docs/TASKS.md#stage-b-reviewed-slices) and [alpha-exit checklist](PLAN.md#alpha-exit-and-stable-release-gates) separate the remaining freshness, retention, provider, polling and beta-validation work. Check the release guide before assuming a new checkout feature is available in the current published version.
+
 Planned follow-on goals include server-driven invalidation notices and direct state updates, an optional server companion with event/database adapters, revision-aware ordering across transports, and framework-independent persistence/offline recovery. These are roadmap commitments to investigate and validate, not implemented features; see [their contracts, priorities, and limits](PLAN.md#stream-cohesion-ordering-and-offline-recovery).
 
 The [incremental release plan](PLAN.md#usable-incremental-releases) keeps every publication independently usable, starting with the standalone client. Client and server will share a recognizable provider-registration and global/resource-group/resource-override pattern, with optional official or custom integrations such as Socket.IO and Redis. These remain planned capabilities; installing the foundation will not require them or a hosted service. Recovery after interrupted connections and server-instance changes is part of the future synchronization release's acceptance criteria.

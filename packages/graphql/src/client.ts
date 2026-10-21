@@ -3,6 +3,7 @@ import {
   type QueryHandle,
   type AcquisitionSource,
   type AcquisitionClientOptions,
+  type ResourceRequestOptions,
 } from '@tandrove/core';
 import type { PreparedOperation } from './operation.js';
 import type { FieldPaths } from './types.js';
@@ -18,10 +19,13 @@ export interface GraphQLTransportContext {
   readonly signal: AbortSignal;
 }
 export interface GraphQLClient {
-  watch<R>(definition: {
-    readonly resultType?: R;
-    asSource(transport: GraphQLTransport): AcquisitionSource;
-  }): QueryHandle<FieldPaths<R>>;
+  watch<R>(
+    definition: {
+      readonly resultType?: R;
+      asSource(transport: GraphQLTransport): AcquisitionSource;
+    },
+    options?: ResourceRequestOptions,
+  ): QueryHandle<FieldPaths<R>>;
   dispose(): void;
 }
 export function createGraphQLClient(
@@ -43,6 +47,8 @@ export function createGraphQLClient(
     ...options,
     retry: options.retry ?? {},
     scheduler: options.scheduler ?? defaultRetryScheduler,
+    deadlineScheduler:
+      options.deadlineScheduler ?? options.scheduler ?? defaultRetryScheduler,
   });
   const transport =
     options.transport ??
@@ -51,9 +57,12 @@ export function createGraphQLClient(
       ...(options.headers === undefined ? {} : { headers: options.headers }),
     });
   return Object.freeze({
-    watch: (definition: {
-      asSource(transport: GraphQLTransport): AcquisitionSource;
-    }) => client.watch(definition.asSource(transport)),
+    watch: (
+      definition: {
+        asSource(transport: GraphQLTransport): AcquisitionSource;
+      },
+      binding?: ResourceRequestOptions,
+    ) => client.watch(definition.asSource(transport), binding),
     dispose: () => client.dispose(),
   });
 }

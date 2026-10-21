@@ -18,6 +18,7 @@
     "demo:acquire": "tsx scripts/acquisition-demo.ts",
     "demo:vanilla": "pnpm --filter @tandrove-demo/vanilla demo",
     "demo:adapters": "pnpm --filter @tandrove-demo/vanilla demo:adapters",
+    "demo:deadline": "pnpm --filter @tandrove-demo/vanilla demo:deadline",
     "demo:typescript": "pnpm --filter @tandrove-demo/vanilla demo:typescript",
     "generate:billing": "pnpm --filter @tandrove/graphql... build && tsx scripts/generate-billing.ts",
     "generate:check": "tsx scripts/generate-billing.ts --check",

@@ -4,10 +4,11 @@ import {
   AcquisitionSupersededError,
   type CancellationSignal,
 } from './cancellation.js';
+import type { RequestPolicyConfiguration } from './request-policy.js';
 
 /** Explicit source classification. Ordinary exceptions are never automatically retried. */
 export class ReadTransportError extends Error {
-  override readonly name = 'ReadTransportError';
+  override readonly name: string = 'ReadTransportError';
   readonly retryable: boolean;
   readonly retryAfterMs: number | undefined;
   constructor(
@@ -42,16 +43,20 @@ export interface ReadRetryPolicy {
   readonly maxDelayMs?: number;
 }
 /** Supplied by the platform adapter; core imports no timers or browser globals. */
-export interface RetryScheduler {
+export interface DelayScheduler {
   wait(delayMs: number, signal: CancellationSignal): Promise<void>;
+}
+export interface RetryScheduler extends DelayScheduler {
   /** A sample in [0, 1), used for full jitter. */
   random(): number;
 }
-export interface AcquisitionClientOptions {
+export interface AcquisitionClientOptions extends RequestPolicyConfiguration {
   readonly onListenerError?: (error: unknown) => void;
   /** Omitted/false disables retries in portable core. GraphQL supplies defaults. */
   readonly retry?: ReadRetryPolicy | false;
   readonly scheduler?: RetryScheduler;
+  /** Defaults to scheduler when supplied. Portable core owns no platform timers. */
+  readonly deadlineScheduler?: DelayScheduler;
 }
 
 /** Immutable client policy; each call owns an independent, bounded attempt count. */

@@ -185,6 +185,7 @@ try {
     'javascript.mjs',
     'fake-adapters.mjs',
     'adapters.mjs',
+    'deadline.mjs',
   ])
     writeFileSync(
       join(consumer, file),
@@ -194,7 +195,12 @@ try {
     join(consumer, 'typescript.js'),
     readFileSync(join(root, 'examples/vanilla/dist/typescript.js')),
   );
-  for (const file of ['javascript.mjs', 'adapters.mjs', 'typescript.js'])
+  for (const file of [
+    'javascript.mjs',
+    'adapters.mjs',
+    'deadline.mjs',
+    'typescript.js',
+  ])
     execFileSync(process.execPath, [join(consumer, file)], {
       cwd: consumer,
       stdio: 'inherit',
@@ -372,6 +378,7 @@ try {
       'planner.ts',
       'javascript.mjs',
       'adapters.mjs',
+      'deadline.mjs',
     ],
     {
       cwd: consumer,
