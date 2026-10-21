@@ -1,5 +1,11 @@
 # Architecture decisions
 
+## D030 Freshness is accepted coverage age
+
+B2 adds `requestPolicy.freshness` to the existing immutable global/group/resource resolver. Default disabled/on-demand preserves earlier behavior. Track each accepted field/null and membership independently; never renew uncommitted fetched context or untouched sibling leaves. Zero duration is immediately stale and on-demand only. An ensure call may settle with immediately stale data, but explicit invalidations during awaited work must still be honored. Active expiry uses normal shared acquisition, retries, deadlines and handle errors, with no self-rearming failure loop.
+
+Membership expiry intentionally enables full-caller-selection membership reacquisition, including empty/null resources. Ordinary mismatch detected by a narrow read still requires explicit `refreshList()`. Expiry marks accepted coverage stale without creating request invalidations, preserving newer in-flight work. Retain due metadata but stop timers with no owners; check it on reuse. Capture a portable monotonic clock/wait capability; GraphQL supplies platform defaults. Scheduler failures fail closed with stale coverage and observable errors. See [the precise contract](FRESHNESS.md). Retention, field-specific duration overrides, provider registration and interval polling remain separate work.
+
 ## D029 Deliver client lifecycle through reviewed slices
 
 Stage B starts with shared request deadlines and timeout-policy resolution, then separate freshness, inactive retention, provider ownership/registration, full capability assignment, polling and beta-readiness slices. Track an explicit alpha-exit checklist and a separate stable gate. The standalone client can stabilize before optional server/streaming packages; beta/stable publication still needs a reviewed release-policy change.

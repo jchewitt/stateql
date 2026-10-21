@@ -68,3 +68,5 @@ This provisional adapter-facing ingress has deliberate limits:
 The example holds an older full read, applies an event, and then releases the read. The event value survives, an unaffected amount can still update, and the older forced operation reports `AcquisitionSupersededError`. Focused tests also cover atomic rejection, structural changes, shared errors, reentrant listeners, and pushes during retry backoff.
 
 These are local arrival/request generations. They cannot determine whether a pushed server value is newer than an HTTP value across transports. An overlapping push can conservatively stop an older retry chain. Authoritative revisions, duplicate detection, reconnect/gap recovery, real WebSocket/SSE delivery, invalidation tokens, server adapters, and offline replay remain E1–E4 work. The fake event fixture does not implement those protocols.
+
+Run `pnpm demo:freshness` for the [plain JavaScript freshness example](../examples/vanilla/src/freshness.mjs): cached values remain visible on expiry, and one owner's `ensure()` updates both consumers. The controlled-clock example also runs in installed-package acceptance. See [freshness rules](FRESHNESS.md).

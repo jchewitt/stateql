@@ -1,7 +1,8 @@
-import type { RetryScheduler } from '@tandrove/core';
+import type { RetryScheduler, FreshnessScheduler } from '@tandrove/core';
 
 /** Platform timers are confined to the assembled GraphQL client. */
-export const defaultRetryScheduler: RetryScheduler = {
+export const defaultRetryScheduler: RetryScheduler & FreshnessScheduler = {
+  now: () => performance.now(),
   random: () => Math.random(),
   wait: (delayMs, signal) =>
     new Promise<void>((resolve, reject) => {

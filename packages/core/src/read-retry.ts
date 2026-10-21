@@ -50,6 +50,10 @@ export interface RetryScheduler extends DelayScheduler {
   /** A sample in [0, 1), used for full jitter. */
   random(): number;
 }
+export interface FreshnessScheduler extends DelayScheduler {
+  /** Finite, nondecreasing milliseconds in one runtime-local clock domain. */
+  now(): number;
+}
 export interface AcquisitionClientOptions extends RequestPolicyConfiguration {
   readonly onListenerError?: (error: unknown) => void;
   /** Omitted/false disables retries in portable core. GraphQL supplies defaults. */
@@ -57,6 +61,7 @@ export interface AcquisitionClientOptions extends RequestPolicyConfiguration {
   readonly scheduler?: RetryScheduler;
   /** Defaults to scheduler when supplied. Portable core owns no platform timers. */
   readonly deadlineScheduler?: DelayScheduler;
+  readonly freshnessScheduler?: FreshnessScheduler;
 }
 
 /** Immutable client policy; each call owns an independent, bounded attempt count. */

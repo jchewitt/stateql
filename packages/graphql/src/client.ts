@@ -49,6 +49,7 @@ export function createGraphQLClient(
     scheduler: options.scheduler ?? defaultRetryScheduler,
     deadlineScheduler:
       options.deadlineScheduler ?? options.scheduler ?? defaultRetryScheduler,
+    freshnessScheduler: options.freshnessScheduler ?? defaultRetryScheduler,
   });
   const transport =
     options.transport ??

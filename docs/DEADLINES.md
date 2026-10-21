@@ -1,6 +1,6 @@
 # Shared request deadlines
 
-Stage B's first slice adds an opt-in deadline around one shared acquisition, including source attempts and retry waits. This checkout introduces the feature through the `shared-request-deadlines` Changeset; alpha.2 does not include it. Timed freshness, inactive retention and provider registration remain separate tasks.
+Stage B's first slice adds an opt-in deadline around one shared acquisition, including source attempts and retry waits. This checkout introduces the feature through the `shared-request-deadlines` Changeset; alpha.2 does not include it. [Timed freshness](FRESHNESS.md) is implemented separately in B2; inactive retention and provider registration remain later tasks.
 
 ```js
 const client = createGraphQLClient({
