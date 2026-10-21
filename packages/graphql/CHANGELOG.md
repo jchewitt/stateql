@@ -1,5 +1,13 @@
 # @tandrove/graphql
 
+## 0.1.0-alpha.2
+
+### Patch Changes
+
+- 8768c25: Validate automated reviewed releases: synchronized versions, changelogs and installation examples now flow through a bot-maintained release PR and trusted publication after its reviewed merge. No runtime API changes.
+- Updated dependencies [8768c25]
+  - @tandrove/core@0.1.0-alpha.2
+
 ## 0.1.0-alpha.1
 
 ### Patch Changes
