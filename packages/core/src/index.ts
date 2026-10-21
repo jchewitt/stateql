@@ -10,6 +10,7 @@ export { ReadTransportError } from './read-retry.js';
 export { ReadTimeoutError } from './read-deadline.js';
 export type {
   RequestPolicy,
+  FreshnessPolicy,
   RequestPolicyConfiguration,
   ResourceRequestOptions,
 } from './request-policy.js';
@@ -17,6 +18,7 @@ export type {
   ReadRetryPolicy,
   RetryScheduler,
   DelayScheduler,
+  FreshnessScheduler,
   AcquisitionClientOptions,
 } from './read-retry.js';
 export type {

@@ -9,6 +9,7 @@
     "test": "node --test test/*.test.mjs",
     "demo": "node src/javascript.mjs",
     "demo:adapters": "node src/adapters.mjs",
+    "demo:freshness": "node src/freshness.mjs",
     "demo:deadline": "node src/deadline.mjs",
     "demo:typescript": "node dist/typescript.js"
   },

@@ -107,6 +107,11 @@ class Handle {
   readonly lifetime = new Cancellation();
   attempt = 0;
   error: string | undefined;
+  revalidate = (): void => {};
+  freshnessError(error: unknown): void {
+    this.error = error instanceof Error ? error.message : String(error);
+    this.publish();
+  }
   private snapshot: QuerySnapshot;
   private signature: string;
   private notifiedSignature: string;
@@ -177,12 +182,17 @@ export class AcquisitionClient {
   private readonly retry: ReadRetrier;
   private readonly policies: RequestPolicies;
   private readonly deadlineScheduler: AcquisitionClientOptions['deadlineScheduler'];
+  private readonly freshnessScheduler: AcquisitionClientOptions['freshnessScheduler'];
   constructor(private readonly options: AcquisitionClientOptions = {}) {
     this.retry = new ReadRetrier(options);
     this.policies = new RequestPolicies(options);
     const scheduler = options.deadlineScheduler ?? options.scheduler;
     this.deadlineScheduler = scheduler
       ? { wait: scheduler.wait.bind(scheduler) }
+      : undefined;
+    const clock = options.freshnessScheduler;
+    this.freshnessScheduler = clock
+      ? { now: clock.now.bind(clock), wait: clock.wait.bind(clock) }
       : undefined;
   }
   /** Adapter-facing local patch ingress, not a server revision or stream protocol. */
@@ -215,6 +225,13 @@ export class AcquisitionClient {
       throw new Error(
         'Sources sharing a state address must use the same effective requestTimeoutMs policy.',
       );
+    if (
+      scope &&
+      canonicalInput(scope.freshnessPolicy) !== canonicalInput(policy.freshness)
+    )
+      throw new Error(
+        'Sources sharing a state address must use the same effective freshness policy.',
+      );
     if (scope && scope.collection !== collection)
       throw new Error(
         'Sources sharing an address must agree on collection semantics.',
@@ -227,6 +244,8 @@ export class AcquisitionClient {
         collection,
         this.retry,
         new ReadDeadline(policy.requestTimeoutMs, this.deadlineScheduler),
+        policy.freshness,
+        this.freshnessScheduler,
       );
       this.scopes.set(address, scope);
     }
@@ -252,7 +271,6 @@ export class AcquisitionClient {
         /* Reporting cannot disrupt acquisition. */
       }
     });
-    current.attach(handle);
     const enqueue = (
       requested?: readonly ResolvedField[],
       replaceMembership = false,
@@ -287,6 +305,10 @@ export class AcquisitionClient {
       return task;
     };
     const ensure = (): Promise<void> => enqueue();
+    handle.revalidate = () => {
+      void ensure().catch(() => {});
+    };
+    current.attach(handle);
     const targetFields = (target?: string): readonly ResolvedField[] => {
       if (this.disposed || !handle.active)
         throw new Error('Query handle is disposed.');

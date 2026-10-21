@@ -14,7 +14,7 @@ npm install @tandrove/core@0.1.0-alpha.3
 
 Use matching Tandrove alpha versions. Core is portable ESM JavaScript with optional TypeScript declarations and no runtime dependencies. The repository tests Node 22.14+ and Node 24; browser integration is tested through Angular 21.2.25. For ordinary GraphQL applications, start with the [assembled GraphQL client](https://github.com/jchewitt/tandrove/tree/main/packages/graphql) rather than constructing an acquisition source manually.
 
-This is an experimental alpha, not a stable API promise. Extension contracts and JSON snapshot projection types remain provisional. Polling, automatic freshness/retention timers, WebSockets, persistence, a server companion and durable writes are planned separately. Alpha changes may require migrations; review each changelog and keep packages on the same version. See [release status and publishing](https://github.com/jchewitt/tandrove/blob/main/docs/RELEASING.md).
+This is an experimental alpha, not a stable API promise. Extension contracts and JSON snapshot projection types remain provisional. Polling, inactive retention, WebSockets, persistence, a server companion and durable writes are planned separately. Alpha changes may require migrations; review each changelog and keep packages on the same version. See [release status and publishing](https://github.com/jchewitt/tandrove/blob/main/docs/RELEASING.md).
 
 The observation interface has no Angular, React, RxJS, GraphQL, DOM, or Node dependencies. Runtime snapshots must be immutable; TypeScript callers supply an immutable snapshot type. Framework adapters will subscribe to this same runtime rather than maintain a separate cache.
 
@@ -29,3 +29,5 @@ See the [project plan](https://github.com/jchewitt/tandrove/blob/main/PLAN.md) a
 Provisional `AcquisitionClient.ingest(source, patch)` applies validated patches to existing acquired records through the same reconciliation and commit path as reads. It requires active ownership, cannot change membership, and protects accepted fields from older local reads. The [vanilla guide](https://github.com/jchewitt/tandrove/blob/main/docs/VANILLA.md) documents constraints and simulated adapters. This is not server revision ordering or a production socket protocol.
 
 The package ships ESM JavaScript and optional TypeScript declarations. JavaScript consumers do not need a compiler or TypeScript loader.
+
+Opt-in `requestPolicy.freshness` tracks field and membership ages with an injected `FreshnessScheduler`. Expiry retains values; on-demand or active revalidation shares normal acquisition. See [freshness configuration and lifecycle](https://github.com/jchewitt/tandrove/blob/main/docs/FRESHNESS.md).

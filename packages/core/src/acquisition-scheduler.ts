@@ -11,6 +11,9 @@ import { reconcileAcquisition } from './acquisition-reconciliation.js';
 import { AcquisitionVersions } from './acquisition-versions.js';
 import { ReadTransportError, type ReadRetrier } from './read-retry.js';
 import type { ReadDeadline } from './read-deadline.js';
+import { FreshnessTracker } from './freshness.js';
+import type { FreshnessScheduler } from './read-retry.js';
+import type { FreshnessPolicy } from './request-policy.js';
 import {
   Cancellation,
   cancellable,
@@ -28,6 +31,8 @@ export interface AcquisitionOwner {
   readonly active: boolean;
   readonly view: StateView;
   readonly lifetime: Cancellation;
+  revalidate(): void;
+  freshnessError(error: unknown): void;
   dispose(): void;
 }
 interface Request {
@@ -66,6 +71,19 @@ function needed(view: StateView): readonly ResolvedField[] {
   return fields;
 }
 
+function remaining(
+  fields: readonly ResolvedField[],
+  satisfied: readonly FieldPath[],
+  parent: FieldPath = [],
+): readonly ResolvedField[] {
+  return fields.flatMap((field) => {
+    const path = [...parent, { name: field.name, arguments: field.arguments }];
+    if (satisfied.some((covered) => pathPrefix(covered, path))) return [];
+    if (!field.children.length) return [field];
+    const children = remaining(field.children, satisfied, path);
+    return children.length ? [{ ...field, children }] : [];
+  });
+}
 /** One resource's request ownership, deduplication and local commit generations. */
 export class AcquisitionScheduler {
   private readonly owners = new Set<AcquisitionOwner>();
@@ -73,6 +91,7 @@ export class AcquisitionScheduler {
   private readonly versions = new AcquisitionVersions();
   private readonly view: StateView;
   private disposed = false;
+  private readonly freshness: FreshnessTracker;
   constructor(
     private readonly store: StateStore,
     readonly address: string,
@@ -80,7 +99,38 @@ export class AcquisitionScheduler {
     readonly collection: boolean,
     private readonly retry: ReadRetrier,
     private readonly deadline: ReadDeadline,
+    readonly freshnessPolicy: Required<FreshnessPolicy>,
+    freshnessScheduler: FreshnessScheduler | undefined,
   ) {
+    this.freshness = new FreshnessTracker(
+      freshnessPolicy,
+      freshnessScheduler,
+      store,
+      address,
+      (changes) => {
+        this.store.commit(address, changes);
+        if (this.freshness.canRevalidate)
+          for (const owner of [...this.owners])
+            if (
+              owner.active &&
+              changes.some(
+                (change) =>
+                  change.kind === 'membership-stale' ||
+                  ('path' in change &&
+                    leafPaths(owner.view.selection).some(
+                      (path) =>
+                        pathPrefix(change.path, path) ||
+                        pathPrefix(path, change.path),
+                    )),
+              )
+            )
+              owner.revalidate();
+      },
+      (error) => {
+        for (const owner of this.owners)
+          if (owner.active) owner.freshnessError(error);
+      },
+    );
     // Membership must remain live when the owner that started a read disposes.
     this.view = store.watch(address, selection);
   }
@@ -92,6 +142,7 @@ export class AcquisitionScheduler {
     for (const request of this.requests)
       if (request.root || overlaps(request.fields, owner.view.selection))
         request.owners.add(owner);
+    this.freshness.setActive(true);
   }
   detach(owner: AcquisitionOwner): void {
     this.owners.delete(owner);
@@ -102,6 +153,7 @@ export class AcquisitionScheduler {
         request.cancellation.abort('Acquisition has no active owners.');
       }
     }
+    if (!this.owners.size) this.freshness.setActive(false);
   }
   private assertOwner(owner: AcquisitionOwner): void {
     if (this.disposed || !owner.active)
@@ -112,12 +164,12 @@ export class AcquisitionScheduler {
   invalidate(paths: readonly FieldPath[]): void {
     this.versions.invalidate(paths);
     const records = this.view.getSnapshot().records;
-    this.store.commit(
-      this.address,
+    const changes: readonly StateChange[] =
       records === null
         ? [{ kind: 'membership-stale' }]
-        : staleChanges(records ?? [], paths),
-    );
+        : staleChanges(records ?? [], paths);
+    this.store.commit(this.address, this.freshness.record(changes));
+    this.freshness.schedule();
   }
   ingest(
     selection: readonly ResolvedField[],
@@ -148,13 +200,15 @@ export class AcquisitionScheduler {
       this.address,
     );
     if (eligible.changes.length) {
+      const aged = this.freshness.record(eligible.changes);
       this.versions.committed(
         version,
         eligible.changes,
         this.store,
         this.address,
       );
-      this.store.commit(this.address, eligible.changes);
+      this.store.commit(this.address, aged);
+      this.freshness.schedule();
     }
     return eligible.superseded;
   }
@@ -165,7 +219,14 @@ export class AcquisitionScheduler {
     replaceMembership = false,
   ): Promise<void> {
     this.assertOwner(owner);
-    let fields = requested ?? needed(owner.view);
+    this.freshness.expire();
+    this.assertOwner(owner);
+    let membershipNeeded =
+      requested === undefined && this.freshness.membershipExpired;
+    let fields =
+      requested ??
+      (membershipNeeded ? owner.view.selection : needed(owner.view));
+    const completed = new Set<Request>();
     if (requested === undefined) {
       // Reuse in-flight coverage before asking for additional missing fields.
       // Forced reads still run concurrently and are protected at commit time.
@@ -179,18 +240,35 @@ export class AcquisitionScheduler {
         await cancellable(
           Promise.all(
             covering.map((request) =>
-              request.promise.catch((error: unknown) => {
-                if (!(error instanceof AcquisitionSupersededError)) throw error;
-              }),
+              request.promise
+                .then(() => {
+                  completed.add(request);
+                })
+                .catch((error: unknown) => {
+                  if (!(error instanceof AcquisitionSupersededError))
+                    throw error;
+                }),
             ),
           ),
           owner.lifetime.signal,
         );
         this.assertOwner(owner);
-        fields = needed(owner.view);
+        const satisfied = [...completed].filter((request) =>
+          this.versions.current(request.version, request.fields),
+        );
+        const rootSatisfied = satisfied.some((request) => request.root);
+        membershipNeeded = this.freshness.membershipExpired && !rootSatisfied;
+        fields = membershipNeeded
+          ? owner.view.selection
+          : remaining(
+              needed(owner.view),
+              satisfied.flatMap((request) => leafPaths(request.fields)),
+            );
+        if (membershipNeeded) break;
       }
     }
     if (!fields.length) return;
+    if (membershipNeeded) replaceMembership = true;
     const fetched = source.fetchSelection
       ? narrowFields(source.selection, source.fetchSelection(fields))
       : fields;
@@ -345,6 +423,7 @@ export class AcquisitionScheduler {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.freshness.dispose();
     for (const owner of this.owners) owner.dispose();
     this.owners.clear();
     for (const request of this.requests) {

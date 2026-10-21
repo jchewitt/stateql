@@ -186,6 +186,7 @@ try {
     'fake-adapters.mjs',
     'adapters.mjs',
     'deadline.mjs',
+    'freshness.mjs',
   ])
     writeFileSync(
       join(consumer, file),
@@ -199,6 +200,7 @@ try {
     'javascript.mjs',
     'adapters.mjs',
     'deadline.mjs',
+    'freshness.mjs',
     'typescript.js',
   ])
     execFileSync(process.execPath, [join(consumer, file)], {
@@ -379,6 +381,7 @@ try {
       'javascript.mjs',
       'adapters.mjs',
       'deadline.mjs',
+      'freshness.mjs',
     ],
     {
       cwd: consumer,
