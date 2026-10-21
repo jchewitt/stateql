@@ -1,6 +1,8 @@
 name: Publish experimental Tandrove
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       release_tag:
@@ -11,13 +13,41 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: npm-publish
-  cancel-in-progress: false
-
 jobs:
-  publish:
+  plan:
     if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+      checks: read
+    outputs:
+      publish: ${{ steps.plan.outputs.publish }}
+      release_tag: ${{ steps.plan.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - id: plan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REQUESTED_RELEASE_TAG: ${{ inputs.release_tag }}
+        run: node scripts/plan-publication.mjs
+  publish:
+    needs: plan
+    if: needs.plan.outputs.publish == 'true'
+    concurrency:
+      group: npm-publish
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment: npm
@@ -25,11 +55,11 @@ jobs:
       contents: read
       id-token: write
     env:
-      RELEASE_TAG: ${{ inputs.release_tag }}
+      RELEASE_TAG: ${{ needs.plan.outputs.release_tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.release_tag }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -44,8 +74,8 @@ jobs:
         run: pnpm release:prepare
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: release-${{ inputs.release_tag }}-${{ github.run_attempt }}
-          path: .artifacts/release/${{ inputs.release_tag }}/
+          name: release-${{ needs.plan.outputs.release_tag }}-${{ github.run_attempt }}
+          path: .artifacts/release/${{ needs.plan.outputs.release_tag }}/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 30

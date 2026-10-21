@@ -154,6 +154,7 @@ Stage A publishes the implemented foundation, independently usable before any se
 - [x] R1.5 Validate the tagged commit, packed artifacts, independent review, and hosted CI before dispatching the release workflow. Alpha.0 passed; repeat for each candidate.
 - [x] R1.6 Verify registry metadata, provenance, and a clean installation from npm after publication. Alpha.0 integrity/installation and alpha.1 CI provenance/signatures/installation passed. See [the completed CI run](https://github.com/jchewitt/tandrove/actions/runs/39658759688).
 - [x] R1.7 Verify the released JS/TS and Angular examples work without server companion, Redis or streaming packages; document the supported subset, provisional extension interfaces and future compatibility/migration policy. Do not imply that demo-only forms helpers or planned timers are public features.
+- [ ] R1.8 Automate one bot-maintained release PR with synchronized manifests, peers, lockfile, changelogs and examples; require current-revision review and CI, then tag and publish the exact merged commit. Implementation and local verification are in progress; exercise the hosted bot PR and publication before marking complete.
 
 No npm publish is part of F0. The scaffold does not reserve an npm name or configure an npm account.
 
