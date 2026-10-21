@@ -1,5 +1,11 @@
 # @tandrove/core
 
+## 0.1.0-alpha.3
+
+### Patch Changes
+
+- c5cdb32: Add opt-in shared-request deadlines covering source attempts and retry backoff. Resolve captured timeout policies through global defaults, named groups and resource bindings; reject conflicts for consumers sharing a state address. Timeout aborts transport/retry work, preserves cached values with eligible field errors, and rejects with ReadTimeoutError. GraphQL supplies platform scheduling; portable core accepts a DelayScheduler. Existing clients keep deadlines disabled by default.
+
 ## 0.1.0-alpha.2
 
 ### Patch Changes
