@@ -8,6 +8,7 @@ import {
 import {
   publishReleaseSet,
   readRegistryVersion,
+  readInstallableRegistryVersion,
   registry,
 } from './release-policy.mjs';
 
@@ -40,6 +41,8 @@ await publishReleaseSet({
   },
   lookup: (artifact, selector = artifact.version) =>
     readRegistryVersion(artifact.name, selector),
+  availabilityLookup: (artifact, selector = artifact.version) =>
+    readInstallableRegistryVersion(artifact.name, selector),
   publish: (artifact) => {
     // Recheck every saved byte before each mutation, before entering npm, which owns any interactive OTP prompt.
     readPreparedRelease(release);

@@ -140,19 +140,19 @@ Stage D after the recoverable live-state slice, independently releasable per use
 
 Depends on a useful implemented package, P5, and registry setup.
 
-Stage A publishes the implemented foundation, independently usable before any server/hosting integration. The selected packages are `@tandrove/core`, `@tandrove/graphql` and `@tandrove/angular`, with initial candidate `0.1.0-alpha.0` on `next`. The [release handoff](RELEASING.md) separates completed preparation from account-owner bootstrap, trusted publishing and registry acceptance. Alpha.0 is published and verified with installed consumers; alpha.1 will validate trusted publishing.
+Stage A publishes the implemented foundation, independently usable before any server/hosting integration. The selected packages are `@tandrove/core`, `@tandrove/graphql` and `@tandrove/angular`, with initial candidate `0.1.0-alpha.0` on `next`. The [release handoff](RELEASING.md) separates completed preparation from account-owner bootstrap, trusted publishing and registry acceptance. Alpha.0 is published and verified with installed consumers; alpha.1 passed trusted publication, provenance and installed-consumer acceptance.
 
 - [x] R1.0 Notify the user when P4/P5 and package acceptance are complete, identify the release packages/versions, and provide the exact trusted-publisher configuration for the user to set up. The October 21 handoff is documented in `RELEASING.md`; the initial local publication is complete.
 - [x] R1.1 Verify npm identity/access to the selected `@tandrove` scope. The account owner successfully published all three alpha.0 packages.
 - [x] R1.1b Complete the Tandrove prepublication rename, review, hosted CI and a fresh `tandrove-v0.1.0-alpha.0` artifact set. Old StateQL tarballs and the old tag are superseded and must not be published.
 - [x] R1.1a Migrate all three manifests, imports, peer dependencies, generated modules, fixtures, checks, Changesets configuration and release metadata together.
-- [x] R1.2 Configure npm trust for all three packages after bootstrap. Current npm flow is documented; GitHub environment `npm` exists. The user reports setup complete; R1.2b will validate it through an actual run.
+- [x] R1.2 Configure npm trust for all three packages after bootstrap. Current npm flow is documented; GitHub environment `npm` exists. The user configured trust and the actual alpha.1 workflow validated it.
 - [x] R1.2a Implement automated CI publication for the approved release set, including dependency order, Angular APF output, version/peer checks, OIDC/provenance metadata, and safe handling of partial multi-package publication.
-- [ ] R1.2b Exercise the actual authenticated workflow on a subsequent reviewed alpha after bootstrap and trust setup; verify provenance attestations and registry-installed consumers.
+- [x] R1.2b Exercise the actual authenticated workflow on a subsequent reviewed alpha after bootstrap and trust setup; verify provenance attestations and registry-installed consumers.
 - [x] R1.3 Add the first prerelease Changeset, changelog, compatibility requirements, and actual usage examples.
 - [x] R1.4 Enable release readiness in a reviewed change; keep experimental versions on `next`.
 - [x] R1.5 Validate the tagged commit, packed artifacts, independent review, and hosted CI before dispatching the release workflow. Alpha.0 passed; repeat for each candidate.
-- [ ] R1.6 Verify registry metadata, provenance, and a clean installation from npm after publication. Alpha.0 integrity and installation passed; CI provenance remains pending alpha.1.
+- [x] R1.6 Verify registry metadata, provenance, and a clean installation from npm after publication. Alpha.0 integrity/installation and alpha.1 CI provenance/signatures/installation passed. See [the completed CI run](https://github.com/jchewitt/tandrove/actions/runs/39658759688).
 - [x] R1.7 Verify the released JS/TS and Angular examples work without server companion, Redis or streaming packages; document the supported subset, provisional extension interfaces and future compatibility/migration policy. Do not imply that demo-only forms helpers or planned timers are public features.
 
 No npm publish is part of F0. The scaffold does not reserve an npm name or configure an npm account.

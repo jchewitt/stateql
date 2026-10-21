@@ -92,6 +92,7 @@ export function checkAngularPackage({
         '--no-audit',
         '--no-fund',
         registry ? '--package-lock' : '--no-package-lock',
+        ...(registry ? ['--prefer-online'] : []),
         '--registry=https://registry.npmjs.org/',
         registry ? `@tandrove/core@${manifest.version}` : coreTarball,
         registry
