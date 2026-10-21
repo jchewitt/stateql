@@ -85,8 +85,8 @@ The [incremental release plan](PLAN.md#usable-incremental-releases) keeps every 
 - [Contribution and review process](CONTRIBUTING.md)
 - [npm release process](docs/RELEASING.md)
 
-GitHub Actions checks Linux and Windows. A manually dispatched prerelease workflow uses npm trusted publishing and provenance after npm account setup. A tracked readiness flag and version/source checks gate publication. No registry token is stored in this repository.
+GitHub Actions checks Linux and Windows. Changesets maintains a release PR with synchronized versions and changelogs. Its reviewed merge triggers tagging and npm trusted publishing with provenance; ordinary merges do not publish. See [release review and recovery](docs/RELEASING.md#subsequent-reviewed-releases). No registry token is stored in this repository.
 
 ## License
 
-[MIT](LICENSE), the same license type used by [TanStack Query](https://github.com/TanStack/query/blob/main/LICENSE) and [Apollo Client](https://github.com/apollographql/apollo-client/blob/main/LICENSE). Tandrove is an independent project and is not affiliated with either.
+Licensed under the [MIT License](LICENSE).

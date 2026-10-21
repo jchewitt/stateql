@@ -84,10 +84,13 @@ test('workflows parse, pin actions, and never run privileged pull-request code',
   }
 });
 
-test('publishing is manual and restricted to the main workflow and npm environment', () => {
+test('publishing requires the main release plan and npm environment', () => {
   const release = parse(read('.github/workflows/publish.yml'));
-  assert.deepEqual(Object.keys(release.on), ['workflow_dispatch']);
-  assert.equal(release.jobs.publish.if, "github.ref == 'refs/heads/main'");
+  assert.deepEqual(release.on.push.branches, ['main']);
+  assert.ok(release.on.workflow_dispatch);
+  assert.equal(release.jobs.plan.if, "github.ref == 'refs/heads/main'");
+  assert.equal(release.jobs.publish.needs, 'plan');
+  assert.equal(release.jobs.publish.if, "needs.plan.outputs.publish == 'true'");
   assert.equal(release.jobs.publish.environment, 'npm');
   assert.equal(release.jobs.publish.permissions['id-token'], 'write');
   assert.equal(typeof json('release.config.json').ready, 'boolean');
