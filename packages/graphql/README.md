@@ -6,10 +6,10 @@ It consumes portable selections from core. A validated acquisition decoder and d
 
 ## Install and first query
 
-The current release candidate is `0.1.0-alpha.3`. Once published, install matching versions:
+The current release candidate is `0.1.0-alpha.4`. Once published, install matching versions:
 
 ```sh
-npm install @tandrove/core@0.1.0-alpha.3 @tandrove/graphql@0.1.0-alpha.3 graphql@^16.14.2
+npm install @tandrove/core@0.1.0-alpha.4 @tandrove/graphql@0.1.0-alpha.4 graphql@^16.14.2
 ```
 
 This native JavaScript example expects an ordinary GraphQL endpoint matching the supplied SDL:
