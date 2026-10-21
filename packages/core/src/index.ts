@@ -7,9 +7,16 @@ export {
 } from './cancellation.js';
 export type { CancellationSignal } from './cancellation.js';
 export { ReadTransportError } from './read-retry.js';
+export { ReadTimeoutError } from './read-deadline.js';
+export type {
+  RequestPolicy,
+  RequestPolicyConfiguration,
+  ResourceRequestOptions,
+} from './request-policy.js';
 export type {
   ReadRetryPolicy,
   RetryScheduler,
+  DelayScheduler,
   AcquisitionClientOptions,
 } from './read-retry.js';
 export type {

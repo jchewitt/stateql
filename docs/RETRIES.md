@@ -21,7 +21,7 @@ The shown values are the assembled GraphQL defaults. `retries` counts additional
 
 The delay before retry index `n` (zero for the first retry) is full jitter: `floor(random() * min(maxDelayMs, initialDelayMs * 2 ** n))`. The random sample must be in `[0, 1)`. A classified `retryAfterMs` raises this delay to the server-requested minimum. If that minimum exceeds `maxDelayMs`, the operation fails instead of retrying too early. The default HTTP transport reads both seconds and date forms of `Retry-After`; invalid values are ignored. Retry counts must be integers from zero through ten; delay options must be integer milliseconds from zero through 2147483647, with initial delay no greater than the cap.
 
-This bounds attempt count and backoff, **not individual request duration**. A request can remain pending until its transport settles or its final owner disposes. Read timeouts and timed cache retention are still follow-on work.
+Retry settings alone bound attempt count and backoff, not elapsed duration. The separate opt-in [shared request deadline](DEADLINES.md) bounds the full read/retry chain. Without it, a request can remain pending until its transport settles or its final owner disposes. Timed cache retention remains follow-on work.
 
 ## Failure classification
 

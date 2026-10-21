@@ -22,7 +22,7 @@ See the [store guide](https://github.com/jchewitt/tandrove/blob/main/docs/STORE.
 
 The [concurrency contract](https://github.com/jchewitt/tandrove/blob/main/docs/CONCURRENCY.md) describes ownership, cancellation signals, and `AcquisitionSupersededError`. Local request ordering does not establish server revision ordering.
 
-The [retry contract](https://github.com/jchewitt/tandrove/blob/main/docs/RETRIES.md) covers `ReadRetryPolicy`, `RetryScheduler`, `ReadTransportError`, and terminal field errors. Portable core defaults to no retries; enabling them requires a scheduler. No automatic write retry or request timeout is implemented.
+The [retry contract](https://github.com/jchewitt/tandrove/blob/main/docs/RETRIES.md) covers `ReadRetryPolicy`, `RetryScheduler`, `ReadTransportError`, and terminal field errors. Portable core defaults to no retries; enabling them requires a scheduler. Optional [shared request deadlines](https://github.com/jchewitt/tandrove/blob/main/docs/DEADLINES.md) use `requestPolicy`, `requestPolicyGroups`, resource binding overrides and an injected `DelayScheduler`; they reject with `ReadTimeoutError` and default to disabled. No automatic write retry is implemented.
 
 See the [project plan](https://github.com/jchewitt/tandrove/blob/main/PLAN.md) and [task list](https://github.com/jchewitt/tandrove/blob/main/docs/TASKS.md).
 

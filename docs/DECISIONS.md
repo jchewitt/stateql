@@ -1,5 +1,11 @@
 # Architecture decisions
 
+## D029 Deliver client lifecycle through reviewed slices
+
+Stage B starts with shared request deadlines and timeout-policy resolution, then separate freshness, inactive retention, provider ownership/registration, full capability assignment, polling and beta-readiness slices. Track an explicit alpha-exit checklist and a separate stable gate. The standalone client can stabilize before optional server/streaming packages; beta/stable publication still needs a reviewed release-policy change.
+
+Deadline policy is immutable for the lifetime of a cached resource scope. Resolve global defaults, one named group and a resource binding before attaching owners. Compare effective values rather than group names; conflicting policies cannot silently split identity or change already-shared work. Deadlines default to disabled and cover one acquisition's attempts/backoff, not the entire chain of requests that an `ensure()` may require. Timeout is terminal, aborts work and preserves existing field-level error/generation semantics. Timers live behind the injected portable wait interface; GraphQL supplies platform timers. This does not claim that A1 provider tokens, factories or other timing policies exist yet.
+
 ## D027 Separate accepted publication from install-index visibility
 
 The [alpha.1 trusted-publishing run](https://github.com/jchewitt/tandrove/actions/runs/39658759688) published all three packages with provenance on October 21. Its first attempt passed direct version/integrity checks before npm's install index exposed the same version; the consumer install failed with ETARGET. The guarded second attempt confirmed identical bytes, skipped uploads and passed consumers and `npm audit signatures`. Provenance identifies source commit `039dee24470c37e19adba3dbdaf1fd380c07568e`, `jchewitt/tandrove`, `.github/workflows/publish.yml`, and attempt 1.

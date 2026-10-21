@@ -9,6 +9,11 @@ import { StateStore, validatedSelection } from './state-store.js';
 import { leafPaths } from './acquisition-coverage.js';
 import { AcquisitionScheduler } from './acquisition-scheduler.js';
 import { ReadRetrier, type AcquisitionClientOptions } from './read-retry.js';
+import { ReadDeadline } from './read-deadline.js';
+import {
+  RequestPolicies,
+  type ResourceRequestOptions,
+} from './request-policy.js';
 import {
   Cancellation,
   cancellable,
@@ -170,8 +175,15 @@ export class AcquisitionClient {
   private readonly scopes = new Map<string, AcquisitionScheduler>();
   private disposed = false;
   private readonly retry: ReadRetrier;
+  private readonly policies: RequestPolicies;
+  private readonly deadlineScheduler: AcquisitionClientOptions['deadlineScheduler'];
   constructor(private readonly options: AcquisitionClientOptions = {}) {
     this.retry = new ReadRetrier(options);
+    this.policies = new RequestPolicies(options);
+    const scheduler = options.deadlineScheduler ?? options.scheduler;
+    this.deadlineScheduler = scheduler
+      ? { wait: scheduler.wait.bind(scheduler) }
+      : undefined;
   }
   /** Adapter-facing local patch ingress, not a server revision or stream protocol. */
   ingest(source: AcquisitionSource, patch: AcquiredPatch): void {
@@ -189,12 +201,20 @@ export class AcquisitionClient {
       throw new Error('Patch selection must not be empty.');
     scope.ingest(selection, patch.records);
   }
-  watch(source: AcquisitionSource): QueryHandle {
+  watch(
+    source: AcquisitionSource,
+    options: ResourceRequestOptions = {},
+  ): QueryHandle {
     if (this.disposed) throw new Error('Client is disposed.');
     const selection = freezeFields(source.selection);
     const address = source.stateAddress;
     const collection = source.collection === true;
+    const policy = this.policies.resolve(options);
     let scope = this.scopes.get(address);
+    if (scope && scope.requestTimeoutMs !== policy.requestTimeoutMs)
+      throw new Error(
+        'Sources sharing a state address must use the same effective requestTimeoutMs policy.',
+      );
     if (scope && scope.collection !== collection)
       throw new Error(
         'Sources sharing an address must agree on collection semantics.',
@@ -206,6 +226,7 @@ export class AcquisitionClient {
         selection,
         collection,
         this.retry,
+        new ReadDeadline(policy.requestTimeoutMs, this.deadlineScheduler),
       );
       this.scopes.set(address, scope);
     }

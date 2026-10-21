@@ -94,6 +94,29 @@ Completed comparison: [method, measurements and decision](COMPARISON.md). Run `p
 
 These findings are not retroactively required to complete the initial comparison. Document limitations in R1's experimental release; schedule runtime changes in separately reviewed chunks.
 
+## Stage B reviewed slices
+
+Each slice is a separate review/PR with meaningful tests, `pnpm check`, independent precommit review, hosted CI and a Changeset for package behavior/API. Finish a useful slice before expanding scope. Released features remain usable without the next slice; publishing a candidate still requires a reviewed bot release PR.
+
+| Slice                                   | Deliverable and acceptance                                                                                                                                                                                                                    | Status                                             |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| B1: shared deadlines and timeout policy | P7.1/P7.4 subset, A1.2/A1.3 subset: captured global/group/resource timeout policy, consistent shared-owner binding, total request/retry deadline, transport cancellation and deterministic race/cleanup tests.                                | Implemented; see [deadline contract](DEADLINES.md) |
+| B2: freshness expiry                    | P7.1/P7.2: define per-field and structural/membership freshness coverage, explicit units/disable/zero semantics and revalidation modes; implement expiry and reacquisition without losing cached values or creating refresh loops.            | Planned                                            |
+| B3: inactive retention                  | P7.1/P7.3: define last-owner transition and zero/disabled policies, then evict the whole inactive resource scope, including metadata/timers, with reacquisition and scope-isolation tests.                                                    | Planned                                            |
+| B4: provider registration and ownership | A1.1/A1.4/A1.5/A1.6: tokens, instance/sync/async factory resolution and reuse; official GraphQL and application-owned custom acquisition integration, cleanup on failure, explicit owned/borrowed lifetime.                                   | Planned                                            |
+| B5: complete client configuration       | Remaining client A1.2/A1.3/A1.6: capability assignments and global/group/resource overrides, disable behavior and conflict diagnostics using real providers; preserve simple default setup and JS usage. Server pairing A1.7 remains stage C. | Planned                                            |
+| B6: field polling                       | P6: shared owner interests, fastest active cadence, no overlapping retry/poll chains, disposal and fake-clock acceptance using the settled timing/configuration model.                                                                        | Planned                                            |
+| B7: beta readiness                      | P5 typed runtime projection, application trial, scale/memory measurements, API/migration/documentation review, and the alpha-exit checklist below. Evaluate compiled plan reuse only if measurements justify it.                              | Planned                                            |
+
+### Alpha-exit tracking
+
+- [ ] AX1 Complete and independently review B1–B6; no accepted-but-unimplemented policies or empty adapter packages.
+- [ ] AX2 Settle beta APIs and typed results, including missing/partial/error states and public versus internal adapter contracts.
+- [ ] AX3 Validate installed JS/TS/Angular consumers and a real application beyond the demo under long sessions, account changes, failures and cleanup; record performance/memory budgets and findings.
+- [ ] AX4 Complete supported-feature/compatibility docs, diagnostics, examples and migration policy; no unresolved critical correctness findings.
+- [ ] AX5 Review beta release-policy changes and exercise bot-maintained release/CI/provenance on `next`. Current scripts intentionally accept only alpha.
+- [ ] ST1 After beta validation, review API stability, compatibility/deprecation commitments and outstanding defects; separately enable stable versions/`latest` and verify the first stable release. No fixed version/date is promised by completing a feature slice.
+
 ## P6 Field polling
 
 Depends on a continue decision in P5.
@@ -108,9 +131,10 @@ Depends on a continue decision in P5.
 Stage B follow-on to R1; coordinate configuration with A1. Each implemented capability may ship separately with its complete lifecycle contract. These timers are not implemented by the current retry-count configuration.
 
 - [ ] P7.1 Define per-field stale time, inactive retention and request deadline as distinct policies with explicit units and disable/inheritance behavior.
+- [x] P7.1a Define the shared request deadline and its timeout-policy precedence; freshness and retention settings remain B2/B3 work.
 - [ ] P7.2 Implement freshness expiry and on-demand/active revalidation without treating a stale value as absent or manufacturing a stream dependency.
 - [ ] P7.3 Evict inactive state under bounded retention while preserving active owners and isolating tenant/schema contexts.
-- [ ] P7.4 Implement shared-request deadlines with explicit retry interaction; one owner's disposal must not cancel another owner's valid work.
+- [x] P7.4 Implement shared-request deadlines with explicit retry interaction; one owner's disposal must not cancel another owner's valid work. See [deadline contract](DEADLINES.md).
 - [ ] P7.5 Test expiry, reacquisition, final-owner cleanup, shared work, retry/deadline races and disposal with deterministic clocks; demonstrate normal client use with all streaming disabled.
 
 ## A1 Consistent provider and resource configuration
@@ -119,6 +143,7 @@ Stage B, with paired server examples completed as part of stage C. See [the shar
 
 - [ ] A1.1 Implement provider tokens with supplied instances and sync/async factories, explicit runtime scope and optional framework DI bridges. Plain JavaScript must not require a DI container.
 - [ ] A1.2 Separate provider registration from assignment; resolve immutable global defaults → one primary resource group → resource overrides, with explicit disabling and conflict diagnostics.
+- [x] A1.2a Exercise immutable global/group/resource resolution for request timeout policies, with explicit disable, unknown-group validation and shared-address conflict rejection. Provider capability assignment remains B4/B5 work.
 - [ ] A1.3 Keep groups out of state identity; reject incompatible authority/identity/scope bindings and define conflicts for owners of shared scheduled work.
 - [ ] A1.4 Define small capability-specific contracts as real implementations arrive: acquisition/decoding, transport, event routing, checkpoints, replay history and commands. Validate requested capabilities before starting work.
 - [ ] A1.5 Share connections safely across bindings; test owned versus injected infrastructure, reference cleanup, initialization failure and resource disposal without cross-resource teardown.

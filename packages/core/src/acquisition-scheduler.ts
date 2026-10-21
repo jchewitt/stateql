@@ -10,6 +10,7 @@ import { leafPaths, pathPrefix, staleChanges } from './acquisition-coverage.js';
 import { reconcileAcquisition } from './acquisition-reconciliation.js';
 import { AcquisitionVersions } from './acquisition-versions.js';
 import { ReadTransportError, type ReadRetrier } from './read-retry.js';
+import type { ReadDeadline } from './read-deadline.js';
 import {
   Cancellation,
   cancellable,
@@ -78,9 +79,13 @@ export class AcquisitionScheduler {
     selection: readonly ResolvedField[],
     readonly collection: boolean,
     private readonly retry: ReadRetrier,
+    private readonly deadline: ReadDeadline,
   ) {
     // Membership must remain live when the owner that started a read disposes.
     this.view = store.watch(address, selection);
+  }
+  get requestTimeoutMs(): number | false {
+    return this.deadline.timeoutMs;
   }
   attach(owner: AcquisitionOwner): void {
     this.owners.add(owner);
@@ -275,12 +280,16 @@ export class AcquisitionScheduler {
         );
       let response: AcquisitionResult;
       try {
-        response = await this.retry.read(
-          () => source.read(fetched, { signal: request.cancellation.signal }),
+        response = await this.deadline.run(
+          (signal) =>
+            this.retry.read(
+              () => source.read(fetched, { signal }),
+              signal,
+              () =>
+                request.live &&
+                this.versions.current(request.version, request.fields),
+            ),
           request.cancellation.signal,
-          () =>
-            request.live &&
-            this.versions.current(request.version, request.fields),
         );
       } catch (error) {
         if (
