@@ -2,7 +2,7 @@
 
 Approved implementation direction · October 16, 2026 · End-to-end and incremental-release direction updated October 20, 2026
 
-Implementation is tracked in [docs/TASKS.md](docs/TASKS.md). P1–P5 are complete, and the [comparison](docs/COMPARISON.md) supports continuing the independent runtime as an experiment. R1 published the standalone `@tandrove` core/GraphQL/Angular release set at `0.1.0-alpha.0`; registry integrity and installed-consumer acceptance passed. The `0.1.0-alpha.1` release passed trusted publishing, provenance and installed-consumer checks. See the [release handoff](docs/RELEASING.md). Examples and future contracts below remain proposals unless their tasks are complete.
+Implementation is tracked in [docs/TASKS.md](docs/TASKS.md). P1–P5 are complete, and the [comparison](docs/COMPARISON.md) supports continuing the independent runtime as an experiment. R1 published the standalone `@tandrove` core/GraphQL/Angular release set at `0.1.0-alpha.0`; registry integrity and installed-consumer acceptance passed. The `0.1.0-alpha.1` release passed trusted publishing, provenance and installed-consumer checks. Alpha.2 verified the complete bot-maintained release PR, reviewed merge, automatic tag and trusted publication flow. See the [release record](docs/RELEASING.md). Examples and future contracts below remain proposals unless their tasks are complete.
 
 Tandrove uses composable data definitions to derive requests, address shared cached state, and target refreshes. Its proof of concept combines a framework-independent TypeScript runtime, a GraphQL source adapter, an Angular integration, and a small billing application. An equivalent Apollo implementation measures application wiring and correctness without assuming general feature parity.
 
