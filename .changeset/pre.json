@@ -17,6 +17,7 @@
     "automatic-acquisition",
     "bounded-read-retries",
     "concurrent-acquisition",
+    "freshness-expiry",
     "initial-standalone-alpha",
     "list-reconciliation",
     "partial-errors-and-nulls",
