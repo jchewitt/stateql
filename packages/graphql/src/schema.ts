@@ -20,7 +20,7 @@ import {
   freezeFields,
   type InputObject,
   type ResolvedField,
-} from '@jchewitt/stateql-core';
+} from '@launch-echo/stateql-core';
 
 export interface SchemaOptions {
   readonly identities?: Readonly<Record<string, readonly string[]>>;

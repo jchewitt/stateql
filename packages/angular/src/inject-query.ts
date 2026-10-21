@@ -10,7 +10,7 @@ import {
   untracked,
   type EffectRef,
 } from '@angular/core';
-import type { QueryHandle, Unsubscribe } from '@jchewitt/stateql-core';
+import type { QueryHandle, Unsubscribe } from '@launch-echo/stateql-core';
 import { observeReader } from './observe-reader.js';
 import type {
   StateQuery,

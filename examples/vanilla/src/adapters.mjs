@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 import {
   AcquisitionClient,
   AcquisitionSupersededError,
-} from '@jchewitt/stateql-core';
+} from '@launch-echo/stateql-core';
 import {
   createWholeResourceFixture,
   createEventFixture,

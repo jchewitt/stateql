@@ -1,5 +1,5 @@
 import type { DestroyRef, Signal } from '@angular/core';
-import type { StoreReader } from '@jchewitt/stateql-core';
+import type { StoreReader } from '@launch-echo/stateql-core';
 import { stateqlSignal } from '../src/public-api.js';
 
 declare const reader: StoreReader<Readonly<{ count: number }>>;

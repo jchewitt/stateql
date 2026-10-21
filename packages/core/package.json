@@ -1,7 +1,7 @@
 {
-  "name": "@jchewitt/stateql-core",
-  "version": "0.0.0",
-  "description": "Framework-independent StateQL contracts and shared-state runtime (under development).",
+  "name": "@launch-echo/stateql-core",
+  "version": "0.1.0-alpha.0",
+  "description": "Framework-independent StateQL shared-state runtime and selective refresh contracts.",
   "type": "module",
   "license": "MIT",
   "author": "Jon Hewitt",
@@ -37,6 +37,6 @@
     "test": "node --test test/*.test.mjs",
     "build": "node ../../scripts/build-package.mjs core",
     "prepack": "pnpm --silent run build",
-    "prepublishOnly": "node ../../scripts/check-release.mjs"
+    "prepublishOnly": "node ../../scripts/publish-from-artifacts-only.mjs"
   }
 }

@@ -7,7 +7,7 @@ import {
   resourceAddress,
   freezeFields,
   mergeFields,
-} from '@jchewitt/stateql-core';
+} from '@launch-echo/stateql-core';
 import { schema as generated } from '../../../examples/query-planner/src/generated/billing.js';
 import {
   schema,

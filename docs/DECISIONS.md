@@ -24,6 +24,8 @@ The GitHub repository belongs to verified personal account `jchewitt`. npm authe
 
 October 20 update: the user selected `@launch-echo` for the core, GraphQL and Angular release set. Existing manifests still use `@jchewitt`; R1 migrates all references together and verifies npm scope access. Exact versions and multi-package publication remain pending.
 
+October 21 update: R1 migrates the complete release set to `@launch-echo` and prepares `0.1.0-alpha.0` on `next`, with one `stateql-v<VERSION>` tag and fixed Changesets release group. The user performs the first interactive publication of reviewed tarballs, then configures trusted publishing for subsequent versions. Local bootstrap has no GitHub provenance. CI uses OIDC/provenance and cannot treat that bootstrap as a provenance-bearing release. Publication checks the entire set before mutation, publishes in dependency order, and only skips existing versions whose integrity matches. GitHub workflow/source revision equality remains mandatory. Registry installation acceptance and account access cannot be inferred from local checks; see [the handoff](RELEASING.md).
+
 ## D006 Review before commit
 
 Every commit requires independent agent review and resolution of actionable findings. CI is complementary verification, not a substitute for the review. Future feature work uses branches and pull requests; the initial reviewed foundation is the bootstrap commit on `main`.

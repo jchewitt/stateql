@@ -5,7 +5,7 @@ import {
   type EnvironmentProviders,
   type InjectionToken,
 } from '@angular/core';
-import type { Disposable } from '@jchewitt/stateql-core';
+import type { Disposable } from '@launch-echo/stateql-core';
 
 /** Own one lazily created client per providing environment injector. */
 export function provideStateQLClient<T extends Disposable>(

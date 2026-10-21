@@ -1,5 +1,5 @@
 ---
-'@jchewitt/stateql-core': minor
+'@launch-echo/stateql-core': minor
 ---
 
 Add provisional validated patch ingestion for existing acquired records through the shared acquisition commit path. Preserve unaffected records and fields while blocking older overlapping reads. Reject malformed patches before changing state or local generations.

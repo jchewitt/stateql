@@ -10,7 +10,7 @@ pnpm demo:typescript
 pnpm demo:adapters
 ```
 
-These deterministic examples use in-process fixtures. `pnpm demo:acquire` remains the HTTP example; `pnpm demo` remains the Angular/Apollo baseline until P4 adds StateQL's Angular adapter.
+These deterministic examples use in-process fixtures. `pnpm demo:acquire` is the HTTP example; `pnpm demo` runs both StateQL and Apollo Angular views.
 
 ## JavaScript is a supported consumer
 

@@ -3,7 +3,7 @@ import {
   createSchema,
   type FieldType,
   type ObjectRef,
-} from '@jchewitt/stateql-graphql';
+} from '@launch-echo/stateql-graphql';
 export type GeneratedTypes = {
   Billing: {
     readonly tenantId: FieldType<string, {}>;

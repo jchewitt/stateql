@@ -1,39 +1,74 @@
 # Experimental npm releases
 
-The workflow is prepared; publishing is not enabled. `release.config.json` has `ready: false`, and version `0.0.0` is rejected. Core and GraphQL now implement the experimental acquisition runtime, and Angular has its initial observation package. Release acceptance and account setup are still required.
+The first release candidate is **0.1.0-alpha.0** for `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql` and `@launch-echo/stateql-angular`, published in that order to **next**. These are functioning standalone libraries; server companions, streaming and hosting are not prerequisites. Publication and npm account setup remain separate from preparing and reviewing the candidate.
 
-Follow the [usable incremental release gates](../PLAN.md#usable-incremental-releases). The first alpha is a functioning standalone core/GraphQL/Angular release set, not a shell waiting for streaming or hosting. Each later integration publishes only when its own installed example, lifecycle/recovery scenarios and compatibility contract work. Preserve client-only operation and the same recognizable client/server provider/group/resource setup pattern throughout.
+All three packages ship ESM JavaScript and optional TypeScript declarations. Core has no framework/platform dependencies. GraphQL requires GraphQL 16.14.2 or a compatible 16.x release; Angular requires Angular 21.2.25 or a compatible 21.x release and the matching StateQL core alpha. Node tooling requires Node >=22.14.0; release CI uses Node 24 and pnpm 10.18.2. See the [GraphQL subset](PLANNER.md#supported-boundary), [JavaScript examples](VANILLA.md), [Angular integration](ANGULAR.md) and [comparison](COMPARISON.md).
 
-The user requested a release-readiness notification and will configure npm trusted publishing at that handoff. Notify them once P4's integration/forms scenarios, P5's comparison decision, and package acceptance checks pass. Before publication, confirm the approved package names/versions and finish CI automation for that release set. The existing core-only scaffold is not yet the complete core/GraphQL/Angular release pipeline. Do not request registry changes merely to continue ordinary feature work.
+The alpha supports shared caching, generated GraphQL reads, field/branch invalidation, explicit list refresh, local request race protection, bounded read retries and Angular observation/query ownership. Snapshot payloads are immutable JSON projections. Low-level source/ingest interfaces remain provisional. Forms draft helpers belong to the demo, not the public library. Polling/stale timers, real socket delivery, server revisions, persistence, offline writes, React and production REST/server adapters remain planned. Alpha changes may break APIs; each release must document changes and migration requirements. Keep dependent StateQL packages on the same tested alpha.
 
-At handoff, provide the exact owner, repository, workflow filename and optional environment used by the final workflow, plus which npm packages need trust configuration. Recheck npm's current setup requirements then. CI should perform verified versioned publication and registry/provenance checks after that configuration, rather than require local registry credentials.
+Follow the [usable incremental release gates](../PLAN.md#usable-incremental-releases). Publish integrations only with runnable behavior and installed-consumer acceptance, while preserving standalone client usage.
 
-## Registry setup
+## First publication: account-owner handoff
 
-The GitHub account is `jchewitt`. The user selected the npm scope `@launch-echo` on October 20. Intended release packages are `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql` and `@launch-echo/stateql-angular`. npm account access to that scope is not yet verified. Existing manifests/imports still use `@jchewitt`; R1 must migrate manifests, peers, source imports, generated modules, fixtures, Changesets configuration, package/release checks and documentation together before publication. Do not re-ask which scope the user selected; verify access and resolve only actual conflicts.
+No new clone is required when using the prepared checkout. From another computer, clone `https://github.com/jchewitt/stateql.git`, fetch tags, check out `stateql-v0.1.0-alpha.0`, install with `pnpm install --frozen-lockfile`, and prepare the artifacts as below. Use Node 24 and pnpm 10.18.2.
 
-Establish the package using npm's current new-package/account flow, then configure its trusted publisher. The target settings are GitHub owner `jchewitt`, repository `stateql`, workflow filename `publish.yml`, and environment `npm`. Enable direct publish permission if npm's settings require it. Scope creation and initial package setup may need account-owner interaction; no stored token or registry setup is implied by the GitHub workflow.
+1. Sign in to npm with an account authorized to publish public packages in `@launch-echo`. If this is an organization scope, its owner must grant that access. Enable account 2FA. Scope selection alone does not prove ownership.
+2. In your own terminal, run `npm login --registry=https://registry.npmjs.org/` and `npm whoami --registry=https://registry.npmjs.org/`. Complete npm's browser/2FA prompts; never put credentials in Git or chat.
+3. Use the reviewed tagged checkout and prepare the release. PowerShell commands from the repository root:
 
-The workflow uses Node 24 and npm 11.6.2, above the documented trusted-publishing minimum, and requests OIDC permission only in the publish job. See [npm trusted publishers](https://docs.npmjs.com/trusted-publishers/). The public repository and `--provenance` support publication provenance. No `NPM_TOKEN` secret is expected.
+   ```powershell
+   $env:RELEASE_TAG = 'stateql-v0.1.0-alpha.0'
+   pnpm release:prepare
+   ```
 
-## Version and review
+   This runs release preflight and the full checks, then writes tarballs and their source revision/SHA512 manifest to `.artifacts/release/stateql-v0.1.0-alpha.0/`. Preparation does not publish. If the handoff already prepared this directory at the same clean commit, use those artifacts.
 
-The commands and tag/workflow names below describe the current core-only scaffold. R1.2a must replace this section with the reviewed three-package procedure before the first release; do not dispatch the scaffold as though it publishes the complete release set. Exact versions and the final tag policy remain to be set in that release change.
+4. Publish the reviewed artifacts interactively:
 
-1. Complete the useful package functionality and release acceptance tasks in `docs/TASKS.md`.
-2. Enter prerelease mode with `pnpm exec changeset pre enter alpha`.
-3. Add an appropriate Changeset with `pnpm changeset`, then run `pnpm version:packages`. Verify the result is at least `0.1.0-alpha.0`, not a `0.0.x` scaffold release.
-4. Review the changelog and package payload. Set `ready: true` in `release.config.json` only in the reviewed release change.
-5. Run `pnpm check`, obtain independent review, commit, and merge through a pull request with passing CI.
-6. Tag that reviewed main-line commit as `core-v<VERSION>` (for example `core-v0.1.0-alpha.0`) and push the tag.
-7. Dispatch **Publish experimental core** from `main`, supplying the exact release tag. The tag must identify the current main commit at dispatch time; publish before main advances or create a new reviewed prerelease at its new tip.
+   ```powershell
+   pnpm release:bootstrap
+   pnpm release:verify
+   ```
 
-The workflow checks out the tag, verifies its version and ancestry on `origin/main`, and requires HEAD to match GitHub's workflow SHA so npm provenance describes the code actually published. It also requires a clean checkout, runs the full checks, and publishes to `next`. It does not publish on normal pushes or pull requests. Run the preflight locally on the tagged checkout using the `RELEASE_TAG` environment variable and `pnpm release:check`.
+   Bootstrap checks every existing registry version before publishing any missing package, then publishes core, GraphQL and Angular in dependency order with public access and the `next` tag. Complete any npm 2FA prompts. This is the step that makes the packages public. It publishes the saved tarballs; Angular uses its built APF output, never the source workspace directory.
 
-The initial workflow releases only core. Add package-specific tagging, dependency ordering, and actual build verification when the GraphQL and Angular packages become releasable. Do not publish empty package shells. Stable `latest` releases require a separate reviewed policy change.
+5. Return the command outcome so registry installation checks can finish. `release:verify` checks registry versions/integrity; it does not replace a clean JS/TS/Angular install from npm. Until those checks pass, R1 registry acceptance remains open.
 
-The Angular prototype remains private. Its APF artifact lives in `packages/angular/dist`; package checks pack that generated directory, not its workspace source manifest. Before any future Angular release, update the exact experimental core peer version alongside package versioning and validate the installed artifact again.
+The first local publication does **not** have GitHub build provenance. Do not describe it as OIDC-published or attempt to republish the same version through CI. Later versions use the trusted workflow and provenance. Never publish a `0.0.0` scaffold just to create package settings.
+
+npm also supports [staged publishing](https://docs.npmjs.com/staged-publishing/) for new packages, with a public `0.0.0-stage` placeholder and separate approval. This release uses direct first publication of the tested alpha; staging is not a hidden step in these scripts. See [npm's public scoped-package instructions](https://docs.npmjs.com/creating-and-publishing-scoped-public-packages/).
+
+## Trusted publishing after bootstrap
+
+In npm's Settings → Trusted Publisher for **each** of the three packages, choose GitHub Actions and enter:
+
+| Setting              | Value                                |
+| -------------------- | ------------------------------------ |
+| Organization or user | `jchewitt`                           |
+| Repository           | `stateql`                            |
+| Workflow filename    | `publish.yml`                        |
+| Environment name     | `npm`                                |
+| Allowed action       | Direct publishing with `npm publish` |
+
+The GitHub environment `npm` has been created in `jchewitt/stateql`. A required reviewer can be configured by the repository owner if desired. No npm token secret is needed. The default stage-only permission in newer npm settings is insufficient for this direct-publish workflow.
+
+Configure trust when the next reviewed alpha is ready: npm currently requires a newly configured publisher to complete its first successful publish within **two days**, or it must be recreated. Do not manufacture or republish an existing version merely to validate trust. Check these settings against [npm's current trusted-publishing documentation](https://docs.npmjs.com/trusted-publishers/) when setting them up. The workflow's npm 11.6.2 and Node 24 exceed the documented minimum versions.
+
+## Subsequent reviewed releases
+
+1. Add Changesets for package behavior/API changes. The initial release enters prerelease mode `alpha`; retain it for subsequent alphas. Run `pnpm version:packages`, review versions and changelogs, and update exact prerelease peers consistently. See [.changeset/README.md](../.changeset/README.md).
+2. Keep the three packages as one tested release set. Check all manifests, packed dependencies and Angular APF metadata. Stable versions and `latest` require a separately reviewed policy change.
+3. Run `pnpm check`, obtain independent agent review, and merge the release PR only after hosted CI passes. Readiness in `release.config.json` permits only validated alpha candidates; it does not trigger publication.
+4. Tag the reviewed main commit `stateql-v<VERSION>` and push the tag. Never move a published tag.
+5. Dispatch **Publish experimental StateQL** from `main`, supplying that exact tag. The tag must identify the current main commit at dispatch; if main has advanced, create another reviewed release candidate instead of publishing with misleading provenance.
+6. The workflow installs locked dependencies, runs `release:prepare`, publishes the saved tarballs with OIDC/provenance, and verifies registry integrity. It never runs on ordinary pushes or PRs. Check the run and provenance for all three packages, then run the clean registry consumers before announcing the release.
+
+The guard requires a clean checkout, a version-matching tag contained in `origin/main`, and, in GitHub Actions, a checked-out commit equal to the workflow's `GITHUB_SHA`. This ties provenance to the actual source. Core/GraphQL ship their compiled modules; Angular ships `packages/angular/dist` with partial compilation and matching core peer metadata.
 
 ## Failure handling
 
-If publication fails, first inspect the npm registry for the exact version; a network failure can occur after a successful publish. Never assume absence, delete a release, or reuse a published version. Confirm the version's contents/provenance and complete any remaining documentation, or create a new corrected prerelease through Changesets. Record registry verification in the release notes.
+A network error can follow a successful publish. Preserve the prepared artifacts and run verification before retrying. Registry preflight treats only an explicit 404 as absent; authentication/network failures stop the operation. Existing versions must match the expected SHA512 integrity, and `next` must resolve to that version and integrity. The CI path additionally requires registry provenance metadata. That metadata check is not cryptographic attestation verification; after CI publication, inspect npm provenance for the source revision and run `npm audit signatures` in a clean installed consumer. An incompatible existing version stops the entire preflight before any further package is published. Never overwrite/delete a version or silently accept different contents.
+
+If some packages succeeded, rerun the same publication command against the same reviewed artifacts. Verified existing packages are skipped; missing ones are published in order. A moved `next` tag stops resumption without changing registry tags. CI uploads artifacts from each attempt for inspection. A CI rerun rebuilds the reviewed source; differing bytes stop publication at the integrity check. There is no automatic cross-run artifact restore. Bootstrap versions without provenance cannot be resumed as CI releases. A content mismatch requires investigation and usually a new reviewed prerelease, not forcing publication. Registry verification does not prove account permissions for missing packages; npm may reject publication and leave a partial set to resume.
+
+Record the actual publication, provenance and clean-install results in release notes. Do not mark registry verification complete based only on local tarball tests.

@@ -1,6 +1,14 @@
 # Angular integration
 
-P4.1/P4.2 implement the private `@jchewitt/stateql-angular` package, readonly observation, environment-owned client providers, and reactive query ownership. P4.3 adds StateQL billing views beside the Apollo baseline; see [the demo guide](DEMO.md). P4.4 adds demo-owned form drafts and explicit saves using the same editing policy for both clients.
+The experimental `@launch-echo/stateql-angular` package provides readonly observation, environment-owned client providers, and reactive query ownership. StateQL billing views sit beside the Apollo baseline; see [the demo guide](DEMO.md). Demo-owned form drafts and explicit saves use the same editing policy for both clients; these helpers are not exported by the library.
+
+The initial release candidate is `0.1.0-alpha.0`, tested with Angular 21.2.25 and RxJS 7.8.2. Once published, install matching StateQL versions into an Angular 21 application:
+
+```sh
+npm install @launch-echo/stateql-core@0.1.0-alpha.0 @launch-echo/stateql-graphql@0.1.0-alpha.0 @launch-echo/stateql-angular@0.1.0-alpha.0 graphql@^16.14.2
+```
+
+The Angular package uses partial compilation and requires Angular core `^21.2.25`; older Angular majors are not supported. The core peer is exact during alpha. See [release status](RELEASING.md) before installing a version that has not yet been published.
 
 ## Shared client and owned queries
 
@@ -11,11 +19,11 @@ import { inject, InjectionToken, signal } from '@angular/core';
 import {
   createGraphQLClient,
   type GraphQLClient,
-} from '@jchewitt/stateql-graphql';
+} from '@launch-echo/stateql-graphql';
 import {
   injectStateQuery,
   provideStateQLClient,
-} from '@jchewitt/stateql-angular';
+} from '@launch-echo/stateql-angular';
 
 export const BILLING_CLIENT = new InjectionToken<GraphQLClient>(
   'Billing StateQL',
@@ -63,7 +71,7 @@ Destroying the current injection scope, or calling `query.dispose()`, stops its 
 ## Observe an externally owned reader
 
 ```ts
-import { stateqlSignal } from '@jchewitt/stateql-angular';
+import { stateqlSignal } from '@launch-echo/stateql-angular';
 
 // During component/service construction, with a reader owned by the caller:
 const snapshot = stateqlSignal(queryHandle);
@@ -80,9 +88,9 @@ The package has Angular core and StateQL core peers so the host supplies the sha
 
 ## Packaging and verification
 
-Build with `pnpm build` or `pnpm --filter @jchewitt/stateql-angular build` after building core. The build uses ng-packagr with Angular partial compilation and produces the Angular Package Format under `packages/angular/dist`. The workspace package points to that output; the build removes those workspace-only paths from the generated package manifest, retaining ng-packagr's exports, module and declaration entries.
+Build with `pnpm build` or `pnpm --filter @launch-echo/stateql-angular build` after building core. The build uses ng-packagr with Angular partial compilation and produces the Angular Package Format under `packages/angular/dist`. The workspace package points to that output; the build removes those workspace-only paths from the generated package manifest, retaining ng-packagr's exports, module and declaration entries.
 
-Pack the generated `dist` directory, not the source package directory. The package remains private, has no publication workflow enabled, and is not yet a supported release.
+Pack the generated `dist` directory, not the source package directory. The initial alpha is prepared for the three-package publication workflow; account setup and actual registry publication are tracked in [releasing](RELEASING.md).
 
 `pnpm check` runs lifecycle/type tests and packs the real APF output. The package check installs it and core into a temporary consumer outside the workspace, verifies native ESM observation/destruction, and compiles a standalone Angular component and its template with `ngc`. It checks declarations, package contents, peers, license, and removal of stale build output. There are no decorated library declarations yet; the partial compiler setting is in place for later DI APIs.
 

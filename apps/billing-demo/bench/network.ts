@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { ApolloClient, ApolloLink, Observable } from '@apollo/client/core';
 import { execute, print, type DocumentNode } from 'graphql';
-import { createGraphQLClient } from '@jchewitt/stateql-graphql';
+import { createGraphQLClient } from '@launch-echo/stateql-graphql';
 import { BillingFixture } from '../../billing-api/src/fixture.js';
 import { schema, createRoot } from '../../billing-api/src/schema.js';
 import { createBillingCache } from '../src/data/cache.js';

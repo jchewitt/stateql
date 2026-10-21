@@ -17,6 +17,14 @@ test('root is private and the runtime foundation has no framework or platform de
   assert.deepEqual(compiler.types, []);
 });
 
+test('source packages route publishing through reviewed artifacts', () => {
+  for (const part of ['core', 'graphql', 'angular'])
+    assert.equal(
+      json(`packages/${part}/package.json`).scripts.prepublishOnly,
+      'node ../../scripts/publish-from-artifacts-only.mjs',
+    );
+});
+
 test('published entrypoints match the declaration build and explicit package allowlist', () => {
   const manifest = json('packages/core/package.json');
   assert.equal(manifest.exports['.'].types, './dist/index.d.ts');
@@ -27,6 +35,39 @@ test('published entrypoints match the declaration build and explicit package all
     manifest.repository.url,
     'git+https://github.com/jchewitt/stateql.git',
   );
+});
+
+test('release packages share scope, alpha version, repository metadata and compatible core edges', () => {
+  const core = json('packages/core/package.json');
+  for (const name of ['core', 'graphql', 'angular']) {
+    const manifest = json(`packages/${name}/package.json`);
+    assert.equal(manifest.name, `@launch-echo/stateql-${name}`);
+    assert.equal(manifest.version, core.version);
+    assert.match(manifest.version, /^0\.[1-9]\d*\.\d+-alpha\.\d+$/);
+    assert.notEqual(manifest.private, true);
+    assert.equal(manifest.license, 'MIT');
+    assert.equal(
+      manifest.repository.url,
+      'git+https://github.com/jchewitt/stateql.git',
+    );
+    assert.equal(manifest.repository.directory, `packages/${name}`);
+    assert.deepEqual(manifest.publishConfig, {
+      access: 'public',
+      registry: 'https://registry.npmjs.org/',
+      tag: 'next',
+    });
+  }
+  assert.equal(
+    json('packages/graphql/package.json').dependencies[core.name],
+    'workspace:*',
+  );
+  assert.equal(
+    json('packages/angular/package.json').peerDependencies[core.name],
+    core.version,
+  );
+  assert.deepEqual(json('.changeset/config.json').fixed, [
+    [core.name, '@launch-echo/stateql-graphql', '@launch-echo/stateql-angular'],
+  ]);
 });
 
 test('workflows parse, pin actions, and never run privileged pull-request code', () => {

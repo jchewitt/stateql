@@ -1,4 +1,4 @@
-import type { RetryScheduler } from '@jchewitt/stateql-core';
+import type { RetryScheduler } from '@launch-echo/stateql-core';
 
 /** Platform timers are confined to the assembled GraphQL client. */
 export const defaultRetryScheduler: RetryScheduler = {

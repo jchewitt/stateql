@@ -30,8 +30,8 @@ export function checkAngularPackage({ root, artifacts, coreTarball, npm }) {
   );
   const files = packed.files.map(({ path }) => path);
   for (const file of [
-    'fesm2022/jchewitt-stateql-angular.mjs',
-    'types/jchewitt-stateql-angular.d.ts',
+    'fesm2022/launch-echo-stateql-angular.mjs',
+    'types/launch-echo-stateql-angular.d.ts',
     'package.json',
     'LICENSE',
     'README.md',
@@ -45,22 +45,26 @@ export function checkAngularPackage({ root, artifacts, coreTarball, npm }) {
   const manifest = JSON.parse(
     readFileSync(join(output, 'package.json'), 'utf8'),
   );
-  assert.equal(manifest.private, true);
+  assert.notEqual(manifest.private, true);
   assert.equal(manifest.sideEffects, false);
   assert.equal(
     manifest.exports['.'].types,
-    './types/jchewitt-stateql-angular.d.ts',
+    './types/launch-echo-stateql-angular.d.ts',
   );
   assert.equal(
     manifest.exports['.'].default,
-    './fesm2022/jchewitt-stateql-angular.mjs',
+    './fesm2022/launch-echo-stateql-angular.mjs',
   );
-  assert.equal(manifest.typings, 'types/jchewitt-stateql-angular.d.ts');
-  assert.equal(manifest.module, 'fesm2022/jchewitt-stateql-angular.mjs');
+  assert.equal(manifest.typings, 'types/launch-echo-stateql-angular.d.ts');
+  assert.equal(manifest.module, 'fesm2022/launch-echo-stateql-angular.mjs');
   assert.equal(manifest.main, undefined);
   assert.equal(manifest.types, undefined);
-  assert.equal(manifest.dependencies['@jchewitt/stateql-core'], undefined);
-  assert.equal(manifest.peerDependencies['@jchewitt/stateql-core'], '0.0.0');
+  assert.equal(manifest.dependencies['@launch-echo/stateql-core'], undefined);
+  assert.equal(
+    manifest.peerDependencies['@launch-echo/stateql-core'],
+    JSON.parse(readFileSync(join(root, 'packages/core/package.json'), 'utf8'))
+      .version,
+  );
   assert.equal(manifest.peerDependencies['@angular/core'], '^21.2.25');
   assert.equal(
     readFileSync(join(output, 'LICENSE'), 'utf8'),

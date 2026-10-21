@@ -17,7 +17,7 @@ import {
   type InputObject,
   type InputValue,
   type ResolvedField,
-} from '@jchewitt/stateql-core';
+} from '@launch-echo/stateql-core';
 import { fieldAt, containsList, type SchemaContext } from './schema.js';
 import type { PathNode } from './definition.js';
 import type { PreparedOperation } from './operation.js';

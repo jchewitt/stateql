@@ -1,10 +1,10 @@
-name: Publish experimental core
+name: Publish experimental StateQL
 
 on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Reviewed core-v0.x.y-alpha.N tag at the current main commit
+        description: Reviewed stateql-v0.x.y-alpha.N tag at the current main commit
         required: true
         type: string
 
@@ -40,7 +40,14 @@ jobs:
       - run: npm install --global npm@11.6.2
       - run: pnpm install --frozen-lockfile
       - run: pnpm release:check
-      - run: pnpm check
+      - name: Prepare reviewed tarballs
+        run: pnpm release:prepare
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-${{ inputs.release_tag }}-${{ github.run_attempt }}
+          path: .artifacts/release/${{ inputs.release_tag }}/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
       - name: Publish using npm trusted publishing
-        run: npm publish --provenance --access public --tag next
-        working-directory: packages/core
+        run: pnpm release:publish

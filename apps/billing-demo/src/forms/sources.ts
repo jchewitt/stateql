@@ -1,7 +1,7 @@
 import { inject, InjectionToken } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { firstValueFrom } from 'rxjs';
-import type { QueryHandle } from '@jchewitt/stateql-core';
+import type { QueryHandle } from '@launch-echo/stateql-core';
 import { BILLING_CLIENT } from '../stateql-client';
 import { accountMonitor, billingScope } from '../data/stateql-definitions';
 import { BILLING_INVOICES, INVOICE_ACCOUNTS } from '../data/operations';

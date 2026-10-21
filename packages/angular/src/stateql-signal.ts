@@ -5,7 +5,7 @@ import {
   signal,
   type Signal,
 } from '@angular/core';
-import type { StoreReader } from '@jchewitt/stateql-core';
+import type { StoreReader } from '@launch-echo/stateql-core';
 import { observeReader } from './observe-reader.js';
 
 export interface StateQLSignalOptions {

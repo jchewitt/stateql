@@ -9,7 +9,7 @@ import { performance } from 'node:perf_hooks';
 import { build, version as esbuildVersion } from 'esbuild';
 import ts from 'typescript';
 import { print } from 'graphql';
-import { createSchema } from '@jchewitt/stateql-graphql';
+import { createSchema } from '@launch-echo/stateql-graphql';
 import { schemaSource } from '../../billing-api/src/schema.js';
 import { BILLING_INVOICES, INVOICE_ACCOUNTS } from '../src/data/operations.js';
 import { createBillingCache } from '../src/data/cache.js';

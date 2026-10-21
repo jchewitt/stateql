@@ -1,5 +1,8 @@
 import type { Injector, Signal } from '@angular/core';
-import type { InvalidateOptions, QuerySnapshot } from '@jchewitt/stateql-core';
+import type {
+  InvalidateOptions,
+  QuerySnapshot,
+} from '@launch-echo/stateql-core';
 
 export type StateQueryState =
   | { readonly status: 'pending' | 'disposed' }

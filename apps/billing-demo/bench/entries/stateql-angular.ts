@@ -3,4 +3,4 @@ export {
   injectStateQuery,
   provideStateQLClient,
   stateqlSignal,
-} from '@jchewitt/stateql-angular';
+} from '@launch-echo/stateql-angular';

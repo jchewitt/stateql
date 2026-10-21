@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import {
   AcquisitionCancelledError,
   AcquisitionSupersededError,
-} from '@jchewitt/stateql-core';
+} from '@launch-echo/stateql-core';
 import {
   createSchema,
   createGraphQLClient,

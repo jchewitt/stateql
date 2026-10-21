@@ -1,10 +1,9 @@
 {
-  "name": "@jchewitt/stateql-graphql",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@launch-echo/stateql-graphql",
+  "version": "0.1.0-alpha.0",
   "type": "module",
   "license": "MIT",
-  "description": "Experimental StateQL schema generation and operation planner.",
+  "description": "GraphQL definitions, operation planning and HTTP acquisition for StateQL.",
   "files": [
     "dist",
     "README.md",
@@ -24,10 +23,11 @@
     "build": "node ../../scripts/build-package.mjs graphql",
     "prepack": "pnpm --silent run build",
     "typecheck": "tsc -p tsconfig.test.json --noEmit",
-    "test": "tsx --test test/*.test.ts"
+    "test": "tsx --test test/*.test.ts",
+    "prepublishOnly": "node ../../scripts/publish-from-artifacts-only.mjs"
   },
   "dependencies": {
-    "@jchewitt/stateql-core": "workspace:*"
+    "@launch-echo/stateql-core": "workspace:*"
   },
   "peerDependencies": {
     "graphql": "^16.14.2"
@@ -37,5 +37,22 @@
     "tsx": "4.23.15",
     "@types/node": "22.20.5",
     "typescript": "5.9.3"
-  }
+  },
+  "author": "Jon Hewitt",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jchewitt/stateql.git",
+    "directory": "packages/graphql"
+  },
+  "homepage": "https://github.com/jchewitt/stateql#readme",
+  "bugs": {
+    "url": "https://github.com/jchewitt/stateql/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "next"
+  },
+  "sideEffects": false,
+  "types": "./dist/index.d.ts"
 }

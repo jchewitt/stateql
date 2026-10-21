@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
-import { createSchema, createGraphQLClient } from '@jchewitt/stateql-graphql';
+import {
+  createSchema,
+  createGraphQLClient,
+} from '@launch-echo/stateql-graphql';
 import { createFixture, sdl, identities } from './fixture.mjs';
 
 /** Native JavaScript: no generated model, transpiler or TypeScript loader. */

@@ -140,14 +140,16 @@ Stage D after the recoverable live-state slice, independently releasable per use
 
 Depends on a useful implemented package, P5, and registry setup.
 
-Stage A publishes the implemented foundation, independently usable before any server/hosting integration. The user selected `@launch-echo` on October 20: intended packages are `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql` and `@launch-echo/stateql-angular`. Selection is confirmed; npm account access, manifest migration, exact versions and trusted publishing are not complete. The scope change is implemented as a reviewed R1 chunk, not partially applied by this planning update.
+Stage A publishes the implemented foundation, independently usable before any server/hosting integration. The selected packages are `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql` and `@launch-echo/stateql-angular`, with initial candidate `0.1.0-alpha.0` on `next`. The [release handoff](RELEASING.md) separates completed preparation from account-owner bootstrap, trusted publishing and registry acceptance. No package has been published by this preparation change.
 
-- [ ] R1.0 Notify the user when P4/P5 and package acceptance are complete, identify the release packages/versions, and provide the exact trusted-publisher configuration for the user to set up. Requested October 20; do not silently enable publication or wait until after a publish attempt to request setup.
-- [ ] R1.1 Verify npm identity/access to the selected `@launch-echo` scope; migrate all three manifests, imports, peer dependencies, generated modules, fixtures, checks, Changesets configuration and release metadata together.
-- [ ] R1.2 Confirm the current npm flow for establishing new packages and trusted publishing; configure `jchewitt/stateql`, `publish.yml`, and environment `npm`.
-- [ ] R1.2a Complete automated CI publication for the approved release set, including dependency order, Angular APF output, version/peer checks, OIDC/provenance, and safe handling of partial multi-package publication. The current manually dispatched scaffold publishes core only.
-- [ ] R1.3 Add the first prerelease Changeset, changelog, compatibility requirements, and actual usage examples.
-- [ ] R1.4 Enable release readiness in a reviewed change; keep experimental versions on `next`.
+- [x] R1.0 Notify the user when P4/P5 and package acceptance are complete, identify the release packages/versions, and provide the exact trusted-publisher configuration for the user to set up. The October 21 handoff is documented in `RELEASING.md`; no publication has been attempted.
+- [ ] R1.1 Verify npm identity/access to the selected `@launch-echo` scope. The local check returned `ENEEDAUTH`; the account owner must log in and confirm publication rights.
+- [x] R1.1a Migrate all three manifests, imports, peer dependencies, generated modules, fixtures, checks, Changesets configuration and release metadata together.
+- [ ] R1.2 Configure npm trust for all three packages after bootstrap. Current npm flow is documented; GitHub environment `npm` exists. Account-owner npm setup remains pending.
+- [x] R1.2a Implement automated CI publication for the approved release set, including dependency order, Angular APF output, version/peer checks, OIDC/provenance metadata, and safe handling of partial multi-package publication.
+- [ ] R1.2b Exercise the actual authenticated workflow on a subsequent reviewed alpha after bootstrap and trust setup; verify provenance attestations and registry-installed consumers.
+- [x] R1.3 Add the first prerelease Changeset, changelog, compatibility requirements, and actual usage examples.
+- [x] R1.4 Enable release readiness in a reviewed change; keep experimental versions on `next`.
 - [ ] R1.5 Validate the tagged commit, packed artifacts, independent review, and hosted CI before dispatching the release workflow.
 - [ ] R1.6 Verify registry metadata, provenance, and a clean installation from npm after publication.
 - [ ] R1.7 Verify the released JS/TS and Angular examples work without server companion, Redis or streaming packages; document the supported subset, provisional extension interfaces and future compatibility/migration policy. Do not imply that demo-only forms helpers or planned timers are public features.

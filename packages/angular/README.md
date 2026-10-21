@@ -1,11 +1,21 @@
 # StateQL Angular integration
 
-Private experimental Angular Package Format library. `provideStateQLClient(token, create)` owns a typed client at an environment injector's lifetime. `injectStateQuery(parameters, open, { injector? })` owns a query handle, replaces it when reactive arguments change, and exposes readonly state without showing the old snapshot under new parameters.
+Experimental Angular Package Format library. `provideStateQLClient(token, create)` owns a typed client at an environment injector's lifetime. `injectStateQuery(parameters, open, { injector? })` owns a query handle, replaces it when reactive arguments change, and exposes readonly state without showing the old snapshot under new parameters.
 
 For externally owned readers, `stateqlSignal(reader, { destroyRef? })` provides readonly signal observation only. It unsubscribes on destruction without disposing the reader or shared client. Owned queries additionally dispose their handles; neither query view disposes the shared client.
 
 The adapter observes the shared core runtime without duplicating fetching, retries, caching, or invalidation. Construct it once outside reactive computations. Form edits remain separate local drafts; observing server state never sends a write.
 
-Build through ng-packagr in partial compilation mode and pack the generated `dist` directory. Angular core and StateQL core are peers; the tested Angular baseline is 21.2.25. The package stays private and has no supported npm release. StateQL demo views and form bindings remain later P4 tasks.
+## Install and compatibility
+
+The initial release candidate is `0.1.0-alpha.0`. Once published, install into an Angular 21 application:
+
+```sh
+npm install @launch-echo/stateql-core@0.1.0-alpha.0 @launch-echo/stateql-angular@0.1.0-alpha.0
+```
+
+Add `@launch-echo/stateql-graphql@0.1.0-alpha.0` and `graphql@^16.14.2` for GraphQL applications. Angular core `^21.2.25` and exactly matching StateQL core are peers; the tested baseline is Angular 21.2.25 with RxJS 7.8.2. Older Angular majors are not supported. The package contains ESM JavaScript, optional declaration files and partial compilation metadata; Angular's build processes that metadata normally. It is built through ng-packagr and published from the generated `dist` directory.
+
+The alpha API and extension interfaces may change with documented migrations. Demo form helpers are not exported: form drafts stay local and a save command remains application-owned. No socket, server, persistence or timer package is required. See [release status](https://github.com/jchewitt/stateql/blob/main/docs/RELEASING.md) before installing a version not yet published.
 
 See the [Angular guide](https://github.com/jchewitt/stateql/blob/main/docs/ANGULAR.md) and [forms contract](https://github.com/jchewitt/stateql/blob/main/docs/FORMS.md).

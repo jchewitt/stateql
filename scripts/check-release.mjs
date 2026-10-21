@@ -7,26 +7,37 @@ import {
   validateWorkflowRevision,
 } from './release-policy.mjs';
 
-const root = fileURLToPath(new URL('../', import.meta.url));
-const readJson = (path) =>
+export const root = fileURLToPath(new URL('../', import.meta.url));
+export const readJson = (path) =>
   JSON.parse(readFileSync(resolve(root, path), 'utf8'));
-const config = readJson('release.config.json');
-const manifest = readJson(`${config.packageDirectory}/package.json`);
-const result = validateRelease({
-  manifest,
-  config,
-  tag: process.env.RELEASE_TAG,
-});
-const git = (...args) =>
+export const git = (...args) =>
   execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
-if (git('rev-parse', 'HEAD') !== git('rev-parse', `${result.tag}^{commit}`))
-  throw new Error('Check out the exact release tag before publishing.');
-git('merge-base', '--is-ancestor', 'HEAD', 'origin/main');
-if (process.env.GITHUB_ACTIONS === 'true')
-  validateWorkflowRevision({
-    head: git('rev-parse', 'HEAD'),
-    workflowSha: process.env.GITHUB_SHA,
+
+export function checkRelease() {
+  const config = readJson('release.config.json');
+  const manifests = config.packages.map((entry) =>
+    readJson(entry.packageDirectory + '/package.json'),
+  );
+  const result = validateRelease({
+    manifests,
+    config,
+    tag: process.env.RELEASE_TAG,
   });
-if (git('status', '--porcelain'))
-  throw new Error('Release checkout must be clean.');
-console.log(`Release preflight passed: ${manifest.name}@${result.version}`);
+  const head = git('rev-parse', 'HEAD');
+  if (head !== git('rev-parse', result.tag + '^{commit}'))
+    throw new Error('Check out the exact release tag before publishing.');
+  git('merge-base', '--is-ancestor', 'HEAD', 'origin/main');
+  if (process.env.GITHUB_ACTIONS === 'true')
+    validateWorkflowRevision({ head, workflowSha: process.env.GITHUB_SHA });
+  if (git('status', '--porcelain'))
+    throw new Error('Release checkout must be clean.');
+  return { ...result, head, config };
+}
+
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  const result = checkRelease();
+  console.log('Release preflight passed: ' + result.tag + ' at ' + result.head);
+}

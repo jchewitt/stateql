@@ -1,21 +1,21 @@
 {
-  "name": "@jchewitt/stateql-angular",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@launch-echo/stateql-angular",
+  "version": "0.1.0-alpha.0",
   "type": "module",
   "license": "MIT",
-  "description": "Experimental Angular observation adapter for StateQL.",
+  "description": "Angular signals, client providers and owned query views for StateQL.",
   "sideEffects": false,
-  "main": "./dist/fesm2022/jchewitt-stateql-angular.mjs",
-  "types": "./dist/types/jchewitt-stateql-angular.d.ts",
+  "main": "./dist/fesm2022/launch-echo-stateql-angular.mjs",
+  "types": "./dist/types/launch-echo-stateql-angular.d.ts",
   "scripts": {
     "build": "node ../../scripts/build-angular.mjs",
     "typecheck": "tsc -p tsconfig.test.json --noEmit",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "prepublishOnly": "node ../../scripts/publish-from-artifacts-only.mjs"
   },
   "peerDependencies": {
     "@angular/core": "^21.2.25",
-    "@jchewitt/stateql-core": "0.0.0"
+    "@launch-echo/stateql-core": "0.1.0-alpha.0"
   },
   "dependencies": {
     "tslib": "2.8.1"
@@ -28,11 +28,26 @@
     "@angular/platform-browser": "21.2.25",
     "@angular/platform-browser-dynamic": "21.2.25",
     "@angular/platform-server": "21.2.25",
-    "@jchewitt/stateql-core": "workspace:*",
-    "@jchewitt/stateql-graphql": "workspace:*",
+    "@launch-echo/stateql-core": "workspace:*",
+    "@launch-echo/stateql-graphql": "workspace:*",
     "graphql": "16.14.2",
     "ng-packagr": "21.2.7",
     "rxjs": "7.8.2",
     "typescript": "5.9.3"
+  },
+  "author": "Jon Hewitt",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jchewitt/stateql.git",
+    "directory": "packages/angular"
+  },
+  "homepage": "https://github.com/jchewitt/stateql#readme",
+  "bugs": {
+    "url": "https://github.com/jchewitt/stateql/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "next"
   }
 }
