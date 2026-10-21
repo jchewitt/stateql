@@ -164,7 +164,7 @@ export function validatePackedPackage({ manifest, files, entry, version }) {
     );
 }
 
-/** 404 is the only response that authorizes treating a version as absent. */
+/** Publication preflight uses direct endpoints to detect already accepted versions. */
 export async function readRegistryVersion(name, version, fetcher = fetch) {
   const response = await fetcher(
     `${registry}${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
@@ -179,6 +179,45 @@ export async function readRegistryVersion(name, version, fetcher = fetch) {
       `Registry preflight failed (${response.status}) for ${name}@${version}.`,
     );
   return response.json();
+}
+
+/** Installation acceptance additionally requires the npm install index. */
+export async function readInstallableRegistryVersion(
+  name,
+  version,
+  fetcher = fetch,
+) {
+  const response = await fetcher(`${registry}${encodeURIComponent(name)}`, {
+    signal: AbortSignal.timeout(30_000),
+    headers: {
+      accept: 'application/vnd.npm.install-v1+json',
+      'cache-control': 'no-cache',
+    },
+  });
+  if (response.status === 404) return null;
+  if (!response.ok)
+    throw new Error(
+      `Registry preflight failed (${response.status}) for ${name}@${version}.`,
+    );
+  const index = await response.json();
+  const object = (value) =>
+    value !== null && typeof value === 'object' && !Array.isArray(value);
+  if (
+    index?.name !== name ||
+    !object(index.versions) ||
+    !object(index['dist-tags'])
+  )
+    throw new Error(`Malformed registry installation index for ${name}.`);
+  const selected = Object.hasOwn(index['dist-tags'], version)
+    ? index['dist-tags'][version]
+    : version;
+  if (typeof selected !== 'string')
+    throw new Error(`Malformed registry tag for ${name}.`);
+  if (!Object.hasOwn(index.versions, selected)) return null;
+  const metadata = index.versions[selected];
+  if (!object(metadata))
+    throw new Error(`Malformed registry version for ${name}.`);
+  return metadata;
 }
 
 export function validateRegistryPackage(metadata, artifact, requireProvenance) {
@@ -209,11 +248,12 @@ export async function publishReleaseSet({
   requireProvenance = false,
   verifyOnly = false,
   availability = {},
+  availabilityLookup = lookup,
 }) {
   if (verifyOnly) {
     await verifyRegistryAvailability({
       artifacts,
-      lookup,
+      lookup: availabilityLookup,
       requireProvenance,
       ...availability,
     });
@@ -238,7 +278,7 @@ export async function publishReleaseSet({
       if (!existing[index]) await publish(artifact);
   await verifyRegistryAvailability({
     artifacts,
-    lookup,
+    lookup: availabilityLookup,
     requireProvenance,
     ...availability,
   });

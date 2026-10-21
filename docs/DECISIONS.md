@@ -1,5 +1,11 @@
 # Architecture decisions
 
+## D027 Separate accepted publication from install-index visibility
+
+The [alpha.1 trusted-publishing run](https://github.com/jchewitt/tandrove/actions/runs/39658759688) published all three packages with provenance on October 21. Its first attempt passed direct version/integrity checks before npm's install index exposed the same version; the consumer install failed with ETARGET. The guarded second attempt confirmed identical bytes, skipped uploads and passed consumers and `npm audit signatures`. Provenance identifies source commit `039dee24470c37e19adba3dbdaf1fd380c07568e`, `jchewitt/tandrove`, `.github/workflows/publish.yml`, and attempt 1.
+
+Keep direct endpoint checks for publication preflight so lagging installation metadata cannot trigger duplicate upload attempts. Use the npm installation index as the additional post-upload/read-only acceptance gate and revalidate consumer install caches. Missing indexed versions/tags are pending; malformed indexes, conflicting metadata, and auth/network failures are errors. This tooling follow-up does not move tags, alter published bytes or publish another version.
+
 ## D026 Trusted publishing acceptance and registry processing
 
 The three `0.1.0-alpha.0` packages were published locally and verified against their saved SHA512 artifacts on October 21. Isolated public-registry JavaScript, TypeScript and Angular consumers passed. They have no CI provenance. The user configured trusted publishing and authorized testing it with the next synchronized alpha, `0.1.0-alpha.1`; do not republish alpha.0.

@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   publishReleaseSet,
   readRegistryVersion,
+  readInstallableRegistryVersion,
   validateDependencies,
   validatePackedPackage,
   validatePreparedRelease,
@@ -199,7 +200,7 @@ test('prepared release rejects wrong source, swapped packages, altered version a
   }
 });
 
-test('only registry 404 is absence; network, authentication, throttling and server errors abort', async () => {
+test('registry HTTP 404 is absence; network, authentication, throttling and server errors abort', async () => {
   assert.equal(
     await readRegistryVersion(
       names[0],
@@ -228,6 +229,48 @@ test('only registry 404 is absence; network, authentication, throttling and serv
       async () => new Response('broken JSON'),
     ),
   );
+});
+
+test('registry verification uses the install index and waits for indexed versions and tags', async () => {
+  const index = { name: names[0], versions: {}, 'dist-tags': {} };
+  const fetcher = async (url, options) => {
+    assert.equal(url, 'https://registry.npmjs.org/%40tandrove%2Fcore');
+    assert.equal(options.headers.accept, 'application/vnd.npm.install-v1+json');
+    return Response.json(index);
+  };
+  assert.equal(
+    await readInstallableRegistryVersion(names[0], version, fetcher),
+    null,
+  );
+  index.versions[version] = metadata(artifacts[0]);
+  assert.deepEqual(
+    await readInstallableRegistryVersion(names[0], version, fetcher),
+    metadata(artifacts[0]),
+  );
+  assert.equal(
+    await readInstallableRegistryVersion(names[0], 'next', fetcher),
+    null,
+  );
+  index['dist-tags'].next = version;
+  assert.deepEqual(
+    await readInstallableRegistryVersion(names[0], 'next', fetcher),
+    metadata(artifacts[0]),
+  );
+  for (const broken of [
+    {},
+    { ...index, name: 'other' },
+    { ...index, versions: null },
+    { ...index, 'dist-tags': [] },
+    { ...index, 'dist-tags': { next: null } },
+    { ...index, versions: { [version]: null } },
+  ]) {
+    await assert.rejects(
+      readInstallableRegistryVersion(names[0], 'next', async () =>
+        Response.json(broken),
+      ),
+      /Malformed/,
+    );
+  }
 });
 
 test('registry checks exact name/version/integrity and CI provenance presence', () => {
@@ -416,6 +459,31 @@ test('verification waits read-only with one bounded deadline for the complete se
   );
   assert.equal(clock, 25);
   assert.equal(writes, 0);
+});
+
+test('already published direct versions are not uploaded again when the install index lags', async () => {
+  let clock = 0;
+  let writes = 0;
+  await publishReleaseSet({
+    artifacts,
+    requireProvenance: true,
+    lookup: async (artifact) => metadata(artifact),
+    availabilityLookup: async (artifact) =>
+      clock < 10 ? null : metadata(artifact),
+    publish: async () => {
+      writes++;
+    },
+    availability: {
+      timeoutMs: 20,
+      intervalMs: 10,
+      now: () => clock,
+      sleep: async (ms) => {
+        clock += ms;
+      },
+    },
+  });
+  assert.equal(writes, 0);
+  assert.equal(clock, 10);
 });
 
 test('availability waiting fails immediately on conflicting metadata, missing provenance or lookup errors', async () => {
