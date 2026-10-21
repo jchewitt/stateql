@@ -137,7 +137,7 @@ try {
       '--ignore-scripts',
       '--no-audit',
       '--no-fund',
-      '--no-package-lock',
+      registry ? '--package-lock' : '--no-package-lock',
       '--registry=https://registry.npmjs.org/',
       registry ? `@tandrove/core@${version}` : join(artifacts, packed.filename),
       registry ? `@tandrove/graphql@${version}` : graphqlPacked.filename,
@@ -380,6 +380,13 @@ try {
   console.log(
     `${registry ? 'Public registry' : 'Packed artifact'} isolated ESM/TypeScript consumer passed: @tandrove/core and @tandrove/graphql ${version}`,
   );
+  if (registry)
+    console.log(
+      npm(
+        ['audit', 'signatures', '--registry=https://registry.npmjs.org/'],
+        consumer,
+      ),
+    );
 } finally {
   // Delete only this exact generated temporary directory, never an unchecked path.
   assert.equal(dirname(consumer), tempRoot);

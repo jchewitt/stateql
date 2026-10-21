@@ -91,7 +91,7 @@ export function checkAngularPackage({
         '--ignore-scripts',
         '--no-audit',
         '--no-fund',
-        '--no-package-lock',
+        registry ? '--package-lock' : '--no-package-lock',
         '--registry=https://registry.npmjs.org/',
         registry ? `@tandrove/core@${manifest.version}` : coreTarball,
         registry
@@ -166,6 +166,13 @@ export function checkAngularPackage({
     console.log(
       `${registry ? 'Public registry' : 'Tarball'} Angular APF, native ESM observation and AOT template consumer passed: @tandrove/angular ${manifest.version}`,
     );
+    if (registry)
+      console.log(
+        npm(
+          ['audit', 'signatures', '--registry=https://registry.npmjs.org/'],
+          consumer,
+        ),
+      );
   } finally {
     assert.equal(dirname(consumer), tempRoot);
     assert.ok(basename(consumer).startsWith('tandrove-angular-consumer-'));

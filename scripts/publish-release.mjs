@@ -29,6 +29,15 @@ await publishReleaseSet({
   artifacts: prepared.artifacts,
   requireProvenance: ci,
   verifyOnly,
+  availability: {
+    timeoutMs: 20 * 60_000,
+    onPending: (names) =>
+      console.log(
+        'Waiting for npm processing: ' +
+          names.join(', ') +
+          '. Checking again in 30 seconds; no uploads are retried.',
+      ),
+  },
   lookup: (artifact, selector = artifact.version) =>
     readRegistryVersion(artifact.name, selector),
   publish: (artifact) => {
@@ -56,5 +65,7 @@ console.log(
     release.tag +
     (ci
       ? ' with registry provenance metadata.'
-      : ' (local bootstrap has no CI provenance).'),
+      : verifyOnly
+        ? ' (local integrity verification does not require CI provenance).'
+        : ' (local bootstrap has no CI provenance).'),
 );
