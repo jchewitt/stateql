@@ -1,5 +1,11 @@
 # Architecture decisions
 
+## D026 Trusted publishing acceptance and registry processing
+
+The three `0.1.0-alpha.0` packages were published locally and verified against their saved SHA512 artifacts on October 21. Isolated public-registry JavaScript, TypeScript and Angular consumers passed. They have no CI provenance. The user configured trusted publishing and authorized testing it with the next synchronized alpha, `0.1.0-alpha.1`; do not republish alpha.0.
+
+Release tooling allows up to 20 minutes of registry availability checks after accepted uploads, retrying only explicit absence every 30 seconds. It never repeats an upload during that wait. Integrity/version/tag conflicts, missing required provenance and registry/auth/network failures still stop immediately. The workflow has a 45-minute budget for preparation, publication, processing and installed-consumer signature checks. Record actual OIDC, provenance and registry results after execution; configuration alone does not establish success.
+
 ## D025 Tandrove prepublication name and npm scope
 
 On October 21 the user selected Tandrove and confirmed securing `@tandrove`. The release packages are `@tandrove/core`, `@tandrove/graphql` and `@tandrove/angular`. None of the old StateQL packages were published, so the first Tandrove candidate remains `0.1.0-alpha.0` on `next`. Rename current APIs, generated imports, examples, package metadata, Angular APF output and release checks together. Angular's branded APIs become `tandroveSignal` and `provideTandroveClient`; this is a prepublication rename, not a compatibility alias layer.

@@ -1,5 +1,11 @@
 # Experimental npm releases
 
+## Current release status
+
+All three `0.1.0-alpha.0` packages were published locally and passed exact-artifact verification and isolated npm installation checks on October 21. They have no CI provenance. The next candidate is `0.1.0-alpha.1`, tag `tandrove-v0.1.0-alpha.1`, for the first real trusted-publishing run. The user reports trust configured for the packages; CI execution remains the acceptance gate. The bootstrap instructions below document the completed alpha.0 process; do not run them again for alpha.1.
+
+Publication and read-only verification now wait up to 20 minutes for npm processing, checking every 30 seconds without repeating uploads. A missing or wrong `RELEASE_TAG` reports the expected value. Set it in each terminal session. Registry installation checks also run `npm audit signatures` against locked isolated installs to validate registry signatures and available provenance attestations. The CI publication path separately requires provenance metadata for every Tandrove package.
+
 Tandrove is the library previously developed as StateQL. The user secured the `@tandrove` scope before any package publication. The GitHub repository is now `jchewitt/tandrove`, including repository metadata and trusted-publisher settings. The older `stateql-v0.1.0-alpha.0` tag and its saved tarballs are superseded preparation artifacts: do not publish them. Use only the new `tandrove-v0.1.0-alpha.0` release set below.
 
 The first release candidate is **0.1.0-alpha.0** for `@tandrove/core`, `@tandrove/graphql` and `@tandrove/angular`, published in that order to **next**. These are functioning standalone libraries; server companions, streaming and hosting are not prerequisites. Publication and npm account setup remain separate from preparing and reviewing the candidate.

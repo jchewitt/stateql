@@ -32,7 +32,9 @@ export function validateRelease({ manifests, config, tag }) {
   )
     throw new Error('Only alpha.N prereleases at or above 0.1.0 are enabled.');
   if (tag !== `tandrove-v${version}`)
-    throw new Error('Release tag must exactly match the package version.');
+    throw new Error(
+      `Set RELEASE_TAG to tandrove-v${version} in this terminal session; the release tag must exactly match the package version.`,
+    );
   for (const [index, manifest] of manifests.entries()) {
     const entry = config.packages[index];
     const part = ['core', 'graphql', 'angular'][index];
@@ -206,7 +208,17 @@ export async function publishReleaseSet({
   publish,
   requireProvenance = false,
   verifyOnly = false,
+  availability = {},
 }) {
+  if (verifyOnly) {
+    await verifyRegistryAvailability({
+      artifacts,
+      lookup,
+      requireProvenance,
+      ...availability,
+    });
+    return;
+  }
   const existing = [];
   for (const artifact of artifacts) {
     const metadata = await lookup(artifact);
@@ -219,27 +231,63 @@ export async function publishReleaseSet({
         );
       validateRegistryPackage(tagged, artifact, requireProvenance);
     }
-    if (!metadata && verifyOnly)
-      throw new Error(
-        `Package is not published: ${artifact.name}@${artifact.version}.`,
-      );
     existing.push(metadata);
   }
   if (!verifyOnly)
     for (const [index, artifact] of artifacts.entries())
       if (!existing[index]) await publish(artifact);
-  for (const artifact of artifacts) {
-    const metadata = await lookup(artifact);
-    if (!metadata)
+  await verifyRegistryAvailability({
+    artifacts,
+    lookup,
+    requireProvenance,
+    ...availability,
+  });
+}
+
+/** Retry only registry absence, never publication or conflicting metadata. */
+export async function verifyRegistryAvailability({
+  artifacts,
+  lookup,
+  requireProvenance = false,
+  timeoutMs = 0,
+  intervalMs = 30_000,
+  now = () => performance.now(),
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  onPending = () => {},
+}) {
+  if (
+    !Number.isFinite(timeoutMs) ||
+    timeoutMs < 0 ||
+    !Number.isFinite(intervalMs) ||
+    intervalMs <= 0
+  )
+    throw new Error(
+      'Registry wait requires a nonnegative timeout and positive interval.',
+    );
+  const deadline = now() + timeoutMs;
+  for (;;) {
+    const pending = [];
+    for (const artifact of artifacts) {
+      const current = await lookup(artifact);
+      if (!current) {
+        pending.push(artifact.name);
+        continue;
+      }
+      validateRegistryPackage(current, artifact, requireProvenance);
+      const tagged = await lookup(artifact, 'next');
+      if (!tagged) {
+        pending.push(artifact.name + ' (next tag)');
+        continue;
+      }
+      validateRegistryPackage(tagged, artifact, requireProvenance);
+    }
+    if (pending.length === 0) return;
+    const remaining = deadline - now();
+    if (remaining <= 0)
       throw new Error(
-        `Registry verification pending for ${artifact.name}; retry verification before publishing again.`,
+        `Registry availability still pending: ${pending.join(', ')}. Uploads may already be accepted. Keep the prepared artifacts and run release:verify with the same RELEASE_TAG; do not republish while processing is pending.`,
       );
-    validateRegistryPackage(metadata, artifact, requireProvenance);
-    const tagged = await lookup(artifact, 'next');
-    if (!tagged)
-      throw new Error(
-        'Published package has no next tag; inspect registry tags before resuming.',
-      );
-    validateRegistryPackage(tagged, artifact, requireProvenance);
+    onPending(pending);
+    await sleep(Math.min(intervalMs, remaining));
   }
 }

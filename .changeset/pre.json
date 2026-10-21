@@ -21,8 +21,9 @@
     "partial-errors-and-nulls",
     "selective-invalidation",
     "shared-record-store",
+    "tandrove-prepublication-rename",
+    "trusted-publishing-acceptance",
     "typed-definition-addresses",
-    "vanilla-adapter-ingress",
-    "tandrove-prepublication-rename"
+    "vanilla-adapter-ingress"
   ]
 }

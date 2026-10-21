@@ -9,6 +9,7 @@ import {
   validateRegistryPackage,
   validateRelease,
   validateWorkflowRevision,
+  verifyRegistryAvailability,
 } from '../scripts/release-policy.mjs';
 
 const version = '0.1.0-alpha.0';
@@ -357,4 +358,88 @@ test('verification is read-only and fails absent packages or changed next tags',
       }),
     );
   assert.equal(writes, 0);
+});
+
+test('accepted uploads are not repeated while version and tag visibility catch up', async () => {
+  let clock = 0;
+  let uploaded = false;
+  let writes = 0;
+  const pending = [];
+  await publishReleaseSet({
+    artifacts,
+    requireProvenance: true,
+    lookup: async (artifact, selector) => {
+      if (!uploaded || clock < 10 || (selector === 'next' && clock < 20))
+        return null;
+      return metadata(artifact);
+    },
+    publish: async () => {
+      writes++;
+      uploaded = true;
+    },
+    availability: {
+      timeoutMs: 30,
+      intervalMs: 10,
+      now: () => clock,
+      sleep: async (ms) => {
+        clock += ms;
+      },
+      onPending: (names) => pending.push(names),
+    },
+  });
+  assert.equal(writes, 3);
+  assert.equal(clock, 20);
+  assert.equal(pending.length, 2);
+});
+
+test('verification waits read-only with one bounded deadline for the complete set', async () => {
+  let clock = 0;
+  let writes = 0;
+  await assert.rejects(
+    publishReleaseSet({
+      artifacts,
+      verifyOnly: true,
+      lookup: async () => null,
+      publish: async () => {
+        writes++;
+      },
+      availability: {
+        timeoutMs: 25,
+        intervalMs: 10,
+        now: () => clock,
+        sleep: async (ms) => {
+          clock += ms;
+        },
+      },
+    }),
+    /do not republish/,
+  );
+  assert.equal(clock, 25);
+  assert.equal(writes, 0);
+});
+
+test('availability waiting fails immediately on conflicting metadata, missing provenance or lookup errors', async () => {
+  for (const failure of ['integrity', 'tag', 'provenance', 'network']) {
+    let waits = 0;
+    await assert.rejects(
+      verifyRegistryAvailability({
+        artifacts,
+        requireProvenance: true,
+        timeoutMs: 20,
+        lookup: async (artifact, selector) => {
+          if (failure === 'network') throw new Error('network failed');
+          const result = metadata(artifact);
+          if (failure === 'integrity') result.dist.integrity = 'wrong';
+          if (failure === 'tag' && selector === 'next')
+            result.version = '0.1.0-alpha.2';
+          if (failure === 'provenance') delete result.dist.attestations;
+          return result;
+        },
+        sleep: async () => {
+          waits++;
+        },
+      }),
+    );
+    assert.equal(waits, 0);
+  }
 });
