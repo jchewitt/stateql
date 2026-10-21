@@ -13,6 +13,7 @@
   "changesets": [
     "angular-observation-foundation",
     "angular-owned-query",
+    "automated-release-pr",
     "automatic-acquisition",
     "bounded-read-retries",
     "concurrent-acquisition",

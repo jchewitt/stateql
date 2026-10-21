@@ -2,10 +2,10 @@
 
 The experimental `@tandrove/angular` package provides readonly observation, environment-owned client providers, and reactive query ownership. Tandrove billing views sit beside the Apollo baseline; see [the demo guide](DEMO.md). Demo-owned form drafts and explicit saves use the same editing policy for both clients; these helpers are not exported by the library.
 
-The current release candidate is `0.1.0-alpha.1`, tested with Angular 21.2.25 and RxJS 7.8.2. Once published, install matching Tandrove versions into an Angular 21 application:
+The current release candidate is `0.1.0-alpha.2`, tested with Angular 21.2.25 and RxJS 7.8.2. Once published, install matching Tandrove versions into an Angular 21 application:
 
 ```sh
-npm install @tandrove/core@0.1.0-alpha.1 @tandrove/graphql@0.1.0-alpha.1 @tandrove/angular@0.1.0-alpha.1 graphql@^16.14.2
+npm install @tandrove/core@0.1.0-alpha.2 @tandrove/graphql@0.1.0-alpha.2 @tandrove/angular@0.1.0-alpha.2 graphql@^16.14.2
 ```
 
 The Angular package uses partial compilation and requires Angular core `^21.2.25`; older Angular majors are not supported. The core peer is exact during alpha. See [release status](RELEASING.md) before installing a version that has not yet been published.
