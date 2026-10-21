@@ -1,9 +1,9 @@
 import { InjectionToken } from '@angular/core';
-import { provideStateQLClient } from '@jchewitt/stateql-angular';
+import { provideStateQLClient } from '@launch-echo/stateql-angular';
 import {
   createGraphQLClient,
   type GraphQLClient,
-} from '@jchewitt/stateql-graphql';
+} from '@launch-echo/stateql-graphql';
 
 export const BILLING_CLIENT = new InjectionToken<GraphQLClient>(
   'Billing StateQL',

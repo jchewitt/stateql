@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createGraphQLClient } from '@jchewitt/stateql-graphql';
+import { createGraphQLClient } from '@launch-echo/stateql-graphql';
 import { listen, type RequestRecord } from '../../billing-api/src/server.js';
 import {
   accountMonitor,

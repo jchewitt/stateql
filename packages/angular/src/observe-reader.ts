@@ -1,4 +1,4 @@
-import type { StoreReader, Unsubscribe } from '@jchewitt/stateql-core';
+import type { StoreReader, Unsubscribe } from '@launch-echo/stateql-core';
 
 /** Subscribe and close the read/subscribe gap without losing setup cleanup. */
 export function observeReader<T>(

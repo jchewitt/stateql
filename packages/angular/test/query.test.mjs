@@ -15,12 +15,15 @@ import {
   ServerTestingModule,
   platformServerTesting,
 } from '@angular/platform-server/testing';
-import { AcquisitionClient, resourceAddress } from '@jchewitt/stateql-core';
-import { createSchema, createGraphQLClient } from '@jchewitt/stateql-graphql';
+import { AcquisitionClient, resourceAddress } from '@launch-echo/stateql-core';
+import {
+  createSchema,
+  createGraphQLClient,
+} from '@launch-echo/stateql-graphql';
 import {
   injectStateQuery,
   provideStateQLClient,
-} from '../dist/fesm2022/jchewitt-stateql-angular.mjs';
+} from '../dist/fesm2022/launch-echo-stateql-angular.mjs';
 
 TestBed.initTestEnvironment(ServerTestingModule, platformServerTesting());
 afterEach(() => TestBed.resetTestingModule());

@@ -133,6 +133,36 @@ try {
     ],
     consumer,
   );
+  const coreManifest = JSON.parse(
+    readFileSync(
+      join(consumer, 'node_modules/@launch-echo/stateql-core/package.json'),
+      'utf8',
+    ),
+  );
+  const graphqlManifest = JSON.parse(
+    readFileSync(
+      join(consumer, 'node_modules/@launch-echo/stateql-graphql/package.json'),
+      'utf8',
+    ),
+  );
+  for (const manifest of [coreManifest, graphqlManifest]) {
+    assert.notEqual(manifest.private, true);
+    assert.equal(
+      manifest.version,
+      JSON.parse(readFileSync(join(root, 'packages/core/package.json'), 'utf8'))
+        .version,
+    );
+    assert.equal(
+      manifest.repository.url,
+      'git+https://github.com/jchewitt/stateql.git',
+    );
+    assert.equal(manifest.publishConfig.tag, 'next');
+  }
+  assert.equal(
+    graphqlManifest.dependencies[coreManifest.name],
+    coreManifest.version,
+    'Packed GraphQL must use the exact published core version, not a workspace protocol.',
+  );
   // Run the actual examples against only installed packages, without tsx/TypeScript.
   assert.equal(existsSync(join(consumer, 'node_modules/typescript')), false);
   for (const file of [
@@ -160,10 +190,10 @@ try {
       '--input-type=module',
       '-e',
       `
-      const { createSchema, createGraphQLClient } = await import('@jchewitt/stateql-graphql');
-      const { StateStore, AcquisitionCancelledError, AcquisitionSupersededError, ReadTransportError } = await import('@jchewitt/stateql-core');
+      const { createSchema, createGraphQLClient } = await import('@launch-echo/stateql-graphql');
+      const { StateStore, AcquisitionCancelledError, AcquisitionSupersededError, ReadTransportError } = await import('@launch-echo/stateql-core');
       const assert = (await import('node:assert/strict')).default;
-      const { generateSchemaModule } = await import('@jchewitt/stateql-graphql/codegen');
+      const { generateSchemaModule } = await import('@launch-echo/stateql-graphql/codegen');
       const sdl = 'type Query { item: Item! } type Item { id: ID! name: String }';
       const bound = createSchema(sdl).field('item').select({ name: true }).bind({}, { source: 'test', scope: 'test' });
       if (!bound.prepare('name').query.includes('name')) throw new Error('Packed planner failed.');
@@ -258,7 +288,7 @@ try {
   );
   writeFileSync(
     join(consumer, 'consumer.ts'),
-    "import { AcquisitionCancelledError, AcquisitionSupersededError, type AcquisitionContext, type CancellationSignal, type StoreReader } from '@jchewitt/stateql-core';\n" +
+    "import { AcquisitionCancelledError, AcquisitionSupersededError, type AcquisitionContext, type CancellationSignal, type StoreReader } from '@launch-echo/stateql-core';\n" +
       'declare const reader: StoreReader<Readonly<{ id: string }>>;\n' +
       'const id: string = reader.getSnapshot().id;\nvoid id;\n' +
       '// @ts-expect-error undeclared fields must not be inferred as any\nreader.getSnapshot().missing;\n' +
@@ -272,8 +302,8 @@ try {
   writeFileSync(
     join(consumer, 'planner.ts'),
     `
-    import { createSchema, createGraphQLClient, type FieldType, type ObjectRef, type ResultOf, type GraphQLTransportContext } from '@jchewitt/stateql-graphql';
-    import { ReadTransportError, type ReadRetryPolicy, type RetryScheduler, type AcquisitionClientOptions, type AcquiredPatch, type AcquisitionSource, type AcquisitionClient } from '@jchewitt/stateql-core';
+    import { createSchema, createGraphQLClient, type FieldType, type ObjectRef, type ResultOf, type GraphQLTransportContext } from '@launch-echo/stateql-graphql';
+    import { ReadTransportError, type ReadRetryPolicy, type RetryScheduler, type AcquisitionClientOptions, type AcquiredPatch, type AcquisitionSource, type AcquisitionClient } from '@launch-echo/stateql-core';
     declare const core: AcquisitionClient;
     declare const source: AcquisitionSource;
     declare const patch: AcquiredPatch;

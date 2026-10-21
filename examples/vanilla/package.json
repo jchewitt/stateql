@@ -12,8 +12,8 @@
     "demo:typescript": "node dist/typescript.js"
   },
   "dependencies": {
-    "@jchewitt/stateql-core": "workspace:*",
-    "@jchewitt/stateql-graphql": "workspace:*",
+    "@launch-echo/stateql-core": "workspace:*",
+    "@launch-echo/stateql-graphql": "workspace:*",
     "graphql": "16.14.2"
   },
   "devDependencies": {

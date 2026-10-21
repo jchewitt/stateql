@@ -19,7 +19,7 @@ import {
   type FieldSegment,
   type InputObject,
   type ResolvedField,
-} from '@jchewitt/stateql-core';
+} from '@launch-echo/stateql-core';
 import { containsList, fieldAt, type SchemaContext } from './schema.js';
 import type { PathNode } from './definition.js';
 

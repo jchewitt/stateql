@@ -76,5 +76,5 @@ export function generateSchemaModule(
     )
     .join('\n');
   const objectImport = objects.includes('ObjectRef<') ? ', type ObjectRef' : '';
-  return `// Generated from the GraphQL schema. Do not edit.\nimport { createSchema, type FieldType${objectImport} } from '@jchewitt/stateql-graphql';\n${inputs ? `export type Inputs = {\n${inputs}\n};\n` : ''}export type GeneratedTypes = {\n${objects}\n};\nexport const schema = createSchema<GeneratedTypes>(${JSON.stringify(printSchema(schema))}, ${JSON.stringify(options)});\n`;
+  return `// Generated from the GraphQL schema. Do not edit.\nimport { createSchema, type FieldType${objectImport} } from '@launch-echo/stateql-graphql';\n${inputs ? `export type Inputs = {\n${inputs}\n};\n` : ''}export type GeneratedTypes = {\n${objects}\n};\nexport const schema = createSchema<GeneratedTypes>(${JSON.stringify(printSchema(schema))}, ${JSON.stringify(options)});\n`;
 }

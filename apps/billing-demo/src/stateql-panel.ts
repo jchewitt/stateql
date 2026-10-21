@@ -1,7 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { injectStateQuery } from '@jchewitt/stateql-angular';
-import type { InputValue } from '@jchewitt/stateql-core';
+import { injectStateQuery } from '@launch-echo/stateql-angular';
+import type { InputValue } from '@launch-echo/stateql-core';
 import {
   accountMonitor,
   billingInvoices,

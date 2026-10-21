@@ -1,0 +1,27 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "@stateql-demo/billing-api": "0.0.0",
+    "@stateql-demo/billing-demo": "0.0.0",
+    "@stateql-demo/query-planner": "0.0.0",
+    "@stateql-demo/vanilla": "0.0.0",
+    "@launch-echo/stateql-angular": "0.0.0",
+    "@launch-echo/stateql-core": "0.0.0",
+    "@launch-echo/stateql-graphql": "0.0.0"
+  },
+  "changesets": [
+    "angular-observation-foundation",
+    "angular-owned-query",
+    "automatic-acquisition",
+    "bounded-read-retries",
+    "concurrent-acquisition",
+    "initial-standalone-alpha",
+    "list-reconciliation",
+    "partial-errors-and-nulls",
+    "selective-invalidation",
+    "shared-record-store",
+    "typed-definition-addresses",
+    "vanilla-adapter-ingress"
+  ]
+}

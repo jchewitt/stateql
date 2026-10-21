@@ -60,18 +60,18 @@ Run `pnpm demo:store` to see shared StateQL records update two differently selec
 
 Run `pnpm demo:acquire` for actual StateQL HTTP requests against an isolated fixture, including shared loading, missing-field fetching, account ID invalidation that preserves cached amounts, and explicit list refresh that adopts server order. The [acquisition guide](docs/ACQUISITION.md) documents the API and supported response subset.
 
-| Location                 | Current role                                                                   |
-| ------------------------ | ------------------------------------------------------------------------------ |
-| `packages/core`          | Shared records, projections, observation, canonical addresses and selections   |
-| `packages/graphql`       | Private schema tooling, operation planner, decoder and HTTP acquisition client |
-| `packages/angular`       | Private APF package, client DI, signals and reactive query ownership           |
-| `apps/billing-api`       | Local GraphQL billing fixture and deterministic controls                       |
-| `apps/billing-demo`      | Apollo and StateQL views with independent consumers and a shared inspector     |
-| `examples/query-planner` | Runnable plain TypeScript operation planning example                           |
-| `examples/vanilla`       | JavaScript/TypeScript consumers and fake whole-resource/event adapters         |
-| `scripts`, `tests`       | Package/release checks and Angular browser scenarios                           |
+| Location                 | Current role                                                                 |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| `packages/core`          | Shared records, projections, observation, canonical addresses and selections |
+| `packages/graphql`       | Schema tooling, operation planner, decoder and HTTP acquisition client       |
+| `packages/angular`       | APF package, client DI, signals and reactive query ownership                 |
+| `apps/billing-api`       | Local GraphQL billing fixture and deterministic controls                     |
+| `apps/billing-demo`      | Apollo and StateQL views with independent consumers and a shared inspector   |
+| `examples/query-planner` | Runnable plain TypeScript operation planning example                         |
+| `examples/vanilla`       | JavaScript/TypeScript consumers and fake whole-resource/event adapters       |
+| `scripts`, `tests`       | Package/release checks and Angular browser scenarios                         |
 
-Core has no runtime, UI-framework, GraphQL, or platform dependency. The user selected `@launch-echo` for the first core/GraphQL/Angular release. Workspace manifests still use the provisional `@jchewitt` names; release preparation will migrate them together and verify registry access before publication.
+Core has no runtime, UI-framework, GraphQL, or platform dependency. The first release candidates are `@launch-echo/stateql-core`, `@launch-echo/stateql-graphql` and `@launch-echo/stateql-angular`, all at `0.1.0-alpha.0`. Publication and npm account setup are tracked in the [release guide](docs/RELEASING.md). Once published, install matching alpha versions together; see the [GraphQL quick start](packages/graphql/README.md) and [Angular integration](docs/ANGULAR.md).
 
 ## Plan and delivery
 
@@ -85,7 +85,7 @@ The [incremental release plan](PLAN.md#usable-incremental-releases) keeps every 
 - [Contribution and review process](CONTRIBUTING.md)
 - [npm release process](docs/RELEASING.md)
 
-GitHub Actions checks Linux and Windows. A manually dispatched prerelease workflow uses npm trusted publishing and provenance after npm account setup. Publishing remains disabled for the scaffold by a tracked readiness flag and version checks. No registry token is stored in this repository.
+GitHub Actions checks Linux and Windows. A manually dispatched prerelease workflow uses npm trusted publishing and provenance after npm account setup. A tracked readiness flag and version/source checks gate publication. No registry token is stored in this repository.
 
 ## License
 

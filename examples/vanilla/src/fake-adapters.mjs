@@ -2,7 +2,7 @@ import {
   resourceAddress,
   freezeFields,
   selectFieldPath,
-} from '@jchewitt/stateql-core';
+} from '@launch-echo/stateql-core';
 
 const selection = freezeFields(
   ['accountId', 'amount'].map((name) => ({
@@ -20,7 +20,7 @@ export function createWholeResourceFixture(scope) {
   let hold = false;
   /** @type {undefined | (() => void)} */
   let release;
-  /** @type {import('@jchewitt/stateql-core').AcquisitionSource} */
+  /** @type {import('@launch-echo/stateql-core').AcquisitionSource} */
   const source = {
     stateAddress: resourceAddress({ source: 'fake-whole-resource', scope }, [
       { name: 'invoices', arguments: {} },
@@ -80,8 +80,8 @@ export function createEventFixture() {
   const listeners = new Set();
   return {
     /**
-     * @param {import('@jchewitt/stateql-core').AcquisitionClient} client
-     * @param {import('@jchewitt/stateql-core').AcquisitionSource} source
+     * @param {import('@launch-echo/stateql-core').AcquisitionClient} client
+     * @param {import('@launch-echo/stateql-core').AcquisitionSource} source
      */
     connect(client, source) {
       /** @param {{ address: string, id: string, accountId: string }} event */

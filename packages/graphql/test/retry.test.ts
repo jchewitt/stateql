@@ -5,7 +5,7 @@ import {
   AcquisitionCancelledError,
   ReadTransportError,
   type RetryScheduler,
-} from '@jchewitt/stateql-core';
+} from '@launch-echo/stateql-core';
 import {
   createGraphQLClient,
   createSchema,

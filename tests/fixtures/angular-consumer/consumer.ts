@@ -4,12 +4,12 @@ import {
   resourceAddress,
   type StoreReader,
   type QueryHandle,
-} from '@jchewitt/stateql-core';
+} from '@launch-echo/stateql-core';
 import {
   stateqlSignal,
   injectStateQuery,
   provideStateQLClient,
-} from '@jchewitt/stateql-angular';
+} from '@launch-echo/stateql-angular';
 
 const CLIENT = new InjectionToken<AcquisitionClient>('packed client');
 export const providers = provideStateQLClient(

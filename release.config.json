@@ -1,6 +1,21 @@
 {
-  "packageDirectory": "packages/core",
-  "packageName": "@jchewitt/stateql-core",
-  "ready": false,
-  "distTag": "next"
+  "ready": true,
+  "distTag": "next",
+  "packages": [
+    {
+      "packageName": "@launch-echo/stateql-core",
+      "packageDirectory": "packages/core",
+      "publishDirectory": "packages/core"
+    },
+    {
+      "packageName": "@launch-echo/stateql-graphql",
+      "packageDirectory": "packages/graphql",
+      "publishDirectory": "packages/graphql"
+    },
+    {
+      "packageName": "@launch-echo/stateql-angular",
+      "packageDirectory": "packages/angular",
+      "publishDirectory": "packages/angular/dist"
+    }
+  ]
 }

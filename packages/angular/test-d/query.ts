@@ -1,12 +1,12 @@
 import { InjectionToken, type Injector } from '@angular/core';
-import type { QueryHandle } from '@jchewitt/stateql-core';
+import type { QueryHandle } from '@launch-echo/stateql-core';
 import { injectStateQuery, provideStateQLClient } from '../src/public-api.js';
 import {
   createSchema,
   type GraphQLClient,
   type FieldType,
   type ObjectRef,
-} from '@jchewitt/stateql-graphql';
+} from '@launch-echo/stateql-graphql';
 
 interface Client {
   watch(id: string): QueryHandle<'name' | 'user.name'>;

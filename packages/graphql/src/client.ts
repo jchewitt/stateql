@@ -3,7 +3,7 @@ import {
   type QueryHandle,
   type AcquisitionSource,
   type AcquisitionClientOptions,
-} from '@jchewitt/stateql-core';
+} from '@launch-echo/stateql-core';
 import type { PreparedOperation } from './operation.js';
 import type { FieldPaths } from './types.js';
 import { httpTransport } from './http-transport.js';

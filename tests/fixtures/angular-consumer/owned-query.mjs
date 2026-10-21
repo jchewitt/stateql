@@ -12,11 +12,11 @@ import {
   ServerTestingModule,
   platformServerTesting,
 } from '@angular/platform-server/testing';
-import { AcquisitionClient, resourceAddress } from '@jchewitt/stateql-core';
+import { AcquisitionClient, resourceAddress } from '@launch-echo/stateql-core';
 import {
   injectStateQuery,
   provideStateQLClient,
-} from '@jchewitt/stateql-angular';
+} from '@launch-echo/stateql-angular';
 
 TestBed.initTestEnvironment(ServerTestingModule, platformServerTesting());
 const token = new InjectionToken('packed client');

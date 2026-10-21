@@ -3,8 +3,8 @@ import {
   createEnvironmentInjector,
   runInInjectionContext,
 } from '@angular/core';
-import { StateStore, resourceAddress } from '@jchewitt/stateql-core';
-import { stateqlSignal } from '@jchewitt/stateql-angular';
+import { StateStore, resourceAddress } from '@launch-echo/stateql-core';
+import { stateqlSignal } from '@launch-echo/stateql-angular';
 
 const store = new StateStore();
 const address = resourceAddress({ source: 'packed', scope: 'A' }, [

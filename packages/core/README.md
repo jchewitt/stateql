@@ -2,7 +2,19 @@
 
 Experimental foundation for StateQL's framework-independent runtime.
 
-Exports observation contracts, portable canonical addresses, immutable selection composition, a provisional `StateStore`, and `AcquisitionClient`. Acquisition reuses shared fresh fields and asks a source for missing selections. Query handles support field/branch invalidation, mark-only invalidation, forced refresh, and explicit keyed-list membership refresh. Decoded partial failures retain successful fields, while structural nulls discard obsolete descendants. Snapshots distinguish unknown, null, and populated/empty resources and expose shared field/resource errors. Concurrent acquisition deduplicates identical work, filters superseded writes using local generations, and cancels work after its final interested owner leaves. Optional bounded read retries use an injected scheduler and explicit transport-failure classification. There is no supported npm release yet.
+Exports observation contracts, portable canonical addresses, immutable selection composition, a provisional `StateStore`, and `AcquisitionClient`. Acquisition reuses shared fresh fields and asks a source for missing selections. Query handles support field/branch invalidation, mark-only invalidation, forced refresh, and explicit keyed-list membership refresh. Decoded partial failures retain successful fields, while structural nulls discard obsolete descendants. Snapshots distinguish unknown, null, and populated/empty resources and expose shared field/resource errors. Concurrent acquisition deduplicates identical work, filters superseded writes using local generations, and cancels work after its final interested owner leaves. Optional bounded read retries use an injected scheduler and explicit transport-failure classification.
+
+## Install and compatibility
+
+The initial release candidate is `0.1.0-alpha.0`. Once published, install with:
+
+```sh
+npm install @launch-echo/stateql-core@0.1.0-alpha.0
+```
+
+Use matching StateQL alpha versions. Core is portable ESM JavaScript with optional TypeScript declarations and no runtime dependencies. The repository tests Node 22.14+ and Node 24; browser integration is tested through Angular 21.2.25. For ordinary GraphQL applications, start with the [assembled GraphQL client](https://github.com/jchewitt/stateql/tree/main/packages/graphql) rather than constructing an acquisition source manually.
+
+This is an experimental alpha, not a stable API promise. Extension contracts and JSON snapshot projection types remain provisional. Polling, automatic freshness/retention timers, WebSockets, persistence, a server companion and durable writes are planned separately. Alpha changes may require migrations; review each changelog and keep packages on the same version. See [release status and publishing](https://github.com/jchewitt/stateql/blob/main/docs/RELEASING.md).
 
 The observation interface has no Angular, React, RxJS, GraphQL, DOM, or Node dependencies. Runtime snapshots must be immutable; TypeScript callers supply an immutable snapshot type. Framework adapters will subscribe to this same runtime rather than maintain a separate cache.
 

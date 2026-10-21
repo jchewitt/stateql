@@ -1,4 +1,4 @@
-import { createGraphQLClient } from '@jchewitt/stateql-graphql';
+import { createGraphQLClient } from '@launch-echo/stateql-graphql';
 export {
   billingInvoices,
   billingScope,

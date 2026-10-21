@@ -7,8 +7,8 @@ import {
   inject,
   runInInjectionContext,
 } from '@angular/core';
-import { StateStore, resourceAddress } from '@jchewitt/stateql-core';
-import { stateqlSignal } from '../dist/fesm2022/jchewitt-stateql-angular.mjs';
+import { StateStore, resourceAddress } from '@launch-echo/stateql-core';
+import { stateqlSignal } from '../dist/fesm2022/launch-echo-stateql-angular.mjs';
 
 function lifetime() {
   const injector = createEnvironmentInjector([]);

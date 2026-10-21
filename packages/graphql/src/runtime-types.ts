@@ -4,7 +4,7 @@ import type {
   InputValue,
   ResolvedField,
   ResourceScope,
-} from '@jchewitt/stateql-core';
+} from '@launch-echo/stateql-core';
 import type { GraphQLTransport } from './client.js';
 import type { PreparedOperation } from './operation.js';
 
