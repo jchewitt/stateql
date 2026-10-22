@@ -75,11 +75,11 @@ Core has no runtime, UI-framework, GraphQL, or platform dependency. The package 
 
 ## Plan and delivery
 
-Stage B is underway: the client has opt-in [shared request deadlines and timeout policies](docs/DEADLINES.md), [field and membership freshness expiry](docs/FRESHNESS.md), and this checkout adds [inactive-cache retention](docs/RETENTION.md). The [reviewed task slices](docs/TASKS.md#stage-b-reviewed-slices) and [alpha-exit checklist](PLAN.md#alpha-exit-and-stable-release-gates) separate the remaining provider, polling and beta-validation work. Check the release guide before assuming a new checkout feature is available in the current published version.
+Stage B is underway: the client has opt-in [shared request deadlines and timeout policies](docs/DEADLINES.md), [field and membership freshness expiry](docs/FRESHNESS.md), and [inactive-cache retention](docs/RETENTION.md). This checkout adds [provider registration and ownership](docs/PROVIDERS.md), pending a batched release and absent from alpha.5. The [reviewed task slices](docs/TASKS.md#stage-b-reviewed-slices) and [alpha-exit checklist](PLAN.md#alpha-exit-and-stable-release-gates) separate the remaining capability assignment, polling and beta-validation work.
 
 Planned follow-on goals include server-driven invalidation notices and direct state updates, an optional server companion with event/database adapters, revision-aware ordering across transports, and framework-independent persistence/offline recovery. These are roadmap commitments to investigate and validate, not implemented features; see [their contracts, priorities, and limits](PLAN.md#stream-cohesion-ordering-and-offline-recovery).
 
-The [incremental release plan](PLAN.md#usable-incremental-releases) keeps every publication independently usable, starting with the standalone client. Client and server will share a recognizable provider-registration and global/resource-group/resource-override pattern, with optional official or custom integrations such as Socket.IO and Redis. These remain planned capabilities; installing the foundation will not require them or a hosted service. Recovery after interrupted connections and server-instance changes is part of the future synchronization release's acceptance criteria.
+The [incremental release plan](PLAN.md#usable-incremental-releases) keeps every publication independently usable, starting with the standalone client. The planned server companion will share the client's provider-registration vocabulary and global/resource-group/resource-override pattern, with optional integrations such as Socket.IO and Redis. Server/streaming integrations remain planned; installing the foundation will not require them or a hosted service. Recovery after interrupted connections and server-instance changes is part of the future synchronization release's acceptance criteria.
 
 - [Architecture and proof-of-concept plan](PLAN.md)
 - [Task breakdown and acceptance criteria](docs/TASKS.md)
@@ -87,7 +87,7 @@ The [incremental release plan](PLAN.md#usable-incremental-releases) keeps every 
 - [Contribution and review process](CONTRIBUTING.md)
 - [npm release process](docs/RELEASING.md)
 
-GitHub Actions checks Linux and Windows. Changesets maintains a release PR with synchronized versions and changelogs. Its reviewed merge triggers tagging and npm trusted publishing with provenance; ordinary merges do not publish. See [release review and recovery](docs/RELEASING.md#subsequent-reviewed-releases). No registry token is stored in this repository.
+GitHub Actions checks Linux and Windows. Changesets maintains a release PR with synchronized versions and changelogs; keep it open to batch features until a useful release milestone is chosen. Its reviewed merge triggers tagging and npm trusted publishing with provenance; ordinary merges do not publish. See [release review and recovery](docs/RELEASING.md#subsequent-reviewed-releases). No registry token is stored in this repository.
 
 ## License
 

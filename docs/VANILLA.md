@@ -72,3 +72,5 @@ These are local arrival/request generations. They cannot determine whether a pus
 Run `pnpm demo:freshness` for the [plain JavaScript freshness example](../examples/vanilla/src/freshness.mjs): cached values remain visible on expiry, and one owner's `ensure()` updates both consumers. The controlled-clock example also runs in installed-package acceptance. See [freshness rules](FRESHNESS.md).
 
 Run `pnpm demo:retention` for [shared ownership and reacquisition after eviction](../examples/vanilla/src/retention.mjs). The plain JavaScript example also runs in isolated installed-package acceptance; see [retention configuration](RETENTION.md).
+
+`pnpm demo:providers` exercises B4's optional provider scope with shared async initialization, GraphQL and borrowed custom acquisition, and explicit teardown. The same native JavaScript example runs against installed archives with editor type checking. See [provider ownership and supported limits](PROVIDERS.md). This feature is pending a batched release and is absent from alpha.5.

@@ -95,3 +95,7 @@ The build follows [Angular's package format](https://angular.dev/tools/libraries
 ## Forms boundary
 
 The signal exposes server snapshots. Editable controls hold separate local drafts; reading a signal never implies sending a command. The [forms contract](FORMS.md) specifies pristine-field refresh, conflict detection, explicit saves, edits during save, and future stream acknowledgements. P4.4 implements those behaviors in the demo. The Angular library exposes observations and owned queries; it does not own form drafts or send writes.
+
+## Optional infrastructure providers
+
+B4's portable [provider scope](PROVIDERS.md) can resolve asynchronous infrastructure during application bootstrap. Pass ready dependencies to the existing synchronous `provideTandroveClient()` factory; do not return a promise from it. Angular owns that client, and the application awaits provider-scope disposal after disposing its consumers. A dedicated async framework lifecycle bridge remains separate work. B4 is pending a batched release and is absent from alpha.5.

@@ -1,4 +1,15 @@
 export type { Disposable, StoreReader, Unsubscribe } from './store-reader.js';
+export { createProviderToken, provide } from './provider.js';
+export type {
+  ProviderToken,
+  ProviderRegistration,
+  ProviderOptions,
+  ProviderFactoryContext,
+  ProviderCleanup,
+} from './provider.js';
+export { createProviderScope } from './provider-scope.js';
+export type { ProviderScope } from './provider-scope.js';
+export { createAcquisitionSourceToken } from './acquisition-provider.js';
 export { StateStore } from './state-store.js';
 export { AcquisitionClient } from './acquisition.js';
 export {
