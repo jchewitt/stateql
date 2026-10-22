@@ -27,6 +27,7 @@ function fixture(t, options = {}) {
   let version = 1;
   const requests = [];
   const source = {
+    authority: {}, // Selection wrappers below represent the same backend.
     stateAddress: 'invoices',
     selection: [field('accountId'), field('amount')],
     read: async (fields) => {

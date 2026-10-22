@@ -8,22 +8,40 @@ export function createAcquisitionSourceToken(
 ) {
   return createProviderToken<AcquisitionSource>(
     description,
-    (value): value is AcquisitionSource => {
-      if (!value || typeof value !== 'object') return false;
-      const source = value as Partial<AcquisitionSource>;
-      return (
-        typeof source.stateAddress === 'string' &&
-        source.stateAddress.length > 0 &&
-        typeof source.read === 'function' &&
-        (source.collection === undefined ||
-          typeof source.collection === 'boolean') &&
-        (source.fetchSelection === undefined ||
-          typeof source.fetchSelection === 'function') &&
-        (source.fingerprint === undefined ||
-          typeof source.fingerprint === 'function') &&
-        Array.isArray(source.selection) &&
-        validatedSelection(source.selection).length > 0
-      );
-    },
+    isAcquisitionSource,
   );
+}
+export function isAcquisitionSource(
+  value: unknown,
+): value is AcquisitionSource {
+  if (!value || typeof value !== 'object') return false;
+  const source = value as Partial<AcquisitionSource>;
+  const authority = source.authority;
+  return (
+    typeof source.stateAddress === 'string' &&
+    source.stateAddress.length > 0 &&
+    typeof source.read === 'function' &&
+    (authority === undefined || isAuthority(authority)) &&
+    (source.collection === undefined ||
+      typeof source.collection === 'boolean') &&
+    (source.fetchSelection === undefined ||
+      typeof source.fetchSelection === 'function') &&
+    (source.fingerprint === undefined ||
+      typeof source.fingerprint === 'function') &&
+    Array.isArray(source.selection) &&
+    validatedSelection(source.selection).length > 0
+  );
+}
+
+function isAuthority(value: unknown): value is object {
+  return (
+    (typeof value === 'object' && value !== null) || typeof value === 'function'
+  );
+}
+export function acquisitionAuthority(source: AcquisitionSource): object {
+  const value = source.authority;
+  if (value === undefined) return source;
+  if (!isAuthority(value))
+    throw new Error('Source authority must be an object or function.');
+  return value;
 }

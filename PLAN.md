@@ -111,7 +111,7 @@ Keep advanced capabilities opt-in and separately importable. The default GraphQL
 
 ### Minimal contracts
 
-B4 implements the portable registration/ownership subset through [provider scopes](docs/PROVIDERS.md): instances and sync/async factories, validated tokens, memoized initialization, explicit cleanup and shared infrastructure. Resolve providers during bootstrap, then construct ordinary synchronous clients. Official GraphQL and custom acquisition exercise this boundary; provider assignments and group/resource precedence remain B5. B4 is queued for a batched release and is absent from alpha.5.
+B4 implements the portable registration/ownership subset through [provider scopes](docs/PROVIDERS.md): instances and sync/async factories, validated tokens, memoized initialization, explicit cleanup and shared infrastructure. Resolve providers during bootstrap, then construct ordinary synchronous clients. B5 adds [provider assignments and global/group/resource precedence](docs/CONFIGURATION.md), exercised by official GraphQL transports and custom bound sources, with shared-authority checks through cache eviction. B4/B5 are queued for a batched release and are absent from alpha.5.
 
 The core exposes getSnapshot(), subscribe(listener), and dispose() on active handles. Snapshots are immutable, preserve their reference until relevant state changes, and contain data completeness, fetching state, and errors. Reading a snapshot has no network side effects. subscribe returns an unsubscribe function; dispose releases the handle's ownership and scheduled work.
 

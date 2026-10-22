@@ -23,7 +23,9 @@ const root = createEnvironmentInjector(
 );
 const owner = createEnvironmentInjector([], root);
 const id = signal('A');
+const authority = {}; // Equivalent wrappers share this backend; addresses isolate sessions.
 const source = (value) => ({
+  authority,
   stateAddress: resourceAddress({ source: 'packed', scope: value }, [
     { name: 'item', arguments: {} },
   ]),

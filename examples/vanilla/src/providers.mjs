@@ -31,7 +31,10 @@ const providers = createProviderScope([
   }),
   provide(sourceToken, { useValue: applicationSource.source }),
 ]);
-const native = new AcquisitionClient();
+const native = new AcquisitionClient({
+  providerScope: providers,
+  resourceGroups: { custom: { providers: { acquisition: sourceToken } } },
+});
 /** @type {import('@tandrove/graphql').GraphQLClient | undefined} */
 let graphql;
 try {
@@ -40,7 +43,11 @@ try {
     providers.resolve(transportToken),
   ]);
   assert.equal(transport, same);
-  graphql = createGraphQLClient({ transport });
+  graphql = createGraphQLClient({
+    providerScope: providers,
+    providers: { transport: transportToken },
+    resourceGroups: { manual: { providers: { transport: false } } },
+  });
   const bound = createSchema(sdl, { identities })
     .field('billing')
     .field('invoices')
@@ -49,9 +56,20 @@ try {
       { billing: { tenantId: 'A' } },
       { source: 'example', scope: 'session' },
     );
+  assert.throws(() => graphql?.watch(bound, { group: 'manual' }), /disabled/);
   const a = graphql.watch(bound),
-    b = graphql.watch(bound);
-  const custom = native.watch(providers.get(sourceToken));
+    b = graphql.watch(bound, {
+      group: 'manual',
+      providers: { transport: transportToken },
+    });
+  const custom = native.watch(
+    {
+      stateAddress: applicationSource.source.stateAddress,
+      selection: applicationSource.source.selection,
+      collection: true,
+    },
+    { group: 'custom' },
+  );
   await Promise.all([a.ready, b.ready, custom.ready]);
   assert.equal(initialized, 1);
   assert.equal(fixture.requests.length, 1);
@@ -71,5 +89,5 @@ try {
 }
 assert.equal(privateCleanup, 1);
 console.log(
-  'Providers: shared initialization, ordinary GraphQL/custom acquisition, and explicit runtime cleanup passed.',
+  'Providers: shared initialization, group/resource assignment, selective acquisition, and explicit runtime cleanup passed.',
 );

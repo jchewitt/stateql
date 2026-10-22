@@ -102,6 +102,7 @@ function setup(
   });
   t.after(() => client.dispose());
   const source = {
+    authority: {}, // Equivalent wrappers include the reentrant cancellation fixture.
     stateAddress: 'one',
     selection,
     collection,
@@ -216,10 +217,17 @@ test('a rejected watch leaves the original inactive deadline intact', async (t) 
     /same effective retentionMs/,
   );
   assert.throws(
+    () => f.client.watch({ ...f.source, authority: {} }),
+    /same authority/,
+  );
+  assert.throws(
     () => f.client.watch({ ...f.source, selection: [] }),
     /Selection/,
   );
-  assert.throws(() => f.client.watch({ ...f.source, read: undefined }), /bind/);
+  assert.throws(
+    () => f.client.watch({ ...f.source, read: undefined }),
+    /acquisition source/,
+  );
   assert.equal(timer.signal.aborted, false);
   assert.equal(f.all.length, 1);
   await f.advance(50);

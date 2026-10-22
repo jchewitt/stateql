@@ -12,6 +12,7 @@ import {
 } from '@tandrove/angular';
 
 const CLIENT = new InjectionToken<AcquisitionClient>('packed client');
+const authority = {}; // Component instances share one backend and canonical scopes.
 export const providers = provideTandroveClient(
   CLIENT,
   () => new AcquisitionClient(),
@@ -35,6 +36,7 @@ export class Consumer {
     () => 'A',
     (value) =>
       this.client.watch({
+        authority,
         stateAddress: resourceAddress({ source: 'packed', scope: value }, [
           { name: 'item', arguments: {} },
         ]),

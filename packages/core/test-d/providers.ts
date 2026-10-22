@@ -4,6 +4,7 @@ import {
   provide,
   createAcquisitionSourceToken,
   type AcquisitionSource,
+  AcquisitionClient,
 } from '../src/index.js';
 const number = createProviderToken(
   'number',
@@ -42,3 +43,19 @@ declare const supplied: AcquisitionSource;
 const sources = createProviderScope([provide(source, { useValue: supplied })]);
 const result: AcquisitionSource = sources.get(source);
 void result;
+const client = new AcquisitionClient({
+  providerScope: sources,
+  providers: { acquisition: source },
+  resourceGroups: { disabled: { providers: { acquisition: false } } },
+});
+client.watch(
+  { stateAddress: supplied.stateAddress, selection: supplied.selection },
+  { group: 'disabled', providers: { acquisition: source } },
+);
+new AcquisitionClient({
+  providerScope: scope,
+  // @ts-expect-error Capability assignment preserves source type.
+  providers: { acquisition: number },
+});
+// @ts-expect-error Unimplemented capabilities are not configurable.
+client.watch(supplied, { providers: { stream: false } });
