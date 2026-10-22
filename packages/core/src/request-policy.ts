@@ -1,3 +1,9 @@
+import { validatePollInterval } from './polling.js';
+
+export interface PollingPolicy {
+  /** Default for explicit handle.poll() registrations; never starts polling by itself. */
+  readonly everyMs?: number | false;
+}
 export interface FreshnessPolicy {
   /** Age of accepted coverage in milliseconds; false disables expiry. Zero is on-demand only. */
   readonly staleTimeMs?: number | false;
@@ -10,6 +16,7 @@ export interface RequestPolicy {
   readonly freshness?: FreshnessPolicy;
   /** Milliseconds to keep a resource after its final owner leaves. False disables; zero evicts immediately. */
   readonly retentionMs?: number | false;
+  readonly polling?: PollingPolicy;
 }
 export interface RequestPolicyConfiguration {
   readonly requestPolicy?: RequestPolicy;
@@ -24,6 +31,7 @@ export interface ResolvedRequestPolicy {
   readonly requestTimeoutMs: number | false;
   readonly freshness: Required<FreshnessPolicy>;
   readonly retentionMs: number | false;
+  readonly polling: Required<PollingPolicy>;
 }
 
 export function validateRequestTimeout(
@@ -49,13 +57,25 @@ function capture(policy: RequestPolicy = {}): Readonly<RequestPolicy> {
       (key) =>
         key !== 'requestTimeoutMs' &&
         key !== 'freshness' &&
-        key !== 'retentionMs',
+        key !== 'retentionMs' &&
+        key !== 'polling',
     )
   )
     throw new Error(
-      'Request policy supports only requestTimeoutMs, freshness and retentionMs.',
+      'Request policy supports only requestTimeoutMs, freshness, retentionMs and polling.',
     );
   const value = policy.requestTimeoutMs;
+  const polling = policy.polling;
+  if (polling !== undefined) {
+    if (
+      !polling ||
+      typeof polling !== 'object' ||
+      Array.isArray(polling) ||
+      Object.keys(polling).some((key) => key !== 'everyMs')
+    )
+      throw new Error('Polling policy supports only everyMs.');
+    if (polling.everyMs !== undefined) validatePollInterval(polling.everyMs);
+  }
   if (value !== undefined) validateRequestTimeout(value);
   const retentionMs = policy.retentionMs;
   if (
@@ -98,6 +118,9 @@ function capture(policy: RequestPolicy = {}): Readonly<RequestPolicy> {
       throw new Error('Freshness revalidate must be on-demand or active.');
   }
   return Object.freeze({
+    ...(polling === undefined
+      ? {}
+      : { polling: Object.freeze({ ...polling }) }),
     ...(retentionMs === undefined ? {} : { retentionMs }),
     ...(value === undefined ? {} : { requestTimeoutMs: value }),
     ...(freshness === undefined
@@ -150,6 +173,13 @@ export class RequestPolicies {
         'Active freshness revalidation requires a positive staleTimeMs or false.',
       );
     return Object.freeze({
+      polling: Object.freeze({
+        everyMs:
+          override.polling?.everyMs ??
+          group?.polling?.everyMs ??
+          this.defaults.polling?.everyMs ??
+          false,
+      }),
       freshness,
       retentionMs:
         override.retentionMs ??

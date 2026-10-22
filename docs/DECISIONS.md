@@ -1,5 +1,11 @@
 # Architecture decisions
 
+## D035 Polling interests reuse shared acquisition
+
+B6 adds explicit owner-bound `poll({ target?, everyMs? })` registrations, with disabled-by-default global/group/resource interval inheritance. Configuration alone does not start reads. Group identical canonical leaf selections and arguments independently of aliases; the fastest active interval wins, while different selections keep separate schedules. Restart cadence after shared work settles, without missed-tick queues. Stop/disposal releases scheduling, not another owner's current read.
+
+Keep timers/interests in a small portable coordinator; reuse acquisition for overlapping read/retry joining, coverage subtraction, deadlines and generation-checked commits. Only requested successful coverage satisfies a tick, never extra fetched siblings. Polling retains explicit refresh/list semantics and does not become membership reconciliation or a stream. Capture a monotonic scheduler at the core boundary; GraphQL supplies defaults and Angular delegates with current-binding checks. A registration belongs to its original handle, including across tenant replacement. See [the polling contract](POLLING.md). This feature joins the batched release without enabling publication.
+
 ## D034 Assign ready capabilities through one resource configuration
 
 B5 captures global defaults, one primary resource group and resource overrides using a portable `ResourceConfiguration` shared by core acquisition and GraphQL transport. Normalize legacy policy-only groups into the same namespace; reject duplicate declarations. Omission inherits, false disables without fallback, and explicit tokens re-enable. Assignment reads ready providers without starting factories. Keep provider ownership separate from client/cache ownership.

@@ -1,6 +1,6 @@
 # Tandrove task breakdown
 
-Complete each chunk with its focused tests, independent agent review, and a passing `pnpm check`. Keep later package APIs internal until a concrete use case exercises them. P1–P5 are complete; R1 is the next delivery. Later work follows [usable incremental releases](../PLAN.md#usable-incremental-releases), with a runnable vertical slice at every publication and continued support for standalone client operation.
+Complete each chunk with its focused tests, independent agent review, and a passing `pnpm check`. Keep later package APIs internal until a concrete use case exercises them. P1–P6 and R1 are implemented; Stage B's remaining beta-readiness gates are tracked below. Later work follows [usable incremental releases](../PLAN.md#usable-incremental-releases), with a runnable vertical slice at every publication and continued support for standalone client operation.
 
 ## F0 Repository foundation
 
@@ -105,7 +105,7 @@ Each slice is a separate review/PR with meaningful tests, `pnpm check`, independ
 | B3: inactive retention                  | P7.1/P7.3: define last-owner transition and zero/disabled policies, then evict the whole inactive resource scope, including metadata/timers, with reacquisition and scope-isolation tests.                                                    | Implemented; see [retention contract](RETENTION.md)                         |
 | B4: provider registration and ownership | A1.1/A1.4/A1.5/A1.6: tokens, instance/sync/async factory resolution and reuse; official GraphQL and application-owned custom acquisition integration, cleanup on failure, explicit owned/borrowed lifetime.                                   | Implemented; pending batched release, see [providers](PROVIDERS.md)         |
 | B5: complete client configuration       | Remaining client A1.2/A1.3/A1.6: capability assignments and global/group/resource overrides, disable behavior and conflict diagnostics using real providers; preserve simple default setup and JS usage. Server pairing A1.7 remains stage C. | Implemented; pending batched release, see [configuration](CONFIGURATION.md) |
-| B6: field polling                       | P6: shared owner interests, fastest active cadence, no overlapping retry/poll chains, disposal and fake-clock acceptance using the settled timing/configuration model.                                                                        | Planned                                                                     |
+| B6: field polling                       | P6: shared owner interests, fastest active cadence, no overlapping retry/poll chains, disposal and fake-clock acceptance using the settled timing/configuration model.                                                                        | Implemented; pending batched release, see [polling](POLLING.md)             |
 | B7: beta readiness                      | P5 typed runtime projection, application trial, scale/memory measurements, API/migration/documentation review, and the alpha-exit checklist below. Evaluate compiled plan reuse only if measurements justify it.                              | Planned                                                                     |
 
 ### B2 work items
@@ -132,9 +132,15 @@ Each slice is a separate review/PR with meaningful tests, `pnpm check`, independ
 - [x] B5b Implement ready-only provider assignment through the same portable configuration resolver for GraphQL transports and custom bound acquisition sources; guard watch/ingest authority through eviction.
 - [x] B5c Add inheritance/readiness/isolation/validation tests, installed JavaScript and typed examples, and migration documentation. Independent review and hosted CI gate merge; publication remains batched.
 
+### B6 work items
+
+- [x] B6a Define explicit owner registration, inherited interval defaults, canonical grouping, fixed delay after settlement and list semantics.
+- [x] B6b Implement portable timer/interest coordination using shared acquisition, retries, deadlines and lifecycle cleanup; expose GraphQL defaults and Angular binding delegation.
+- [x] B6c Add deterministic cadence/coverage/error/race tests, Angular/GraphQL integration, installed JavaScript and typed examples, and usage documentation. Independent review and hosted CI gate merge; publication remains batched.
+
 ### Alpha-exit tracking
 
-- [ ] AX1 Complete and independently review B1–B6; no accepted-but-unimplemented policies or empty adapter packages.
+- [x] AX1 Complete and independently review B1–B6; no accepted-but-unimplemented policies or empty adapter packages. See the [B6 review record](reviews/2026-10-22-shared-field-polling.md); the other alpha-exit gates remain open.
 - [ ] AX2 Settle beta APIs and typed results, including missing/partial/error states and public versus internal adapter contracts.
 - [ ] AX3 Validate installed JS/TS/Angular consumers and a real application beyond the demo under long sessions, account changes, failures and cleanup; record performance/memory budgets and findings.
 - [ ] AX4 Complete supported-feature/compatibility docs, diagnostics, examples and migration policy; no unresolved critical correctness findings.
@@ -143,12 +149,12 @@ Each slice is a separate review/PR with meaningful tests, `pnpm check`, independ
 
 ## P6 Field polling
 
-Depends on a continue decision in P5.
+P5's continue decision is complete. B6 implements this milestone; see [the polling contract](POLLING.md).
 
-- [ ] P6.1 Add explicit interval units and owner-bound polling interests.
-- [ ] P6.2 Share identical interests and avoid overlapping poll/retry chains.
-- [ ] P6.3 Apply A1's resolved global/group/resource policies and expose field-specific failure states. Define how differing owner polling interests combine; do not give each consumer an incompatible retry policy for shared work.
-- [ ] P6.4 Test fake-clock cadence, fastest-owner departure, retries, and final-owner disposal.
+- [x] P6.1 Add explicit interval units and owner-bound polling interests.
+- [x] P6.2 Share identical interests and avoid overlapping poll/retry chains.
+- [x] P6.3 Apply A1's resolved global/group/resource policies and expose field-specific failure states. Define how differing owner polling interests combine; do not give each consumer an incompatible retry policy for shared work.
+- [x] P6.4 Test fake-clock cadence, fastest-owner departure, retries, and final-owner disposal.
 
 ## P7 Standalone client timing and retention
 

@@ -44,7 +44,7 @@ The product roadmap also targets three related problems: repeated application co
 | Apollo baseline and request inspector                                   | Production developer-tools extension                       |
 | Deterministic tests for lifecycle and reconciliation                    | Production REST, socket, SSR, or server companion packages |
 
-Field polling is a small follow-on milestone after the core comparison. It is not required to prove the first selective-refresh workflow.
+Field polling follows the core comparison as B6. The [implemented contract](docs/POLLING.md) is pending a batched release; it was not required to prove the first selective-refresh workflow.
 
 ## Architecture boundaries
 
@@ -342,14 +342,16 @@ E1 and E2 together are the strongest near-term expansion hypothesis for applicat
 
 ## Polling and retry policies
 
-After the first comparison succeeds, add field polling through the same planner and commit path:
+B6 implements field polling through the same planner and commit path:
 
 ```ts
-const stop = invoices.field('status').poll({ everyMs: 10_000 });
+const stop = invoices.poll({ target: 'status', everyMs: 10_000 });
 // stop() or handle disposal releases this owner's polling interest.
 ```
 
 Use explicit milliseconds. Group identical state-and-field polling interests; the fastest active requested cadence wins, returning to a slower cadence when the faster owner leaves. Keep distinct field groups separate initially rather than fetching all fields at the fastest interval. Do not overlap a poll with an equivalent pending read or create a queue of missed ticks. Stop when the last owner releases the interest. Optional browser visibility policy belongs outside the portable core.
+
+Intervals inherit through global/group/resource defaults but require an explicit owner registration. The interval restarts after shared read/retry settlement; polling preserves ordinary field-refresh semantics without implicit list replacement. The [polling guide](docs/POLLING.md) defines disable behavior, scheduler failures, shared coverage and Angular binding lifetime. B6 is pending a batched release and is absent from alpha.5.
 
 Proposed read defaults are two retries after the first attempt, exponential backoff with jitter, and a bounded timeout. Retry transient transport failures and configured retryable responses; do not automatically retry schema/validation errors, authorization failures, cancellations, or ordinary business errors. Global defaults are inherited and overridable. No automatic write retries without an explicit idempotency contract.
 
@@ -484,4 +486,4 @@ Confirmed direction: Angular first, framework-independent core, GraphQL first, s
 
 Preserve schema-informed definitions with optional generated types, path/argument-scoped sharing, identity-required selective list updates, active-handle refetch on invalidation, and editor-local drafts. The future product uses consistent client/server provider registration and global/group/resource configuration, with optional acquisition, transport, persistence and server integrations.
 
-R1 is complete: alpha.0 was published locally, and alpha.1 passed the reviewed trusted-publishing workflow, provenance/signature checks and installed-consumer acceptance. Subsequent releases follow the usable capability gates above. The rename introduces no new adapters, timers or streaming behavior.
+R1 is complete: alpha.0 was published locally, and alpha.1 passed the reviewed trusted-publishing workflow, provenance/signature checks and installed-consumer acceptance. B1–B6 implement standalone timing, provider configuration and polling; B4–B6 remain queued for a batched release. B7 next addresses typed results, application trials, performance/memory evidence and API/documentation readiness. Completing these features does not automatically authorize beta or a publication.

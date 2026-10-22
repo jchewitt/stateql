@@ -10,6 +10,7 @@
     "demo": "node src/javascript.mjs",
     "demo:adapters": "node src/adapters.mjs",
     "demo:providers": "node src/providers.mjs",
+    "demo:polling": "node src/polling.mjs",
     "demo:retention": "node src/retention.mjs",
     "demo:freshness": "node src/freshness.mjs",
     "demo:deadline": "node src/deadline.mjs",

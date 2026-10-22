@@ -187,6 +187,7 @@ try {
     'adapters.mjs',
     'deadline.mjs',
     'freshness.mjs',
+    'polling.mjs',
     'retention.mjs',
     'providers.mjs',
   ])
@@ -203,6 +204,7 @@ try {
     'adapters.mjs',
     'deadline.mjs',
     'freshness.mjs',
+    'polling.mjs',
     'retention.mjs',
     'providers.mjs',
     'typescript.js',
@@ -386,6 +388,7 @@ try {
       'adapters.mjs',
       'deadline.mjs',
       'freshness.mjs',
+      'polling.mjs',
       'retention.mjs',
       'providers.mjs',
     ],
