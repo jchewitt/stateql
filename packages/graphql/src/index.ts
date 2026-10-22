@@ -1,4 +1,5 @@
 export { createSchema } from './definition.js';
+export { createGraphQLTransportToken } from './transport-provider.js';
 export { createGraphQLClient, httpTransport } from './client.js';
 export type {
   GraphQLClient,

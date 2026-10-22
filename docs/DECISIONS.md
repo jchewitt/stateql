@@ -1,5 +1,15 @@
 # Architecture decisions
 
+## D033 Resolve provider infrastructure before synchronous client construction
+
+B4 adds runtime-scoped tokens, captured instance/factory registrations, lazy single-flight async resolution and ready-only synchronous access. Preserve synchronous GraphQL and Angular clients; async provider setup belongs to bootstrap. Official GraphQL transports and application-owned acquisition sources use the same capability validation and existing decode/commit path. Tokens never enter resource identities. Capability assignment and global/group/resource provider precedence remain B5, without a speculative dependency resolver or generic adapter framework.
+
+Borrow provider values by default; ownership requires an explicit disposer. Successfully created scopes own supplied owned instances even if never resolved. Factories can journal private cleanup before failing awaits. Initialization failure and scope disposal cancel that provider, preserve errors, release partial allocations and clean late owned results. Disposal seals before reentrant callbacks, is idempotent, continues after cleanup failures and releases internal references when settled. Clients must be disposed before their infrastructure scope. See [provider semantics and limits](PROVIDERS.md).
+
+## D032 Batch releases while continuing reviewed feature delivery
+
+The October 22 user direction separates implementation cadence from npm publication. Continue reviewed feature PRs and meaningful CI per slice, accumulating Changesets in the bot release PR. Leave that PR open until a useful release milestone is chosen or publication is explicitly requested. A request to continue development does not automatically authorize merging the release PR. No workflow bypass or versioning change is needed: ordinary main merges already skip publication.
+
 ## D031 Eviction ends the cached resource lifetime
 
 B3 adds `requestPolicy.retentionMs` to the existing immutable policy resolver: false/default retains inactive state, zero evicts after final-owner cleanup, and positive integer milliseconds create an inactive reuse window. Retention is independent of freshness and request deadlines. Valid reacquisition cancels retention without renewing field ages; rejected watches and repeated disposal cannot extend the deadline. Check elapsed age before enforcing old bindings, so eviction permits a new policy at the same canonical address.

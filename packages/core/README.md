@@ -33,3 +33,5 @@ The package ships ESM JavaScript and optional TypeScript declarations. JavaScrip
 Opt-in `requestPolicy.freshness` tracks field and membership ages with an injected `FreshnessScheduler`. Expiry retains values; on-demand or active revalidation shares normal acquisition. See [freshness configuration and lifecycle](https://github.com/jchewitt/tandrove/blob/main/docs/FRESHNESS.md).
 
 Opt-in `requestPolicy.retentionMs` retains an inactive resource for integer milliseconds, disables eviction with `false`, or evicts at final-owner departure with zero. Positive retention uses `retentionScheduler` or a supplied `freshnessScheduler`. See [ownership, eviction and rebinding](https://github.com/jchewitt/tandrove/blob/main/docs/RETENTION.md).
+
+B4's optional `createProviderScope`, `provide` and capability tokens resolve shared infrastructure before ordinary clients are constructed. Instance/sync/async registrations, owned/borrowed lifetime and failure cleanup follow the [provider contract](https://github.com/jchewitt/tandrove/blob/main/docs/PROVIDERS.md). These additions are pending a batched release and are absent from alpha.5.

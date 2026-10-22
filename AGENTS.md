@@ -8,4 +8,5 @@
 - **An independent review agent must review the candidate changes before every commit.** Address actionable findings and request re-review of fixes before committing. Record the review and validation evidence in the commit/PR context or `docs/reviews/`. Do not substitute self-review for this requirement.
 - Keep the task list accurate. Do not present a proposed API or reserved module as implemented.
 - Use Changesets for package behavior/API changes. Never publish the scaffold or change npm scopes casually. Follow `docs/RELEASING.md` for release readiness, account configuration, and validation.
+- Batch Changesets in the open bot release PR. Continuing feature development does not imply publishing; merge release PRs only for a chosen release milestone or an explicit publication request.
 - Keep credentials, local artifacts, generated builds, and caches out of Git. Avoid committing unrelated changes.
