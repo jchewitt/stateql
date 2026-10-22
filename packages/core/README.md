@@ -14,7 +14,7 @@ npm install @tandrove/core@0.1.0-alpha.4
 
 Use matching Tandrove alpha versions. Core is portable ESM JavaScript with optional TypeScript declarations and no runtime dependencies. The repository tests Node 22.14+ and Node 24; browser integration is tested through Angular 21.2.25. For ordinary GraphQL applications, start with the [assembled GraphQL client](https://github.com/jchewitt/tandrove/tree/main/packages/graphql) rather than constructing an acquisition source manually.
 
-This is an experimental alpha, not a stable API promise. Extension contracts and JSON snapshot projection types remain provisional. Polling, inactive retention, WebSockets, persistence, a server companion and durable writes are planned separately. Alpha changes may require migrations; review each changelog and keep packages on the same version. See [release status and publishing](https://github.com/jchewitt/tandrove/blob/main/docs/RELEASING.md).
+This is an experimental alpha, not a stable API promise. Extension contracts and JSON snapshot projection types remain provisional. Polling, WebSockets, persistence, a server companion and durable writes are planned separately. Alpha changes may require migrations; review each changelog and keep packages on the same version. See [release status and publishing](https://github.com/jchewitt/tandrove/blob/main/docs/RELEASING.md).
 
 The observation interface has no Angular, React, RxJS, GraphQL, DOM, or Node dependencies. Runtime snapshots must be immutable; TypeScript callers supply an immutable snapshot type. Framework adapters will subscribe to this same runtime rather than maintain a separate cache.
 
@@ -31,3 +31,5 @@ Provisional `AcquisitionClient.ingest(source, patch)` applies validated patches 
 The package ships ESM JavaScript and optional TypeScript declarations. JavaScript consumers do not need a compiler or TypeScript loader.
 
 Opt-in `requestPolicy.freshness` tracks field and membership ages with an injected `FreshnessScheduler`. Expiry retains values; on-demand or active revalidation shares normal acquisition. See [freshness configuration and lifecycle](https://github.com/jchewitt/tandrove/blob/main/docs/FRESHNESS.md).
+
+Opt-in `requestPolicy.retentionMs` retains an inactive resource for integer milliseconds, disables eviction with `false`, or evicts at final-owner departure with zero. Positive retention uses `retentionScheduler` or a supplied `freshnessScheduler`. See [ownership, eviction and rebinding](https://github.com/jchewitt/tandrove/blob/main/docs/RETENTION.md).

@@ -515,13 +515,23 @@ export class StateStore {
     if (!resource) return false;
     if (resource.views.size || resource.requests.size)
       throw new Error('Cannot evict active state.');
+    // Disposed views may outlive this cache. Keep their immutable snapshots, but
+    // release the shared records they no longer own through their resource link.
+    resource.records.clear();
+    resource.membership = undefined;
+    resource.resourceError = undefined;
     return this.resources.delete(address);
   }
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    for (const resource of this.resources.values())
+    for (const resource of this.resources.values()) {
       for (const view of [...resource.views]) view.dispose();
+      resource.records.clear();
+      resource.requests.clear();
+      resource.membership = undefined;
+      resource.resourceError = undefined;
+    }
     this.resources.clear();
   }
 }

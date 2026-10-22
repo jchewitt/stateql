@@ -1,6 +1,6 @@
 # Shared request deadlines
 
-Stage B's first slice adds an opt-in deadline around one shared acquisition, including source attempts and retry waits. This checkout introduces the feature through the `shared-request-deadlines` Changeset; alpha.2 does not include it. [Timed freshness](FRESHNESS.md) is implemented separately in B2; inactive retention and provider registration remain later tasks.
+Stage B's first slice adds an opt-in deadline around one shared acquisition, including source attempts and retry waits. This checkout introduces the feature through the `shared-request-deadlines` Changeset; alpha.2 does not include it. [Timed freshness](FRESHNESS.md) is implemented separately in B2; [inactive retention](RETENTION.md) is implemented in B3, while provider registration remains a later task.
 
 ```js
 const client = createGraphQLClient({
@@ -22,7 +22,7 @@ const second = client.watch(invoices.bind(variables, scope), binding);
 
 Resolution is client `requestPolicy` → the optional named `requestPolicyGroups` group → `watch` binding's `requestPolicy`. An empty policy inherits. A resource override can enable or disable a group/default deadline. Unknown groups and unsupported policy keys fail before attaching an owner or starting acquisition. Client defaults/groups and each binding are copied into immutable effective policy. Caller mutations cannot alter an existing binding.
 
-Group names do not affect cache identity. Consumers of the same canonical state address must resolve to the same timeout, even when their selections or group names differ. A conflicting `watch` throws before changing ownership. Binding lasts as long as the cached resource scope: currently until client disposal, including after the final handle leaves. Changing its policy requires a new client; do not change the cache key to evade a conflict. Timed eviction will define when a future scope can be rebound. Retry configuration remains client-wide; this slice does not introduce retry overrides or provider tokens/factories.
+Group names do not affect cache identity. Consumers of the same canonical state address must resolve to the same timeout, even when their selections or group names differ. A conflicting `watch` throws before changing ownership. Binding lasts as long as the cached resource scope: until client disposal or configured inactive eviction, including while a retention window remains open after the final handle leaves. Changing its policy requires a new client or a new scope lifetime after eviction; do not change the cache key to evade a conflict. Retry configuration remains client-wide; this slice does not introduce retry overrides or provider tokens/factories.
 
 ## Budget and outcomes
 

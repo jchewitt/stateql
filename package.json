@@ -18,6 +18,7 @@
     "demo:acquire": "tsx scripts/acquisition-demo.ts",
     "demo:vanilla": "pnpm --filter @tandrove-demo/vanilla demo",
     "demo:adapters": "pnpm --filter @tandrove-demo/vanilla demo:adapters",
+    "demo:retention": "pnpm --filter @tandrove-demo/vanilla demo:retention",
     "demo:freshness": "pnpm --filter @tandrove-demo/vanilla demo:freshness",
     "demo:deadline": "pnpm --filter @tandrove-demo/vanilla demo:deadline",
     "demo:typescript": "pnpm --filter @tandrove-demo/vanilla demo:typescript",

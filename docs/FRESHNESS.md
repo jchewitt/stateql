@@ -38,7 +38,7 @@ When **freshness has expired membership**, `ensure()`/new ownership requests the
 
 Expiry of an old cached value does not create a server invalidation or supersede a read/retry already underway. A newer eligible response can satisfy it. Explicit invalidation and generation guards still protect newer updates. Expiry may require one later membership read after a narrow read finishes; those are separate shared requests and deadline budgets.
 
-One nearest-expiry timer is retained per active resource, independent of its request/retry timers. Final-owner departure cancels it while keeping due metadata; a later owner checks elapsed age before reacquisition. One owner's departure does not stop another's work. Client disposal releases timers and metadata. Inactive eviction remains B3.
+One nearest-expiry timer is retained per active resource, independent of its request/retry timers. Final-owner departure cancels it while keeping due metadata; a later owner checks elapsed age before reacquisition. One owner's departure does not stop another's work. Client disposal releases timers and metadata. B3 [inactive retention](RETENTION.md) can evict the whole resource and its age metadata.
 
 ## Clock boundary and verification
 

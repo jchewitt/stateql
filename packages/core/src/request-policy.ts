@@ -8,6 +8,8 @@ export interface RequestPolicy {
   /** Total milliseconds across a request's attempts/backoff. Omitted inherits; false disables. */
   readonly requestTimeoutMs?: number | false;
   readonly freshness?: FreshnessPolicy;
+  /** Milliseconds to keep a resource after its final owner leaves. False disables; zero evicts immediately. */
+  readonly retentionMs?: number | false;
 }
 export interface RequestPolicyConfiguration {
   readonly requestPolicy?: RequestPolicy;
@@ -21,6 +23,7 @@ export interface ResourceRequestOptions {
 export interface ResolvedRequestPolicy {
   readonly requestTimeoutMs: number | false;
   readonly freshness: Required<FreshnessPolicy>;
+  readonly retentionMs: number | false;
 }
 
 export function validateRequestTimeout(
@@ -43,14 +46,28 @@ function capture(policy: RequestPolicy = {}): Readonly<RequestPolicy> {
     typeof policy !== 'object' ||
     Array.isArray(policy) ||
     Object.keys(policy).some(
-      (key) => key !== 'requestTimeoutMs' && key !== 'freshness',
+      (key) =>
+        key !== 'requestTimeoutMs' &&
+        key !== 'freshness' &&
+        key !== 'retentionMs',
     )
   )
     throw new Error(
-      'Request policy supports only requestTimeoutMs and freshness.',
+      'Request policy supports only requestTimeoutMs, freshness and retentionMs.',
     );
   const value = policy.requestTimeoutMs;
   if (value !== undefined) validateRequestTimeout(value);
+  const retentionMs = policy.retentionMs;
+  if (
+    retentionMs !== undefined &&
+    retentionMs !== false &&
+    (!Number.isInteger(retentionMs) ||
+      retentionMs < 0 ||
+      retentionMs > 2_147_483_647)
+  )
+    throw new Error(
+      'retentionMs must be false or integer milliseconds from 0 to 2147483647.',
+    );
   const freshness = policy.freshness;
   if (freshness !== undefined) {
     if (
@@ -81,6 +98,7 @@ function capture(policy: RequestPolicy = {}): Readonly<RequestPolicy> {
       throw new Error('Freshness revalidate must be on-demand or active.');
   }
   return Object.freeze({
+    ...(retentionMs === undefined ? {} : { retentionMs }),
     ...(value === undefined ? {} : { requestTimeoutMs: value }),
     ...(freshness === undefined
       ? {}
@@ -133,6 +151,11 @@ export class RequestPolicies {
       );
     return Object.freeze({
       freshness,
+      retentionMs:
+        override.retentionMs ??
+        group?.retentionMs ??
+        this.defaults.retentionMs ??
+        false,
       requestTimeoutMs:
         override.requestTimeoutMs ??
         group?.requestTimeoutMs ??
