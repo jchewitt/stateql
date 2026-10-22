@@ -3,6 +3,9 @@ export { createGraphQLTransportToken } from './transport-provider.js';
 export { createGraphQLClient, httpTransport } from './client.js';
 export type {
   GraphQLClient,
+  GraphQLClientOptions,
+  GraphQLCapabilities,
+  GraphQLResourceOptions,
   GraphQLTransport,
   GraphQLTransportContext,
 } from './client.js';

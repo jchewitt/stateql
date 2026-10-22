@@ -109,6 +109,7 @@ export class AcquisitionScheduler {
       readonly evict: (scope: AcquisitionScheduler) => void;
       readonly report: (error: unknown) => void;
     },
+    private authorityValue: object | undefined,
   ) {
     this.retention = new InactiveRetention(
       retention.durationMs,
@@ -150,6 +151,9 @@ export class AcquisitionScheduler {
   }
   get requestTimeoutMs(): number | false {
     return this.deadline.timeoutMs;
+  }
+  get authority(): object | undefined {
+    return this.authorityValue;
   }
   get retentionMs(): number | false {
     return this.retention.durationMs;
@@ -451,6 +455,7 @@ export class AcquisitionScheduler {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.authorityValue = undefined;
     this.retention.dispose();
     this.freshness.dispose();
     for (const owner of this.owners) owner.dispose();

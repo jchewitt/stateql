@@ -10,6 +10,14 @@ export type {
 export { createProviderScope } from './provider-scope.js';
 export type { ProviderScope } from './provider-scope.js';
 export { createAcquisitionSourceToken } from './acquisition-provider.js';
+export { ResourceConfiguration } from './resource-configuration.js';
+export type {
+  ProviderAssignments,
+  ResourceGroup,
+  ResourceConfigurationOptions,
+  ResourceOptions,
+  CapabilityValidators,
+} from './resource-configuration.js';
 export { StateStore } from './state-store.js';
 export { AcquisitionClient } from './acquisition.js';
 export {
@@ -35,6 +43,9 @@ export type {
 } from './read-retry.js';
 export type {
   AcquisitionSource,
+  AcquisitionResource,
+  AcquisitionCapabilities,
+  AcquisitionResourceOptions,
   AcquisitionContext,
   AcquiredRecord,
   AcquiredField,

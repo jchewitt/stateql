@@ -361,7 +361,9 @@ test('shared core acquisition survives one argument switch and late data stays u
   const selection = [
     { name: 'name', responseName: 'name', arguments: {}, children: [] },
   ];
+  const authority = {}; // These wrappers use one backend; the address isolates sessions.
   const source = (id) => ({
+    authority,
     stateAddress: resourceAddress({ source: 'test', scope: id }, [
       { name: 'item', arguments: {} },
     ]),

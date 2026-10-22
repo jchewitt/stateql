@@ -1,5 +1,11 @@
 # Architecture decisions
 
+## D034 Assign ready capabilities through one resource configuration
+
+B5 captures global defaults, one primary resource group and resource overrides using a portable `ResourceConfiguration` shared by core acquisition and GraphQL transport. Normalize legacy policy-only groups into the same namespace; reject duplicate declarations. Omission inherits, false disables without fallback, and explicit tokens re-enable. Assignment reads ready providers without starting factories. Keep provider ownership separate from client/cache ownership.
+
+Core accepts canonical descriptors backed by existing bound-source providers; avoid inventing a second route language or a speculative multi-resource adapter. Preserve full advertised fetch coverage while the descriptor controls observation and commit intent. GraphQL transport remains reusable across resources. Bind effective policies and authority to the cached resource lifetime. Authority is the actual GraphQL transport or, for custom core sources, the source instance unless equivalent wrappers explicitly share an authority object. Guard both watches and patch ingress; eviction releases the binding. Identity checks cannot detect mutations to credentials/backends inside the same object. See [configuration, limitations and migration](CONFIGURATION.md). B4/B5 remain queued for a batched release; no npm publication is implied by feature completion.
+
 ## D033 Resolve provider infrastructure before synchronous client construction
 
 B4 adds runtime-scoped tokens, captured instance/factory registrations, lazy single-flight async resolution and ready-only synchronous access. Preserve synchronous GraphQL and Angular clients; async provider setup belongs to bootstrap. Official GraphQL transports and application-owned acquisition sources use the same capability validation and existing decode/commit path. Tokens never enter resource identities. Capability assignment and global/group/resource provider precedence remain B5, without a speculative dependency resolver or generic adapter framework.

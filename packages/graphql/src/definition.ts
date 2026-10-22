@@ -220,6 +220,7 @@ export class BoundDefinition<R> {
     const last = this.path.at(-1)!;
     return Object.freeze({
       stateAddress: this.stateAddress,
+      authority: transport,
       selection: this.selection,
       collection: containsList(
         fieldAt(this.context, last.parentType, last.name),

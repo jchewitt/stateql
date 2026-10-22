@@ -10,9 +10,13 @@ import { AcquisitionScheduler } from './acquisition-scheduler.js';
 import { ReadRetrier, type AcquisitionClientOptions } from './read-retry.js';
 import { ReadDeadline } from './read-deadline.js';
 import {
-  RequestPolicies,
-  type ResourceRequestOptions,
-} from './request-policy.js';
+  ResourceConfiguration,
+  type ResourceOptions,
+} from './resource-configuration.js';
+import {
+  isAcquisitionSource,
+  acquisitionAuthority,
+} from './acquisition-provider.js';
 import {
   Cancellation,
   cancellable,
@@ -60,12 +64,21 @@ export interface AcquiredPatch {
 export interface AcquisitionContext {
   readonly signal: CancellationSignal;
 }
-/** Provisional source boundary: decode protocol responses before returning records. */
-export interface AcquisitionSource {
+export interface AcquisitionResource {
   readonly stateAddress: string;
   readonly selection: readonly ResolvedField[];
   /** Opts into identity-based list reconciliation and explicit membership refresh. */
   readonly collection?: boolean;
+}
+export interface AcquisitionCapabilities {
+  readonly acquisition: AcquisitionSource;
+}
+export type AcquisitionResourceOptions =
+  ResourceOptions<AcquisitionCapabilities>;
+/** Provisional source boundary: decode protocol responses before returning records. */
+export interface AcquisitionSource extends AcquisitionResource {
+  /** Shared backend identity for equivalent source wrappers. Defaults to this source object. */
+  readonly authority?: object;
   /** Optional broader read coverage (for example, a whole-resource backend).
    * Must contain the requested fields and remain inside this source's selection.
    * Extra fetched values are validated but never committed as ordinary field writes. */
@@ -180,14 +193,16 @@ export class AcquisitionClient {
   private readonly initializing = new Set<string>();
   private disposed = false;
   private readonly retry: ReadRetrier;
-  private readonly policies: RequestPolicies;
+  private readonly configuration: ResourceConfiguration<AcquisitionCapabilities>;
   private readonly deadlineScheduler: AcquisitionClientOptions['deadlineScheduler'];
   private readonly freshnessScheduler: AcquisitionClientOptions['freshnessScheduler'];
   private readonly retentionScheduler: AcquisitionClientOptions['retentionScheduler'];
   private readonly onRetentionError: AcquisitionClientOptions['onRetentionError'];
   constructor(private readonly options: AcquisitionClientOptions = {}) {
     this.retry = new ReadRetrier(options);
-    this.policies = new RequestPolicies(options);
+    this.configuration = new ResourceConfiguration(options, {
+      acquisition: isAcquisitionSource,
+    });
     const scheduler = options.deadlineScheduler ?? options.scheduler;
     this.deadlineScheduler = scheduler
       ? { wait: scheduler.wait.bind(scheduler) }
@@ -211,6 +226,7 @@ export class AcquisitionClient {
     if (this.disposed) throw new Error('Client is disposed.');
     const scope = this.scopes.get(source.stateAddress);
     if (!scope) throw new Error('Patch requires an existing active resource.');
+    this.assertAuthority(scope, acquisitionAuthority(source));
     if (scope.collection !== (source.collection === true))
       throw new Error(
         'Sources sharing an address must agree on collection semantics.',
@@ -223,21 +239,48 @@ export class AcquisitionClient {
     scope.ingest(selection, patch.records);
   }
   watch(
-    source: AcquisitionSource,
-    options: ResourceRequestOptions = {},
+    resource: AcquisitionResource | AcquisitionSource,
+    options: AcquisitionResourceOptions = {},
   ): QueryHandle {
     if (this.disposed) throw new Error('Client is disposed.');
-    const selection = validatedSelection(source.selection);
-    const address = source.stateAddress;
+    const address = resource.stateAddress;
+    const requestedCollection = resource.collection;
+    if (
+      typeof address !== 'string' ||
+      !address.length ||
+      (requestedCollection !== undefined &&
+        typeof requestedCollection !== 'boolean')
+    )
+      throw new Error(
+        'Resource requires a nonempty stateAddress and an optional boolean collection.',
+      );
+    const selection = validatedSelection(resource.selection);
     if (this.initializing.has(address))
       throw new Error(
         'Resource initialization is already in progress for this state address.',
       );
-    const collection = source.collection === true;
-    const policy = this.policies.resolve(options);
+    const collection = requestedCollection === true;
+    const resolved = this.configuration.resolve(options);
+    const policy = resolved.requestPolicy;
+    const assigned = resolved.providers.acquisition;
+    if (assigned === false)
+      throw new Error('Acquisition is disabled for this resource.');
+    const source = assigned ?? resource;
+    if (!isAcquisitionSource(source))
+      throw new Error('Resource requires an acquisition source.');
+    if (
+      source.stateAddress !== address ||
+      (source.collection === true) !== collection
+    )
+      throw new Error(
+        'Assigned acquisition source must match the resource address and collection semantics.',
+      );
+    const sourceSelection = validatedSelection(source.selection);
+    narrowFields(sourceSelection, selection);
+    const authority = acquisitionAuthority(source);
     const captured: AcquisitionSource = {
       stateAddress: address,
-      selection,
+      selection: sourceSelection,
       collection,
       read: source.read.bind(source),
       ...(source.fetchSelection
@@ -250,6 +293,7 @@ export class AcquisitionClient {
     this.scopes.get(address)?.expireInactive();
     if (this.disposed) throw new Error('Client is disposed.');
     let scope = this.scopes.get(address);
+    if (scope) this.assertAuthority(scope, authority);
     if (scope && scope.retentionMs !== policy.retentionMs)
       throw new Error(
         'Sources sharing a state address must use the same effective retentionMs policy.',
@@ -293,6 +337,7 @@ export class AcquisitionClient {
             },
             report: (error) => this.onRetentionError?.(error, address),
           },
+          authority,
         );
         this.scopes.set(address, scope);
       } finally {
@@ -412,6 +457,15 @@ export class AcquisitionClient {
         current.detach(handle);
       },
     });
+  }
+  private assertAuthority(
+    scope: AcquisitionScheduler,
+    authority: object,
+  ): void {
+    if (scope.authority !== authority)
+      throw new Error(
+        'Sources sharing a state address must use the same authority. Use a distinct source/scope address for a different backend or authorization context.',
+      );
   }
   dispose(): void {
     if (this.disposed) return;

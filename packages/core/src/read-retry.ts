@@ -4,7 +4,8 @@ import {
   AcquisitionSupersededError,
   type CancellationSignal,
 } from './cancellation.js';
-import type { RequestPolicyConfiguration } from './request-policy.js';
+import type { ResourceConfigurationOptions } from './resource-configuration.js';
+import type { AcquisitionCapabilities } from './acquisition.js';
 
 /** Explicit source classification. Ordinary exceptions are never automatically retried. */
 export class ReadTransportError extends Error {
@@ -56,7 +57,7 @@ export interface MonotonicScheduler extends DelayScheduler {
 }
 /** Backward-compatible name for the monotonic scheduling capability. */
 export type FreshnessScheduler = MonotonicScheduler;
-export interface AcquisitionClientOptions extends RequestPolicyConfiguration {
+export interface AcquisitionClientOptions extends ResourceConfigurationOptions<AcquisitionCapabilities> {
   readonly onListenerError?: (error: unknown) => void;
   /** Omitted/false disables retries in portable core. GraphQL supplies defaults. */
   readonly retry?: ReadRetryPolicy | false;

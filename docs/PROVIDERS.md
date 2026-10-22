@@ -1,6 +1,6 @@
 # Provider registration and ownership
 
-B4 adds optional provider scopes, validated tokens and explicit resource ownership. It is implemented in this checkout and queued in the `provider-ownership` Changeset; alpha.5 and earlier do not include these APIs. Group/resource capability assignment remains B5. Existing `createGraphQLClient({ endpoint })` and Angular client construction remain synchronous and need no registry.
+B4 adds optional provider scopes, validated tokens and explicit resource ownership. It is implemented in this checkout and queued in the `provider-ownership` Changeset; alpha.5 and earlier do not include these APIs. B5 adds [global/group/resource capability assignment](CONFIGURATION.md), also queued for a batched release. Existing `createGraphQLClient({ endpoint })` and Angular client construction remain synchronous and need no registry.
 
 ## Register, resolve, then use an ordinary client
 
@@ -68,6 +68,6 @@ Await disposal to know all initialization and asynchronous cleanup have settled.
 
 Dispose clients before their provider scope. A query handle's disposal, inactive-cache eviction, or one client's disposal does not close a shared provider. A scope does not discover or dispose consumers constructed outside it. Multiple clients may borrow a resolved transport, but their caches remain separate. Source addresses and tenant/schema scopes govern state sharing independently of provider labels.
 
-For Angular, resolve async providers during application bootstrap, then give ready dependencies to the existing synchronous `provideTandroveClient()` factory. That factory owns the client; the provider scope owns only infrastructure explicitly assigned to it. Do not give both Angular and the scope ownership of the same client. A dedicated async framework lifecycle bridge and B5 capability assignment are separate work; no server package or DI container is required.
+For Angular, resolve async providers during application bootstrap, then give ready dependencies to the existing synchronous `provideTandroveClient()` factory. That factory owns the client; the provider scope owns only infrastructure explicitly assigned to it. Do not give both Angular and the scope ownership of the same client. A dedicated async framework lifecycle bridge remains separate work; no server package or DI container is required.
 
-Run `pnpm demo:providers` after `pnpm build`. The native JavaScript example registers a GraphQL transport factory and borrowed custom whole-resource source, shares initialization and cached reads, and tears down private allocations. Installed-package acceptance executes it and checks its editor types. Integration tests also exercise the official HTTP transport against an actual local HTTP server and verify malformed custom responses still fail the normal validation boundary.
+Run `pnpm demo:providers` after `pnpm build`. The native JavaScript example registers a GraphQL transport factory and borrowed custom whole-resource source, assigns them through global/group/resource configuration, shares initialization and cached reads, and tears down private allocations. Installed-package acceptance executes it and checks its editor types. Integration tests also exercise the official HTTP transport against an actual local HTTP server and verify malformed custom responses still fail the normal validation boundary.

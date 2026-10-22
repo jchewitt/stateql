@@ -38,6 +38,7 @@ function setup(
   t.after(() => client.dispose());
   const reads = [];
   const source = {
+    authority: {}, // Selection wrappers below represent the same backend.
     stateAddress: 'one',
     selection,
     collection,

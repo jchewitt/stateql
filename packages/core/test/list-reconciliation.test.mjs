@@ -34,6 +34,7 @@ function fixture(t) {
   let intercept = async (result) => result;
   const requests = [];
   const source = {
+    authority: {}, // Selection wrappers below represent the same backend.
     collection: true,
     stateAddress: 'items',
     selection: [field('name'), field('amount')],

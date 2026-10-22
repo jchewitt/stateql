@@ -31,6 +31,7 @@ function setup(t, selection = [field('name'), field('amount')], options = {}) {
   const client = new AcquisitionClient(options);
   t.after(() => client.dispose());
   const source = {
+    authority: {}, // Selection wrappers below represent the same backend.
     stateAddress: 'A',
     selection,
     collection: true,
