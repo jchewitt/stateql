@@ -12,7 +12,8 @@ import { AcquisitionVersions } from './acquisition-versions.js';
 import { ReadTransportError, type ReadRetrier } from './read-retry.js';
 import type { ReadDeadline } from './read-deadline.js';
 import { FreshnessTracker } from './freshness.js';
-import type { FreshnessScheduler } from './read-retry.js';
+import { InactiveRetention } from './inactive-retention.js';
+import type { FreshnessScheduler, MonotonicScheduler } from './read-retry.js';
 import type { FreshnessPolicy } from './request-policy.js';
 import {
   Cancellation,
@@ -89,9 +90,10 @@ export class AcquisitionScheduler {
   private readonly owners = new Set<AcquisitionOwner>();
   private readonly requests = new Set<Request>();
   private readonly versions = new AcquisitionVersions();
-  private readonly view: StateView;
+  private view: StateView | undefined;
   private disposed = false;
   private readonly freshness: FreshnessTracker;
+  private readonly retention: InactiveRetention;
   constructor(
     private readonly store: StateStore,
     readonly address: string,
@@ -101,7 +103,19 @@ export class AcquisitionScheduler {
     private readonly deadline: ReadDeadline,
     readonly freshnessPolicy: Required<FreshnessPolicy>,
     freshnessScheduler: FreshnessScheduler | undefined,
+    retention: {
+      readonly durationMs: number | false;
+      readonly scheduler: MonotonicScheduler | undefined;
+      readonly evict: (scope: AcquisitionScheduler) => void;
+      readonly report: (error: unknown) => void;
+    },
   ) {
+    this.retention = new InactiveRetention(
+      retention.durationMs,
+      retention.scheduler,
+      () => retention.evict(this),
+      retention.report,
+    );
     this.freshness = new FreshnessTracker(
       freshnessPolicy,
       freshnessScheduler,
@@ -137,15 +151,25 @@ export class AcquisitionScheduler {
   get requestTimeoutMs(): number | false {
     return this.deadline.timeoutMs;
   }
+  get retentionMs(): number | false {
+    return this.retention.durationMs;
+  }
+  get hasOwners(): boolean {
+    return this.owners.size > 0;
+  }
+  expireInactive(): void {
+    this.retention.expireIfDue();
+  }
   attach(owner: AcquisitionOwner): void {
     this.owners.add(owner);
+    this.retention.activate();
     for (const request of this.requests)
       if (request.root || overlaps(request.fields, owner.view.selection))
         request.owners.add(owner);
     this.freshness.setActive(true);
   }
   detach(owner: AcquisitionOwner): void {
-    this.owners.delete(owner);
+    if (this.disposed || !this.owners.delete(owner)) return;
     for (const request of [...this.requests]) {
       request.owners.delete(owner);
       if (!request.owners.size) {
@@ -153,7 +177,11 @@ export class AcquisitionScheduler {
         request.cancellation.abort('Acquisition has no active owners.');
       }
     }
-    if (!this.owners.size) this.freshness.setActive(false);
+    if (!this.owners.size) {
+      this.freshness.setActive(false);
+      // Adapter cancellation callbacks may synchronously attach a new owner.
+      if (!this.owners.size && !this.disposed) this.retention.deactivate();
+    }
   }
   private assertOwner(owner: AcquisitionOwner): void {
     if (this.disposed || !owner.active)
@@ -163,7 +191,7 @@ export class AcquisitionScheduler {
   }
   invalidate(paths: readonly FieldPath[]): void {
     this.versions.invalidate(paths);
-    const records = this.view.getSnapshot().records;
+    const records = this.view!.getSnapshot().records;
     const changes: readonly StateChange[] =
       records === null
         ? [{ kind: 'membership-stale' }]
@@ -179,7 +207,7 @@ export class AcquisitionScheduler {
       throw new Error('Patch requires an existing active resource.');
     const result = reconcileAcquisition({
       acquired: snapshotInput(records) as unknown as AcquisitionResult,
-      known: this.view.getSnapshot().records,
+      known: this.view!.getSnapshot().records,
       requested: selection,
       fetched: selection,
       collection: this.collection,
@@ -307,7 +335,7 @@ export class AcquisitionScheduler {
     key: string,
     replaceMembership: boolean,
   ): Request {
-    const root = replaceMembership || this.view.getSnapshot().records == null;
+    const root = replaceMembership || this.view!.getSnapshot().records == null;
     const version = this.versions.advance(leafPaths(fields), root);
     let resolve!: () => void;
     let reject!: (error: unknown) => void;
@@ -386,7 +414,7 @@ export class AcquisitionScheduler {
       const acquired = snapshotInput(response) as unknown as AcquisitionResult;
       const result = reconcileAcquisition({
         acquired,
-        known: this.view.getSnapshot().records,
+        known: this.view!.getSnapshot().records,
         requested: request.fields,
         fetched,
         collection: this.collection,
@@ -401,7 +429,7 @@ export class AcquisitionScheduler {
     }
   }
   private failFields(request: Request, error: ReadTransportError): void {
-    const records = this.view.getSnapshot().records;
+    const records = this.view!.getSnapshot().records;
     // No invented records or conversion of a transport failure into resource null.
     const changes: StateChange[] = (records ?? []).flatMap((record) =>
       leafPaths(request.fields).map((path) => ({
@@ -423,6 +451,7 @@ export class AcquisitionScheduler {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.retention.dispose();
     this.freshness.dispose();
     for (const owner of this.owners) owner.dispose();
     this.owners.clear();
@@ -431,6 +460,8 @@ export class AcquisitionScheduler {
       request.cancellation.abort('Acquisition client is disposed.');
     }
     this.requests.clear();
-    this.view.dispose();
+    this.versions.dispose();
+    this.view?.dispose();
+    this.view = undefined;
   }
 }

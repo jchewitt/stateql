@@ -19,6 +19,7 @@ export type {
   RetryScheduler,
   DelayScheduler,
   FreshnessScheduler,
+  MonotonicScheduler,
   AcquisitionClientOptions,
 } from './read-retry.js';
 export type {

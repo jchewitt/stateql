@@ -40,4 +40,4 @@ The GraphQL boundary bridges that signal to a native `AbortSignal`. `GraphQLTran
 
 Handle-level `error` follows the latest invoked read/ensure attempt, so an older failing or superseded attempt cannot replace a newer attempt's status. Shared field/resource errors remain cache state visible to every relevant view. Mark-only invalidation does not reset the handle's attempt error.
 
-Inactive cache data remains until client disposal. P3.7 adds [retry scheduling](RETRIES.md) while preserving these request generations and ownership rules. Timeout policies, configurable retention timers, and a production stream protocol remain future work.
+Inactive cache data remains until client disposal by default. P3.7 adds [retry scheduling](RETRIES.md) while preserving these request generations and ownership rules. B1–B3 add opt-in [request deadlines](DEADLINES.md), [freshness expiry](FRESHNESS.md) and [inactive retention](RETENTION.md). A production stream protocol remains future work.

@@ -6,6 +6,7 @@ import {
   type ResourceRequestOptions,
   type FreshnessScheduler,
   type FreshnessPolicy,
+  type MonotonicScheduler,
 } from '../src/index.js';
 
 declare const source: AcquisitionSource;
@@ -35,3 +36,16 @@ new AcquisitionClient({
 // @ts-expect-error Unknown revalidation modes must not silently schedule reads.
 const badFreshness: FreshnessPolicy = { revalidate: 'always' };
 void badFreshness;
+declare const retentionScheduler: MonotonicScheduler;
+new AcquisitionClient({
+  retentionScheduler,
+  requestPolicy: { retentionMs: 500 },
+  onRetentionError: (error, address) => {
+    void error;
+    const key: string = address;
+    void key;
+  },
+}).watch(source, { requestPolicy: { retentionMs: 0 } });
+// @ts-expect-error Retention uses explicit numeric milliseconds or false.
+const badRetention: RequestPolicy = { retentionMs: '5s' };
+void badRetention;

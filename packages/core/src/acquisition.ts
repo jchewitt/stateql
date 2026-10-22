@@ -1,6 +1,5 @@
 import {
   canonicalInput,
-  freezeFields,
   narrowFields,
   selectFieldPath,
   type ResolvedField,
@@ -178,11 +177,14 @@ class Handle {
 export class AcquisitionClient {
   private readonly store = new StateStore();
   private readonly scopes = new Map<string, AcquisitionScheduler>();
+  private readonly initializing = new Set<string>();
   private disposed = false;
   private readonly retry: ReadRetrier;
   private readonly policies: RequestPolicies;
   private readonly deadlineScheduler: AcquisitionClientOptions['deadlineScheduler'];
   private readonly freshnessScheduler: AcquisitionClientOptions['freshnessScheduler'];
+  private readonly retentionScheduler: AcquisitionClientOptions['retentionScheduler'];
+  private readonly onRetentionError: AcquisitionClientOptions['onRetentionError'];
   constructor(private readonly options: AcquisitionClientOptions = {}) {
     this.retry = new ReadRetrier(options);
     this.policies = new RequestPolicies(options);
@@ -194,6 +196,15 @@ export class AcquisitionClient {
     this.freshnessScheduler = clock
       ? { now: clock.now.bind(clock), wait: clock.wait.bind(clock) }
       : undefined;
+    const retentionClock =
+      options.retentionScheduler ?? options.freshnessScheduler;
+    this.retentionScheduler = retentionClock
+      ? {
+          now: retentionClock.now.bind(retentionClock),
+          wait: retentionClock.wait.bind(retentionClock),
+        }
+      : undefined;
+    this.onRetentionError = options.onRetentionError;
   }
   /** Adapter-facing local patch ingress, not a server revision or stream protocol. */
   ingest(source: AcquisitionSource, patch: AcquiredPatch): void {
@@ -216,11 +227,33 @@ export class AcquisitionClient {
     options: ResourceRequestOptions = {},
   ): QueryHandle {
     if (this.disposed) throw new Error('Client is disposed.');
-    const selection = freezeFields(source.selection);
+    const selection = validatedSelection(source.selection);
     const address = source.stateAddress;
+    if (this.initializing.has(address))
+      throw new Error(
+        'Resource initialization is already in progress for this state address.',
+      );
     const collection = source.collection === true;
     const policy = this.policies.resolve(options);
+    const captured: AcquisitionSource = {
+      stateAddress: address,
+      selection,
+      collection,
+      read: source.read.bind(source),
+      ...(source.fetchSelection
+        ? { fetchSelection: source.fetchSelection.bind(source) }
+        : {}),
+      ...(source.fingerprint
+        ? { fingerprint: source.fingerprint.bind(source) }
+        : {}),
+    };
+    this.scopes.get(address)?.expireInactive();
+    if (this.disposed) throw new Error('Client is disposed.');
     let scope = this.scopes.get(address);
+    if (scope && scope.retentionMs !== policy.retentionMs)
+      throw new Error(
+        'Sources sharing a state address must use the same effective retentionMs policy.',
+      );
     if (scope && scope.requestTimeoutMs !== policy.requestTimeoutMs)
       throw new Error(
         'Sources sharing a state address must use the same effective requestTimeoutMs policy.',
@@ -237,30 +270,35 @@ export class AcquisitionClient {
         'Sources sharing an address must agree on collection semantics.',
       );
     if (!scope) {
-      scope = new AcquisitionScheduler(
-        this.store,
-        address,
-        selection,
-        collection,
-        this.retry,
-        new ReadDeadline(policy.requestTimeoutMs, this.deadlineScheduler),
-        policy.freshness,
-        this.freshnessScheduler,
-      );
-      this.scopes.set(address, scope);
+      this.initializing.add(address);
+      try {
+        scope = new AcquisitionScheduler(
+          this.store,
+          address,
+          selection,
+          collection,
+          this.retry,
+          new ReadDeadline(policy.requestTimeoutMs, this.deadlineScheduler),
+          policy.freshness,
+          this.freshnessScheduler,
+          {
+            durationMs: policy.retentionMs,
+            scheduler: this.retentionScheduler,
+            evict: (retired) => {
+              if (this.scopes.get(address) !== retired || retired.hasOwners)
+                return;
+              this.scopes.delete(address);
+              retired.dispose();
+              this.store.evict(address);
+            },
+            report: (error) => this.onRetentionError?.(error, address),
+          },
+        );
+        this.scopes.set(address, scope);
+      } finally {
+        this.initializing.delete(address);
+      }
     }
-    const captured: AcquisitionSource = {
-      stateAddress: address,
-      selection,
-      collection,
-      read: source.read.bind(source),
-      ...(source.fetchSelection
-        ? { fetchSelection: source.fetchSelection.bind(source) }
-        : {}),
-      ...(source.fingerprint
-        ? { fingerprint: source.fingerprint.bind(source) }
-        : {}),
-    };
     const view = this.store.watch(address, selection);
     const current = scope;
     const handle = new Handle(view, (error) => {
@@ -369,6 +407,7 @@ export class AcquisitionClient {
       getSnapshot: () => handle.getSnapshot(),
       subscribe: (listener: () => void) => handle.subscribe(listener),
       dispose: () => {
+        if (!handle.active) return;
         handle.dispose();
         current.detach(handle);
       },

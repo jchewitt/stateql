@@ -50,7 +50,7 @@ Duplicate callback registrations are independent subscriptions. Unsubscribe and 
 
 `setFetching(address, requestId, selection, membership?)` records coverage; calling it without selection removes that request. The optional membership flag makes all resource views report fetching because their membership may change. Otherwise, only views interested in the selected fields report fetching. Multiple request IDs can overlap. This is bookkeeping, not scheduling, execution, deduplication, or cancellation.
 
-Inactive data remains available until explicit `evict(address)` or store disposal. Eviction rejects active views or request markers. The acquisition coordinator owns request cancellation; automatic retention timers remain future work. Store disposal releases all views and records and rejects further work.
+Inactive data remains available until explicit `evict(address)` or store disposal. Eviction rejects active views or request markers. The acquisition coordinator owns request cancellation and opt-in [inactive retention](RETENTION.md); the store itself does not schedule timers. Store disposal releases all views and records and rejects further work.
 
 `matchesObject(address, record, path, identity?)` lets the coordinator inspect an existing object marker without creating state. It distinguishes a retained object from a structural replacement before applying generation barriers. Like the other store interfaces, it is provisional infrastructure rather than an application query API.
 

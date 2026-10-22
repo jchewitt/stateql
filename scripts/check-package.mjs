@@ -187,6 +187,7 @@ try {
     'adapters.mjs',
     'deadline.mjs',
     'freshness.mjs',
+    'retention.mjs',
   ])
     writeFileSync(
       join(consumer, file),
@@ -201,6 +202,7 @@ try {
     'adapters.mjs',
     'deadline.mjs',
     'freshness.mjs',
+    'retention.mjs',
     'typescript.js',
   ])
     execFileSync(process.execPath, [join(consumer, file)], {
@@ -382,6 +384,7 @@ try {
       'adapters.mjs',
       'deadline.mjs',
       'freshness.mjs',
+      'retention.mjs',
     ],
     {
       cwd: consumer,

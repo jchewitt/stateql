@@ -22,6 +22,12 @@ export class AcquisitionVersions {
     string,
     { readonly record: string } & Stamp
   >();
+  dispose(): void {
+    this.intents.clear();
+    this.invalidations.clear();
+    this.structures.clear();
+    this.clock = this.rootIntent = this.rootCommit = 0;
+  }
 
   advance(paths: readonly FieldPath[], root = false): number {
     const version = ++this.clock;

@@ -52,7 +52,7 @@ Depends on P2.
 - [x] P3.7 Add bounded read retries and field error state; keep writes outside automatic retries. See [retry policy, classification, and lifecycle](RETRIES.md).
 - [x] P3.8 Demonstrate native JavaScript and TypeScript consumers plus fake whole-resource and push-event adapters. See [the examples and provisional ingestion contract](VANILLA.md); isolated package checks run without a TypeScript runtime.
 
-Inactive cache data is currently retained until client disposal. Configurable retention and request timeout timers remain follow-on lifecycle work; bounded attempts do not bound an individual request's duration. Narrower policy inheritance also remains deferred until conflicting owners of shared work have defined semantics.
+Inactive cache data is retained until client disposal by default. B1–B3 add opt-in shared request deadlines, field freshness expiry and inactive retention with global/group/resource policy inheritance and conflict checks for shared owners. Bounded retry attempts alone do not bound an individual request's duration. Narrower retry-policy inheritance remains follow-on work.
 
 For P3.6/P3.8, keep local request generations separate from future server revision metadata, and route simulated pushes through the shared validation/commit path. This preserves the E1/E2 boundary without implementing a production stream protocol or offline outbox in the current proof of concept.
 
@@ -90,7 +90,7 @@ Completed comparison: [method, measurements and decision](COMPARISON.md). Run `p
 - [ ] Add a typed runtime result projection while preserving partial/missing/error states; current generic snapshots add presentation narrowing code.
 - [ ] Measure larger schemas, record counts, browser memory and lower-powered devices before making scaling/performance claims.
 - [ ] Evaluate reusable compiled operation plans with argument, scope and identity regression coverage.
-- [ ] Complete P7's stale-time, inactive-retention and request-timeout contracts before presenting the prototype as production-ready.
+- [x] Complete P7's stale-time, inactive-retention and request-timeout contracts through B1–B3. The remaining alpha-exit and real-application validation gates still apply.
 
 These findings are not retroactively required to complete the initial comparison. Document limitations in R1's experimental release; schedule runtime changes in separately reviewed chunks.
 
@@ -102,7 +102,7 @@ Each slice is a separate review/PR with meaningful tests, `pnpm check`, independ
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | B1: shared deadlines and timeout policy | P7.1/P7.4 subset, A1.2/A1.3 subset: captured global/group/resource timeout policy, consistent shared-owner binding, total request/retry deadline, transport cancellation and deterministic race/cleanup tests.                                | Implemented; see [deadline contract](DEADLINES.md)  |
 | B2: freshness expiry                    | P7.1/P7.2: define per-field and structural/membership freshness coverage, explicit units/disable/zero semantics and revalidation modes; implement expiry and reacquisition without losing cached values or creating refresh loops.            | Implemented; see [freshness contract](FRESHNESS.md) |
-| B3: inactive retention                  | P7.1/P7.3: define last-owner transition and zero/disabled policies, then evict the whole inactive resource scope, including metadata/timers, with reacquisition and scope-isolation tests.                                                    | Planned                                             |
+| B3: inactive retention                  | P7.1/P7.3: define last-owner transition and zero/disabled policies, then evict the whole inactive resource scope, including metadata/timers, with reacquisition and scope-isolation tests.                                                    | Implemented; see [retention contract](RETENTION.md) |
 | B4: provider registration and ownership | A1.1/A1.4/A1.5/A1.6: tokens, instance/sync/async factory resolution and reuse; official GraphQL and application-owned custom acquisition integration, cleanup on failure, explicit owned/borrowed lifetime.                                   | Planned                                             |
 | B5: complete client configuration       | Remaining client A1.2/A1.3/A1.6: capability assignments and global/group/resource overrides, disable behavior and conflict diagnostics using real providers; preserve simple default setup and JS usage. Server pairing A1.7 remains stage C. | Planned                                             |
 | B6: field polling                       | P6: shared owner interests, fastest active cadence, no overlapping retry/poll chains, disposal and fake-clock acceptance using the settled timing/configuration model.                                                                        | Planned                                             |
@@ -113,6 +113,12 @@ Each slice is a separate review/PR with meaningful tests, `pnpm check`, independ
 - [x] B2a Define accepted coverage, null/list membership, zero/disable/inheritance and revalidation contracts.
 - [x] B2b Implement portable expiry tracking, shared acquisition and ownership cleanup without changing request invalidation semantics.
 - [x] B2c Add fake-clock races, GraphQL integration, installed JavaScript/type acceptance and usage documentation. Independent precommit review and hosted CI gate delivery.
+
+### B3 work items
+
+- [x] B3a Define final-owner retention, zero/disable/inheritance, failure behavior and policy rebinding.
+- [x] B3b Implement whole-scope eviction and reuse with cancellation, elapsed-time and reentrant-adapter guards.
+- [x] B3c Add deterministic lifecycle/race/isolation tests, GraphQL and installed JavaScript acceptance, and documentation. Independent precommit review and hosted CI gate delivery.
 
 ### Alpha-exit tracking
 
@@ -136,13 +142,13 @@ Depends on a continue decision in P5.
 
 Stage B follow-on to R1; coordinate configuration with A1. Each implemented capability may ship separately with its complete lifecycle contract. These timers are not implemented by the current retry-count configuration.
 
-- [ ] P7.1 Define per-field stale time, inactive retention and request deadline as distinct policies with explicit units and disable/inheritance behavior.
+- [x] P7.1 Define per-field stale time, inactive retention and request deadline as distinct policies with explicit units and disable/inheritance behavior.
 - [x] P7.1b Define per-field and membership freshness ages, zero/on-demand behavior and explicit disable/inheritance; see B2.
-- [x] P7.1a Define the shared request deadline and its timeout-policy precedence; freshness and retention settings remain B2/B3 work.
+- [x] P7.1a Define the shared request deadline and its timeout-policy precedence; see B2/B3 for the separately implemented freshness and retention settings.
 - [x] P7.2 Implement freshness expiry and on-demand/active revalidation without treating a stale value as absent or manufacturing a stream dependency.
-- [ ] P7.3 Evict inactive state under bounded retention while preserving active owners and isolating tenant/schema contexts.
+- [x] P7.3 Evict inactive state under bounded retention while preserving active owners and isolating tenant/schema contexts.
 - [x] P7.4 Implement shared-request deadlines with explicit retry interaction; one owner's disposal must not cancel another owner's valid work. See [deadline contract](DEADLINES.md).
-- [ ] P7.5 Test expiry, reacquisition, final-owner cleanup, shared work, retry/deadline races and disposal with deterministic clocks; demonstrate normal client use with all streaming disabled.
+- [x] P7.5 Test expiry, reacquisition, final-owner cleanup, shared work, retry/deadline races and disposal with deterministic clocks; demonstrate normal client use with all streaming disabled.
 
 ## A1 Consistent provider and resource configuration
 

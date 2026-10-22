@@ -50,6 +50,10 @@ export function createGraphQLClient(
     deadlineScheduler:
       options.deadlineScheduler ?? options.scheduler ?? defaultRetryScheduler,
     freshnessScheduler: options.freshnessScheduler ?? defaultRetryScheduler,
+    retentionScheduler:
+      options.retentionScheduler ??
+      options.freshnessScheduler ??
+      defaultRetryScheduler,
   });
   const transport =
     options.transport ??

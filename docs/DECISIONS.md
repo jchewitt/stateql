@@ -1,5 +1,11 @@
 # Architecture decisions
 
+## D031 Eviction ends the cached resource lifetime
+
+B3 adds `requestPolicy.retentionMs` to the existing immutable policy resolver: false/default retains inactive state, zero evicts after final-owner cleanup, and positive integer milliseconds create an inactive reuse window. Retention is independent of freshness and request deadlines. Valid reacquisition cancels retention without renewing field ages; rejected watches and repeated disposal cannot extend the deadline. Check elapsed age before enforcing old bindings, so eviction permits a new policy at the same canonical address.
+
+Evict the entire scope: data/membership/error storage, generations, freshness coverage and internal view. Clear obsolete internal references even when the application retains disposed handles; preserve those handles' last immutable snapshots. Instance and lifecycle generation checks protect replacement scopes from late work and reentrant adapters. Reuse the `MonotonicScheduler` capability, retain `FreshnessScheduler` as a compatible alias, and supply GraphQL platform defaults. Inactive scheduler failure evicts conservatively and reports through optional isolated `onRetentionError`; it does not retry or evict active owners. See [the full contract](RETENTION.md). This is elapsed inactive retention, not an active-cache memory budget, persistence or provider lifecycle implementation.
+
 ## D030 Freshness is accepted coverage age
 
 B2 adds `requestPolicy.freshness` to the existing immutable global/group/resource resolver. Default disabled/on-demand preserves earlier behavior. Track each accepted field/null and membership independently; never renew uncommitted fetched context or untouched sibling leaves. Zero duration is immediately stale and on-demand only. An ensure call may settle with immediately stale data, but explicit invalidations during awaited work must still be honored. Active expiry uses normal shared acquisition, retries, deadlines and handle errors, with no self-rearming failure loop.
