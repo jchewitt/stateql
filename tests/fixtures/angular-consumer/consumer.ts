@@ -61,6 +61,10 @@ const typed = injectStateQuery(
   () => narrow,
 );
 void typed.invalidate('name');
+const stopPolling: () => void = typed.poll({ target: 'name', everyMs: 100 });
+stopPolling();
+// @ts-expect-error polling target literals must survive packed declarations
+typed.poll({ target: 'missing', everyMs: 100 });
 // @ts-expect-error target literals must survive packed declarations
 void typed.invalidate('missing');
 // @ts-expect-error token type controls the provider's factory

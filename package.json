@@ -19,6 +19,7 @@
     "demo:vanilla": "pnpm --filter @tandrove-demo/vanilla demo",
     "demo:adapters": "pnpm --filter @tandrove-demo/vanilla demo:adapters",
     "demo:providers": "pnpm --filter @tandrove-demo/vanilla demo:providers",
+    "demo:polling": "pnpm --filter @tandrove-demo/vanilla demo:polling",
     "demo:retention": "pnpm --filter @tandrove-demo/vanilla demo:retention",
     "demo:freshness": "pnpm --filter @tandrove-demo/vanilla demo:freshness",
     "demo:deadline": "pnpm --filter @tandrove-demo/vanilla demo:deadline",

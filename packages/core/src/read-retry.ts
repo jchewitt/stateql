@@ -65,6 +65,8 @@ export interface AcquisitionClientOptions extends ResourceConfigurationOptions<A
   /** Defaults to scheduler when supplied. Portable core owns no platform timers. */
   readonly deadlineScheduler?: DelayScheduler;
   readonly freshnessScheduler?: FreshnessScheduler;
+  /** Defaults to freshnessScheduler; used only when explicit polling is enabled. */
+  readonly pollingScheduler?: MonotonicScheduler;
   /** Defaults to freshnessScheduler when supplied; zero/disabled retention needs no clock. */
   readonly retentionScheduler?: MonotonicScheduler;
   /** Inactive scheduling failed and the cache was evicted. Reporting cannot disrupt cleanup. */

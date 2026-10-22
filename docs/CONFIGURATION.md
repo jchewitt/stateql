@@ -57,6 +57,8 @@ GraphQL supports the `transport` capability. An omitted assignment uses the clie
 
 Retry settings remain client-wide. Deadline, freshness and retention policies are shared per cached resource; consumers must agree on their resolved values. A group's name cannot create competing policies for already-shared work. No streaming, persistence, replay or command capability is accepted before its implementation exists.
 
+B6's `requestPolicy.polling.everyMs` is an owner default, so it can differ between consumers sharing cached state. It follows the same precedence and disable rules, but starts no timer until `handle.poll()` is called. Identical active selections share the fastest cadence. See [polling behavior and ownership](POLLING.md); B6 is pending a batched release.
+
 ## Custom core sources
 
 Core supports `providers: { acquisition: sourceToken }` using `createAcquisitionSourceToken()`. With an assignment, `AcquisitionClient.watch()` accepts a descriptor containing `stateAddress`, `selection`, and optional `collection`; it needs no dummy `read()` callback. Without an assignment, continue passing an ordinary `AcquisitionSource`. Explicit acquisition `false` prevents fallback to that source.

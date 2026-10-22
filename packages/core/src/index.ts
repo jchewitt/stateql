@@ -27,9 +27,11 @@ export {
 export type { CancellationSignal } from './cancellation.js';
 export { ReadTransportError } from './read-retry.js';
 export { ReadTimeoutError } from './read-deadline.js';
+export type { PollOptions } from './polling.js';
 export type {
   RequestPolicy,
   FreshnessPolicy,
+  PollingPolicy,
   RequestPolicyConfiguration,
   ResourceRequestOptions,
 } from './request-policy.js';

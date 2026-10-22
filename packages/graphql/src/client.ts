@@ -98,6 +98,10 @@ export function createGraphQLClient(
     deadlineScheduler:
       options.deadlineScheduler ?? options.scheduler ?? defaultRetryScheduler,
     freshnessScheduler: options.freshnessScheduler ?? defaultRetryScheduler,
+    pollingScheduler:
+      options.pollingScheduler ??
+      options.freshnessScheduler ??
+      defaultRetryScheduler,
     retentionScheduler:
       options.retentionScheduler ??
       options.freshnessScheduler ??

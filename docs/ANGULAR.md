@@ -62,6 +62,8 @@ An argument change hides the previous snapshot synchronously when state is read,
 
 Destroying the current injection scope, or calling `query.dispose()`, stops its effect and releases its subscription and handle exactly once. The provider's shared client remains alive until the provider scope ends. A manually disposed view stops evaluating parameters. Use the component injector for component lifetime; a root service naturally lives longer. Passing an explicit injector enables creation outside an injection context, using that injector's lifetime. Construct once outside reactive computations.
 
+B6 adds synchronous `query.poll({ target?, everyMs? })` on a ready owned query. It returns an idempotent stop function and throws for pending, replaced-but-not-yet-rebound, or disposed bindings. Polling belongs to the current handle: replacement and injector destruction release its interests, and a new binding requires a new registration. The adapter delegates scheduling to core. See [the polling contract](POLLING.md); this API is pending a batched release and is absent from alpha.5.
+
 ## Observe an externally owned reader
 
 ```ts

@@ -9,9 +9,12 @@ pnpm demo:vanilla
 pnpm demo:typescript
 pnpm demo:adapters
 pnpm demo:deadline
+pnpm demo:polling
 ```
 
 These deterministic examples use in-process fixtures. `pnpm demo:acquire` is the HTTP example; `pnpm demo` runs both Tandrove and Apollo Angular views.
+
+The [polling example](../examples/vanilla/src/polling.mjs) demonstrates two consumers sharing a narrow timed refresh while retaining cached siblings. It also runs against installed archives with editor type checking. B6 is pending a batched release; see [polling configuration and lifecycle](POLLING.md).
 
 The [deadline example](../examples/vanilla/src/deadline.mjs) configures a named request-policy group and two consumers sharing one timed request. A controlled scheduler triggers the deadline; both consumers settle and the GraphQL transport signal aborts. It runs in isolated installed-package acceptance too. See [policy and lifetime details](DEADLINES.md).
 

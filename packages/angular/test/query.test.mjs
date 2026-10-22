@@ -70,6 +70,10 @@ function handles() {
       refreshList: async () => {
         calls.push(['refreshList']);
       },
+      poll: (options) => {
+        calls.push(['poll', options]);
+        return () => calls.push(['stopPoll', options]);
+      },
       publish(next) {
         snapshot = Object.freeze({ value: next });
         for (const fn of [...listeners]) fn();
@@ -184,6 +188,125 @@ test('observed A to B to A transitions do not reuse the old binding before flush
   assert.equal(fixture.opened.length, 2);
   assert.equal(fixture.opened[0].disposals, 1);
   owner.destroy();
+});
+
+test('polling is synchronous, checks the current binding, and never transfers a stop to its replacement', () => {
+  const owner = scope();
+  const id = signal('A');
+  const fixture = handles();
+  const query = injectStateQuery(id, fixture.open, { injector: owner });
+  const options = { target: 'name', everyMs: 100 };
+  const stop = query.poll(options);
+  assert.equal(typeof stop, 'function');
+  assert.deepEqual(fixture.opened[0].calls, [['poll', options]]);
+  id.set('B');
+  assert.throws(() => query.poll(options), /current binding/);
+  tick();
+  assert.equal(fixture.opened[0].disposals, 1);
+  assert.deepEqual(fixture.opened[1].calls, []);
+  stop();
+  assert.deepEqual(fixture.opened[0].calls, [
+    ['poll', options],
+    ['stopPoll', options],
+  ]);
+  assert.deepEqual(fixture.opened[1].calls, []);
+  query.poll({ everyMs: false });
+  assert.deepEqual(fixture.opened[1].calls, [['poll', { everyMs: false }]]);
+  owner.destroy();
+  assert.throws(() => query.poll(options), /disposed/);
+});
+
+test('poll registration does not capture reactive dependencies from the binding or handle', () => {
+  const owner = scope();
+  const id = signal('A');
+  const incidental = signal(0);
+  const fixture = handles();
+  const query = injectStateQuery(
+    id,
+    (value) => {
+      const handle = fixture.open(value);
+      const poll = handle.poll;
+      handle.poll = (options) => {
+        incidental();
+        return poll(options);
+      };
+      return handle;
+    },
+    { injector: owner },
+  );
+  let evaluations = 0;
+  const registration = computed(() => {
+    evaluations++;
+    return query.poll({ target: 'name', everyMs: 100 });
+  });
+  const stop = registration();
+  incidental.set(1);
+  id.set('B');
+  tick();
+  assert.equal(registration(), stop);
+  assert.equal(evaluations, 1);
+  assert.deepEqual(fixture.opened[1].calls, []);
+  owner.destroy();
+});
+
+test('owned query replacement and injector destruction cancel polling without closing the shared client', async (t) => {
+  const timers = [];
+  const client = new AcquisitionClient({
+    pollingScheduler: {
+      now: () => 0,
+      wait: (_ms, signal) =>
+        new Promise((resolve) => timers.push({ signal, resolve })),
+    },
+  });
+  t.after(() => client.dispose());
+  const owner = scope();
+  t.after(() => {
+    if (!owner.destroyed) owner.destroy();
+  });
+  const id = signal('A');
+  const authority = {};
+  const source = (value) => ({
+    authority,
+    stateAddress: resourceAddress({ source: 'angular-poll', scope: value }, [
+      { name: 'item', arguments: {} },
+    ]),
+    selection: [
+      { name: 'name', responseName: 'name', arguments: {}, children: [] },
+    ],
+    read: async () => [
+      {
+        identity: { id: '1' },
+        fields: [
+          { kind: 'write', path: [{ name: 'name', arguments: {} }], value },
+        ],
+      },
+    ],
+  });
+  const query = injectStateQuery(id, (value) => client.watch(source(value)), {
+    injector: owner,
+  });
+  await query.ensure();
+  const stopA = query.poll({ target: 'name', everyMs: 100 });
+  await until(() => timers.some((timer) => !timer.signal.aborted));
+  const timerA = timers.find((timer) => !timer.signal.aborted);
+  id.set('B');
+  assert.throws(() => query.poll({ everyMs: 100 }), /current binding/);
+  tick();
+  await query.ensure();
+  assert.equal(timerA.signal.aborted, true);
+  assert.equal(timers.filter((timer) => !timer.signal.aborted).length, 0);
+  query.poll({ target: 'name', everyMs: 100 });
+  await until(() => timers.some((timer) => !timer.signal.aborted));
+  const timerB = timers.find((timer) => !timer.signal.aborted);
+  stopA();
+  stopA();
+  assert.equal(timerB.signal.aborted, false);
+  owner.destroy();
+  assert.equal(timerB.signal.aborted, true);
+  const peer = client.watch(source('B'));
+  await peer.ready;
+  assert.equal(peer.getSnapshot().records[0].data.name, 'B');
+  peer.dispose();
 });
 
 test('parameter and factory errors detach old handles and recover after parameter change', async () => {

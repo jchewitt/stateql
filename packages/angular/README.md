@@ -19,3 +19,5 @@ Add `@tandrove/graphql@0.1.0-alpha.5` and `graphql@^16.14.2` for GraphQL applica
 The alpha API and extension interfaces may change with documented migrations. Demo form helpers are not exported: form drafts stay local and a save command remains application-owned. No socket, server, persistence or timer package is required. See [release status](https://github.com/jchewitt/tandrove/blob/main/docs/RELEASING.md) before installing a version not yet published.
 
 See the [Angular guide](https://github.com/jchewitt/tandrove/blob/main/docs/ANGULAR.md) and [forms contract](https://github.com/jchewitt/tandrove/blob/main/docs/FORMS.md).
+
+B6 adds synchronous `query.poll({ target?, everyMs? })` on ready owned queries. It delegates to core and returns a stop function; binding replacement and injector destruction release the original handle's interests. Registration does not transfer to a new tenant. See [the polling contract](https://github.com/jchewitt/tandrove/blob/main/docs/POLLING.md). B6 is pending a batched release and is absent from alpha.5.

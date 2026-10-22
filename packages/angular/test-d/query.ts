@@ -25,6 +25,16 @@ const query = injectStateQuery(
 );
 void query.invalidate('name');
 void query.refresh('user.name');
+const stopPolling: () => void = query.poll({
+  target: 'user.name',
+  everyMs: 250,
+});
+stopPolling();
+query.poll({ everyMs: false });
+// @ts-expect-error polling preserves the query's allowed field targets
+query.poll({ target: 'missing', everyMs: 250 });
+// @ts-expect-error intervals have explicit numeric millisecond units
+query.poll({ target: 'name', everyMs: '250ms' });
 // @ts-expect-error target inference must survive the Angular wrapper
 void query.invalidate('missing');
 // @ts-expect-error state is a readonly signal
@@ -54,6 +64,9 @@ const gqlQuery = injectStateQuery(
   { injector },
 );
 void gqlQuery.invalidate('label');
+gqlQuery.poll({ target: 'label', everyMs: 100 });
+// @ts-expect-error polling uses the selected alias, not its canonical field name
+gqlQuery.poll({ target: 'name', everyMs: 100 });
 // @ts-expect-error canonical field is not the selected alias
 void gqlQuery.invalidate('name');
 // @ts-expect-error GraphQL required arguments remain checked

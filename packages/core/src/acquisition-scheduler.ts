@@ -13,6 +13,7 @@ import { ReadTransportError, type ReadRetrier } from './read-retry.js';
 import type { ReadDeadline } from './read-deadline.js';
 import { FreshnessTracker } from './freshness.js';
 import { InactiveRetention } from './inactive-retention.js';
+import { FieldPolling } from './polling.js';
 import type { FreshnessScheduler, MonotonicScheduler } from './read-retry.js';
 import type { FreshnessPolicy } from './request-policy.js';
 import {
@@ -94,6 +95,7 @@ export class AcquisitionScheduler {
   private disposed = false;
   private readonly freshness: FreshnessTracker;
   private readonly retention: InactiveRetention;
+  readonly polling: FieldPolling;
   constructor(
     private readonly store: StateStore,
     readonly address: string,
@@ -110,7 +112,11 @@ export class AcquisitionScheduler {
       readonly report: (error: unknown) => void;
     },
     private authorityValue: object | undefined,
+    pollingScheduler: MonotonicScheduler | undefined,
   ) {
+    this.polling = new FieldPolling(pollingScheduler, (fields) =>
+      this.settlePolling(fields),
+    );
     this.retention = new InactiveRetention(
       retention.durationMs,
       retention.scheduler,
@@ -174,6 +180,7 @@ export class AcquisitionScheduler {
   }
   detach(owner: AcquisitionOwner): void {
     if (this.disposed || !this.owners.delete(owner)) return;
+    this.polling.removeOwner(owner);
     for (const request of [...this.requests]) {
       request.owners.delete(owner);
       if (!request.owners.size) {
@@ -249,6 +256,7 @@ export class AcquisitionScheduler {
     source: AcquisitionSource,
     requested?: readonly ResolvedField[],
     replaceMembership = false,
+    polling = false,
   ): Promise<void> {
     this.assertOwner(owner);
     this.freshness.expire();
@@ -259,7 +267,7 @@ export class AcquisitionScheduler {
       requested ??
       (membershipNeeded ? owner.view.selection : needed(owner.view));
     const completed = new Set<Request>();
-    if (requested === undefined) {
+    if (requested === undefined || polling) {
       // Reuse in-flight coverage before asking for additional missing fields.
       // Forced reads still run concurrently and are protected at commit time.
       while (fields.length) {
@@ -269,6 +277,7 @@ export class AcquisitionScheduler {
             (request.root || overlaps(fields, request.fields)),
         );
         if (!covering.length) break;
+        let superseded = false;
         await cancellable(
           Promise.all(
             covering.map((request) =>
@@ -279,21 +288,24 @@ export class AcquisitionScheduler {
                 .catch((error: unknown) => {
                   if (!(error instanceof AcquisitionSupersededError))
                     throw error;
+                  superseded = true;
                 }),
             ),
           ),
           owner.lifetime.signal,
         );
         this.assertOwner(owner);
+        if (polling && superseded) return;
         const satisfied = [...completed].filter((request) =>
           this.versions.current(request.version, request.fields),
         );
         const rootSatisfied = satisfied.some((request) => request.root);
-        membershipNeeded = this.freshness.membershipExpired && !rootSatisfied;
+        membershipNeeded =
+          !polling && this.freshness.membershipExpired && !rootSatisfied;
         fields = membershipNeeded
           ? owner.view.selection
           : remaining(
-              needed(owner.view),
+              polling ? requested! : needed(owner.view),
               satisfied.flatMap((request) => leafPaths(request.fields)),
             );
         if (membershipNeeded) break;
@@ -330,6 +342,17 @@ export class AcquisitionScheduler {
       )
         return this.run(owner, source);
       throw error;
+    }
+  }
+  private async settlePolling(fields: readonly ResolvedField[]): Promise<void> {
+    while (!this.disposed) {
+      const pending = [...this.requests].filter(
+        (request) =>
+          this.versions.current(request.version, request.fields) &&
+          (request.root || overlaps(fields, request.fields)),
+      );
+      if (!pending.length) return;
+      await Promise.allSettled(pending.map((request) => request.promise));
     }
   }
   private start(
@@ -456,6 +479,7 @@ export class AcquisitionScheduler {
     if (this.disposed) return;
     this.disposed = true;
     this.authorityValue = undefined;
+    this.polling.dispose();
     this.retention.dispose();
     this.freshness.dispose();
     for (const owner of this.owners) owner.dispose();

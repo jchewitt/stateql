@@ -9,6 +9,7 @@ import { leafPaths } from './acquisition-coverage.js';
 import { AcquisitionScheduler } from './acquisition-scheduler.js';
 import { ReadRetrier, type AcquisitionClientOptions } from './read-retry.js';
 import { ReadDeadline } from './read-deadline.js';
+import { validatePollInterval, type PollOptions } from './polling.js';
 import {
   ResourceConfiguration,
   type ResourceOptions,
@@ -113,6 +114,8 @@ export interface QueryHandle<Target extends string = string> extends Omit<
   refresh(target?: Target): Promise<void>;
   /** Replace list membership/order using this handle's entire declared selection. */
   refreshList(): Promise<void>;
+  /** Register owner-bound selective polling; stopping releases future scheduling. */
+  poll(options?: PollOptions<Target>): () => void;
 }
 class Handle {
   active = true;
@@ -197,6 +200,7 @@ export class AcquisitionClient {
   private readonly deadlineScheduler: AcquisitionClientOptions['deadlineScheduler'];
   private readonly freshnessScheduler: AcquisitionClientOptions['freshnessScheduler'];
   private readonly retentionScheduler: AcquisitionClientOptions['retentionScheduler'];
+  private readonly pollingScheduler: AcquisitionClientOptions['pollingScheduler'];
   private readonly onRetentionError: AcquisitionClientOptions['onRetentionError'];
   constructor(private readonly options: AcquisitionClientOptions = {}) {
     this.retry = new ReadRetrier(options);
@@ -220,6 +224,13 @@ export class AcquisitionClient {
         }
       : undefined;
     this.onRetentionError = options.onRetentionError;
+    const pollingClock = options.pollingScheduler ?? options.freshnessScheduler;
+    this.pollingScheduler = pollingClock
+      ? {
+          now: pollingClock.now.bind(pollingClock),
+          wait: pollingClock.wait.bind(pollingClock),
+        }
+      : undefined;
   }
   /** Adapter-facing local patch ingress, not a server revision or stream protocol. */
   ingest(source: AcquisitionSource, patch: AcquiredPatch): void {
@@ -338,6 +349,7 @@ export class AcquisitionClient {
             report: (error) => this.onRetentionError?.(error, address),
           },
           authority,
+          this.pollingScheduler,
         );
         this.scopes.set(address, scope);
       } finally {
@@ -357,11 +369,15 @@ export class AcquisitionClient {
     const enqueue = (
       requested?: readonly ResolvedField[],
       replaceMembership = false,
+      polling = false,
+      interested = () => true,
     ): Promise<void> => {
       if (this.disposed || !handle.active)
         return Promise.reject(new Error('Query handle is disposed.'));
-      const attempt = ++handle.attempt;
-      const task = Promise.resolve().then(async () => {
+      const reservedAttempt = polling ? undefined : ++handle.attempt;
+      const execute = async (): Promise<void> => {
+        if (!interested()) return;
+        const attempt = reservedAttempt ?? ++handle.attempt;
         if (this.disposed || !handle.active)
           throw (
             handle.lifetime.signal.reason ??
@@ -373,7 +389,13 @@ export class AcquisitionClient {
         }
         try {
           await cancellable(
-            current.run(handle, captured, requested, replaceMembership),
+            current.run(
+              handle,
+              captured,
+              requested,
+              replaceMembership,
+              polling,
+            ),
             handle.lifetime.signal,
           );
         } catch (error) {
@@ -384,8 +406,10 @@ export class AcquisitionClient {
           }
           throw error;
         }
-      });
-      return task;
+      };
+      // Ticks already dispatch asynchronously. Reserve their error order only once
+      // an interest actually executes, so a stopped tick cannot hide a manual error.
+      return polling ? execute() : Promise.resolve().then(execute);
     };
     const ensure = (): Promise<void> => enqueue();
     handle.revalidate = () => {
@@ -439,6 +463,31 @@ export class AcquisitionClient {
       }
     };
     const ready = ensure();
+    const poll = (options: PollOptions = {}): (() => void) => {
+      if (
+        !options ||
+        typeof options !== 'object' ||
+        Array.isArray(options) ||
+        Object.keys(options).some(
+          (key) => key !== 'target' && key !== 'everyMs',
+        )
+      )
+        throw new Error('Polling options support only target and everyMs.');
+      const fields = targetFields(options.target);
+      const interval =
+        options.everyMs === undefined
+          ? policy.polling.everyMs
+          : options.everyMs;
+      validatePollInterval(interval);
+      if (interval === false) return () => {};
+      return current.polling.add(
+        handle,
+        fields,
+        interval,
+        (interested) => enqueue(fields, false, true, interested),
+        (error) => handle.freshnessError(error),
+      );
+    };
     // Automatic acquisition errors remain observable through ready/snapshot without unhandled rejections.
     void ready.catch(() => {});
     return Object.freeze({
@@ -449,6 +498,7 @@ export class AcquisitionClient {
       invalidate,
       refresh,
       refreshList,
+      poll,
       getSnapshot: () => handle.getSnapshot(),
       subscribe: (listener: () => void) => handle.subscribe(listener),
       dispose: () => {

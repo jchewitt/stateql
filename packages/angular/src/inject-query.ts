@@ -137,16 +137,18 @@ export function injectStateQuery<P, Target extends string>(
         });
     }
   };
+  const withCurrentBinding = <T>(run: (current: QueryHandle<Target>) => T): T =>
+    untracked(() => {
+      if (stopped()) throw new Error('Tandrove query is disposed.');
+      if (!handle || binding !== requested())
+        throw new Error('Tandrove query has no current binding.');
+      return run(handle);
+    });
   const command = (
     run: (current: QueryHandle<Target>) => Promise<void>,
   ): Promise<void> => {
     try {
-      return untracked(() => {
-        if (stopped()) throw new Error('Tandrove query is disposed.');
-        if (!handle || binding !== requested())
-          throw new Error('Tandrove query has no current binding.');
-        return run(handle);
-      });
+      return withCurrentBinding(run);
     } catch (error) {
       return Promise.reject(error);
     }
@@ -172,6 +174,7 @@ export function injectStateQuery<P, Target extends string>(
       command((current) => current.invalidate(target, options)),
     refresh: (target) => command((current) => current.refresh(target)),
     refreshList: () => command((current) => current.refreshList()),
+    poll: (options) => withCurrentBinding((current) => current.poll(options)),
     dispose,
   });
 }
