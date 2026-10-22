@@ -1,5 +1,13 @@
 # @tandrove/graphql
 
+## 0.1.0-alpha.5
+
+### Patch Changes
+
+- b492abe: Add opt-in inactive resource retention with global/group/resource `retentionMs` policies. Evict full cached scopes after the final owner leaves, preserve active owners and disposed snapshots, and allow fresh acquisition and policy rebinding after eviction. Support zero/disabled retention, monotonic scheduling, safe cancellation and late-response isolation; GraphQL supplies platform defaults.
+- Updated dependencies [b492abe]
+  - @tandrove/core@0.1.0-alpha.5
+
 ## 0.1.0-alpha.4
 
 ### Patch Changes
