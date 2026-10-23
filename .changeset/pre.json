@@ -22,12 +22,16 @@
     "initial-standalone-alpha",
     "list-reconciliation",
     "partial-errors-and-nulls",
+    "provider-assignment",
+    "provider-ownership",
     "selective-invalidation",
+    "shared-field-polling",
     "shared-record-store",
     "shared-request-deadlines",
     "tandrove-prepublication-rename",
     "trusted-publishing-acceptance",
     "typed-definition-addresses",
+    "typed-snapshots",
     "vanilla-adapter-ingress"
   ]
 }
