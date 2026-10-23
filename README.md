@@ -79,6 +79,8 @@ Stage B is underway: the client has opt-in [shared request deadlines and timeout
 
 Planned follow-on goals include server-driven invalidation notices and direct state updates, an optional server companion with event/database adapters, revision-aware ordering across transports, and framework-independent persistence/offline recovery. These are roadmap commitments to investigate and validate, not implemented features; see [their contracts, priorities, and limits](PLAN.md#stream-cohesion-ordering-and-offline-recovery).
 
+B7a adds [inferred snapshot data](docs/TYPED-SNAPSHOTS.md) through GraphQL and Angular, also pending a batched release. Selected fields retain their scalar types while remaining safely optional for partial/error states. The remaining base-client work is a real application trial, performance/memory measurements, and final API/documentation readiness review; findings may require further fixes before extensions.
+
 The [incremental release plan](PLAN.md#usable-incremental-releases) keeps every publication independently usable, starting with the standalone client. The planned server companion will share the client's provider-registration vocabulary and global/resource-group/resource-override pattern, with optional integrations such as Socket.IO and Redis. Server/streaming integrations remain planned; installing the foundation will not require them or a hosted service. Recovery after interrupted connections and server-instance changes is part of the future synchronization release's acceptance criteria.
 
 - [Architecture and proof-of-concept plan](PLAN.md)

@@ -45,10 +45,10 @@
     </p>
     } @else {
     <div class="invoice-details">
-      <span data-testid="user-name">{{ userName(record.data['user']) }}</span
+      <span data-testid="user-name">{{ userName(record.data) }}</span
       ><strong data-testid="amount"
-        >{{ amount(record.data['amountCents']) === null ? 'Unavailable' :
-        (amount(record.data['amountCents']) | currency: 'USD') }}</strong
+        >{{ amount(record.data) === null ? 'Unavailable' : (amount(record.data)
+        | currency: 'USD') }}</strong
       >
     </div>
     }

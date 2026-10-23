@@ -94,6 +94,8 @@ Installed package checks also exercise providers, argument changes, command gati
 
 The build follows [Angular's package format](https://angular.dev/tools/libraries/angular-package-format) and its [library compilation guidance](https://angular.dev/tools/libraries/creating-libraries). Lifetime cleanup uses the public [DestroyRef API](https://angular.dev/api/core/DestroyRef).
 
+B7a preserves inferred selected data through `injectStateQuery()` and `tandroveSignal()`. On an active owned query, `state.snapshot.records?.[0]?.data` exposes readonly optional fields, aliases and nested structural nulls. `StateQuery<Target, Result>` and `StateQueryState<Result>` accept a result model while existing target-only APIs remain generic. See [typed snapshots and migration](TYPED-SNAPSHOTS.md); this is pending a batched release and is absent from alpha.5.
+
 ## Forms boundary
 
 The signal exposes server snapshots. Editable controls hold separate local drafts; reading a signal never implies sending a command. The [forms contract](FORMS.md) specifies pristine-field refresh, conflict detection, explicit saves, edits during save, and future stream acknowledgements. P4.4 implements those behaviors in the demo. The Angular library exposes observations and owned queries; it does not own form drafts or send writes.

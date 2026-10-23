@@ -1,0 +1,11 @@
+# B7a typed snapshot results review
+
+Independent reviewer: `/root/freshness_review`, October 22, 2026. Separate implementation agents authored core/GraphQL acceptance tests and Angular/demo/installed-consumer integration. The primary agent implemented the core and GraphQL contracts and documentation. No agent committed before independent review.
+
+Scope: inferred selected snapshot data, readonly partial/null/error semantics, aliases and conditional selections, scalar arrays, generic and dynamic compatibility, Angular signal propagation, installed-package declarations, migration guidance, Changeset and the B7 readiness split. Core remains framework- and GraphQL-independent; cache storage, projection and notification behavior are unchanged.
+
+Review and targeted type probes exposed unsafe assignability through generic wrapper interfaces, especially for all-optional selections. The final contracts lower result models to their actual output types and retain an optional declaration-only witness. This preserves typed-to-generic compatibility while rejecting untyped-to-specific narrowing. Angular uses the same output-based pattern. No runtime symbol or wrapper is created. The independent reviewer re-reviewed the final contracts, migration notes, all package guides, demo and packed-consumer assertions and found no unresolved actionable findings.
+
+The reviewer independently passed core, GraphQL and Angular typechecks, optional-only callback inference and unsafe-narrowing probes, four typed-snapshot runtime scenarios and `git diff --check`. The primary agent passed `pnpm check`: formatting, builds, generated-schema verification, strict source/type/checked-JavaScript checks, 403 tests, and isolated real-tarball native ESM/TypeScript/Angular APF/AOT consumers. The full browser suite passed all 25 scenarios.
+
+The Changeset queues all three packages for the existing batched alpha release. No package versions, release policy or publication permissions change. B7b's real application trial, B7c's performance/memory measurements and B7d's final API/docs/extension-readiness review remain open; findings may require separately reviewed fixes. Beta and stable publication retain their separate gates. Hosted CI evidence belongs to the feature PR.

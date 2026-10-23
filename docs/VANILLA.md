@@ -20,6 +20,8 @@ The [deadline example](../examples/vanilla/src/deadline.mjs) configures a named 
 
 ## JavaScript is a supported consumer
 
+B7a's [typed snapshot data](TYPED-SNAPSHOTS.md) adds editor/compiler inference without changing JavaScript execution. `pnpm demo:typescript` now reads inferred numeric/string values directly while handling possible absence; `ResultOf` still describes the full declaration. Dynamic SDL usage remains generic JSON. Installed-package acceptance runs the compiled example without a TypeScript runtime and validates the published declaration contracts separately.
+
 Tandrove is implemented in TypeScript and ships compiled ESM JavaScript with declaration files. Consuming the packages does not require TypeScript, a TypeScript loader, or generated schema types. Building this repository does use TypeScript. CommonJS packaging and a React adapter are not implemented.
 
 The [native JavaScript example](../examples/vanilla/src/javascript.mjs) uses runtime SDL:

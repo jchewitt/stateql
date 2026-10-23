@@ -6,6 +6,8 @@ import {
   ResourceConfiguration,
   type ResourceConfigurationOptions,
   type ResourceOptions,
+  type InputObject,
+  type SnapshotData,
 } from '@tandrove/core';
 import type { PreparedOperation } from './operation.js';
 import type { FieldPaths } from './types.js';
@@ -46,14 +48,24 @@ export type GraphQLClientOptions = Omit<
         readonly headers?: never;
       }
   );
+interface QueryDefinition {
+  readonly resultType?: unknown;
+  asSource(transport: GraphQLTransport): AcquisitionSource;
+}
+type DefinitionResult<Definition> = Definition extends {
+  readonly resultType?: infer Result;
+}
+  ? Result
+  : InputObject;
+type DefinitionHandle<Definition> = QueryHandle<
+  FieldPaths<SnapshotData<DefinitionResult<Definition>>>,
+  DefinitionResult<Definition>
+>;
 export interface GraphQLClient {
-  watch<R>(
-    definition: {
-      readonly resultType?: R;
-      asSource(transport: GraphQLTransport): AcquisitionSource;
-    },
+  watch<Definition extends QueryDefinition>(
+    definition: Definition,
     options?: GraphQLResourceOptions,
-  ): QueryHandle<FieldPaths<R>>;
+  ): DefinitionHandle<Definition>;
   dispose(): void;
 }
 export function createGraphQLClient(
@@ -109,10 +121,8 @@ export function createGraphQLClient(
   });
   let disposed = false;
   return Object.freeze({
-    watch: (
-      definition: {
-        asSource(transport: GraphQLTransport): AcquisitionSource;
-      },
+    watch: <Definition extends QueryDefinition>(
+      definition: Definition,
       binding?: GraphQLResourceOptions,
     ) => {
       if (disposed) throw new Error('Client is disposed.');
@@ -123,7 +133,7 @@ export function createGraphQLClient(
       if (!selected)
         throw new Error('Resource requires a GraphQL transport or endpoint.');
       const source = definition.asSource(selected);
-      return client.watch(
+      const handle = client.watch(
         {
           stateAddress: source.stateAddress,
           selection: source.selection,
@@ -141,6 +151,9 @@ export function createGraphQLClient(
         },
         { requestPolicy: resolved.requestPolicy },
       );
+      // The schema-validated source and the definition's inferred selection describe
+      // this same projection; core keeps the untyped JSON storage/commit boundary.
+      return handle as unknown as DefinitionHandle<Definition>;
     },
     dispose: () => {
       disposed = true;

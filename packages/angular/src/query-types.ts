@@ -1,18 +1,22 @@
 import type { Injector, Signal } from '@angular/core';
 import type {
+  InputObject,
   InvalidateOptions,
   PollOptions,
   QuerySnapshot,
   Unsubscribe,
 } from '@tandrove/core';
 
-export type StateQueryState =
+export type StateQueryState<Result = InputObject> = StateQueryStateFor<
+  QuerySnapshot<Result>
+>;
+type StateQueryStateFor<Snapshot> =
   | { readonly status: 'pending' | 'disposed' }
   | { readonly status: 'error'; readonly error: unknown }
   | {
       readonly status: 'active';
       readonly stateAddress: string;
-      readonly snapshot: QuerySnapshot;
+      readonly snapshot: Snapshot;
     };
 
 export interface StateQueryOptions {
@@ -20,8 +24,12 @@ export interface StateQueryOptions {
   readonly injector?: Injector;
 }
 
-export interface StateQuery<Target extends string = string> {
-  readonly state: Signal<StateQueryState>;
+export type StateQuery<
+  Target extends string = string,
+  Result = InputObject,
+> = StateQueryFor<Target, StateQueryState<Result>>;
+interface StateQueryFor<Target extends string, State> {
+  readonly state: Signal<State>;
   ensure(): Promise<void>;
   invalidate(target?: Target, options?: InvalidateOptions): Promise<void>;
   refresh(target?: Target): Promise<void>;

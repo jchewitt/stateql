@@ -21,3 +21,5 @@ The alpha API and extension interfaces may change with documented migrations. De
 See the [Angular guide](https://github.com/jchewitt/tandrove/blob/main/docs/ANGULAR.md) and [forms contract](https://github.com/jchewitt/tandrove/blob/main/docs/FORMS.md).
 
 B6 adds synchronous `query.poll({ target?, everyMs? })` on ready owned queries. It delegates to core and returns a stop function; binding replacement and injector destruction release the original handle's interests. Registration does not transfer to a new tenant. See [the polling contract](https://github.com/jchewitt/tandrove/blob/main/docs/POLLING.md). B6 is pending a batched release and is absent from alpha.5.
+
+B7a carries inferred selected data through owned-query signals and templates. Fields remain readonly and optional, and nested structural errors may produce nulls. Existing target-only queries and generic helpers remain supported. See [typed snapshots and migration](https://github.com/jchewitt/tandrove/blob/main/docs/TYPED-SNAPSHOTS.md). B7a is pending a batched release and is absent from alpha.5.
