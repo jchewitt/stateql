@@ -9,6 +9,8 @@ import {
   tandroveSignal,
   injectStateQuery,
   provideTandroveClient,
+  type StateQuery,
+  type StateQueryState,
 } from '@tandrove/angular';
 
 const CLIENT = new InjectionToken<AcquisitionClient>('packed client');
@@ -69,3 +71,51 @@ typed.poll({ target: 'missing', everyMs: 100 });
 void typed.invalidate('missing');
 // @ts-expect-error token type controls the provider's factory
 provideTandroveClient(CLIENT, () => ({ dispose() {} }));
+
+declare const projected: QueryHandle<
+  'label' | 'owner' | 'owner.name',
+  {
+    readonly label: string;
+    readonly owner: { readonly name: string } | null;
+  }
+>;
+const projectedQuery = injectStateQuery(
+  () => 'A',
+  () => projected,
+);
+const projectedState = projectedQuery.state();
+const legacyQuery: StateQuery = projectedQuery;
+const legacyState: StateQueryState = projectedState;
+void legacyQuery;
+void legacyState;
+declare const dynamicQuery: StateQuery<'label'>;
+declare const dynamicState: StateQueryState;
+// @ts-expect-error installed declarations must not promote raw queries to an optional-only model
+const inventedQuery: StateQuery<'label', { readonly label?: string }> =
+  dynamicQuery;
+// @ts-expect-error installed declarations must not promote raw state to an optional-only model
+const inventedState: StateQueryState<{ readonly label?: string }> =
+  dynamicState;
+void inventedQuery;
+void inventedState;
+if (projectedState.status === 'active') {
+  const data = projectedState.snapshot.records?.[0]?.data;
+  const label: string | undefined = data?.label;
+  const owner: string | undefined = data?.owner?.name;
+  void label;
+  void owner;
+  // @ts-expect-error packed declarations retain missing-field handling
+  const required: string = data?.label;
+  void required;
+  // @ts-expect-error packed declarations retain selected shape
+  data?.missing;
+  if (data?.owner) {
+    // @ts-expect-error nested snapshots stay readonly after package installation
+    data.owner.name = 'draft';
+  }
+}
+const projectedSignal = tandroveSignal(projected);
+const label: string | undefined = projectedSignal().records?.[0]?.data.label;
+void label;
+// @ts-expect-error the installed non-owning bridge retains selected shape
+projectedSignal().records?.[0]?.data.missing;

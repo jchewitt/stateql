@@ -1,7 +1,8 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { injectStateQuery } from '@tandrove/angular';
-import type { InputValue } from '@tandrove/core';
+import type { InputValue, SnapshotData } from '@tandrove/core';
+import type { ResultOf } from '@tandrove/graphql';
 import {
   accountMonitor,
   billingInvoices,
@@ -10,6 +11,8 @@ import {
 import type { TenantId } from './data/operations';
 import { FixtureService } from './fixture.service';
 import { BILLING_CLIENT } from './tandrove-client';
+
+type InvoiceData = SnapshotData<ResultOf<typeof billingInvoices>>;
 
 @Component({
   selector: 'tandrove-panel',
@@ -66,17 +69,11 @@ export class TandrovePanel {
       ? String(value)
       : 'Unavailable';
   }
-  amount(value: InputValue | undefined): number | null {
+  amount(data: InvoiceData): number | null {
+    const value = data.amountCents;
     return typeof value === 'number' ? value / 100 : null;
   }
-  userName(value: InputValue | undefined): string {
-    if (
-      value &&
-      typeof value === 'object' &&
-      !Array.isArray(value) &&
-      'name' in value
-    )
-      return this.text(value.name);
-    return 'Unavailable';
+  userName(data: InvoiceData): string {
+    return this.text(data.user?.name);
   }
 }

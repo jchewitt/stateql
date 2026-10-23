@@ -10,7 +10,7 @@ import {
   untracked,
   type EffectRef,
 } from '@angular/core';
-import type { QueryHandle, Unsubscribe } from '@tandrove/core';
+import type { InputObject, QueryHandle, Unsubscribe } from '@tandrove/core';
 import { observeReader } from './observe-reader.js';
 import type {
   StateQuery,
@@ -21,15 +21,19 @@ import type {
 type Parameters<P> =
   | { readonly kind: 'value'; readonly value: P }
   | { readonly kind: 'error'; readonly error: unknown };
-const pending: StateQueryState = Object.freeze({ status: 'pending' });
-const disposed: StateQueryState = Object.freeze({ status: 'disposed' });
+const pending = Object.freeze({ status: 'pending' });
+const disposed = Object.freeze({ status: 'disposed' });
 
 /** Own a query handle selected by reactive parameters, without owning its client. */
-export function injectStateQuery<P, Target extends string>(
+export function injectStateQuery<
+  P,
+  Target extends string,
+  Result = InputObject,
+>(
   parameters: () => P,
-  open: (parameters: P) => QueryHandle<Target>,
+  open: (parameters: P) => QueryHandle<Target, Result>,
   options: StateQueryOptions = {},
-): StateQuery<Target> {
+): StateQuery<Target, Result> {
   assertNotInReactiveContext(injectStateQuery);
   const injector = options.injector ?? inject(Injector);
   const lifetime = injector.get(DestroyRef);
@@ -46,17 +50,17 @@ export function injectStateQuery<P, Target extends string>(
   const stopped = signal(false);
   const published = signal<{
     readonly binding: Parameters<P> | undefined;
-    readonly state: StateQueryState;
+    readonly state: StateQueryState<Result>;
   }>({
     binding: undefined,
     state: pending,
   });
   let binding: Parameters<P> | undefined;
-  let handle: QueryHandle<Target> | undefined;
+  let handle: QueryHandle<Target, Result> | undefined;
   let unsubscribe: Unsubscribe | undefined;
   let watcher: EffectRef | undefined;
   let unregister: Unsubscribe | undefined;
-  const state = computed<StateQueryState>(() => {
+  const state = computed<StateQueryState<Result>>(() => {
     if (stopped()) return disposed;
     const target = requested();
     if (target.kind === 'error')
@@ -137,7 +141,9 @@ export function injectStateQuery<P, Target extends string>(
         });
     }
   };
-  const withCurrentBinding = <T>(run: (current: QueryHandle<Target>) => T): T =>
+  const withCurrentBinding = <T>(
+    run: (current: QueryHandle<Target, Result>) => T,
+  ): T =>
     untracked(() => {
       if (stopped()) throw new Error('Tandrove query is disposed.');
       if (!handle || binding !== requested())
@@ -145,7 +151,7 @@ export function injectStateQuery<P, Target extends string>(
       return run(handle);
     });
   const command = (
-    run: (current: QueryHandle<Target>) => Promise<void>,
+    run: (current: QueryHandle<Target, Result>) => Promise<void>,
   ): Promise<void> => {
     try {
       return withCurrentBinding(run);
@@ -167,7 +173,7 @@ export function injectStateQuery<P, Target extends string>(
     dispose();
     throw error;
   }
-  return Object.freeze<StateQuery<Target>>({
+  return Object.freeze<StateQuery<Target, Result>>({
     state,
     ensure: () => command((current) => current.ensure()),
     invalidate: (target, options) =>

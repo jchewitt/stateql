@@ -28,6 +28,7 @@ export type { CancellationSignal } from './cancellation.js';
 export { ReadTransportError } from './read-retry.js';
 export { ReadTimeoutError } from './read-deadline.js';
 export type { PollOptions } from './polling.js';
+export type { SnapshotData } from './snapshot-data.js';
 export type {
   RequestPolicy,
   FreshnessPolicy,

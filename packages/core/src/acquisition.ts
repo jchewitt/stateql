@@ -2,6 +2,7 @@ import {
   canonicalInput,
   narrowFields,
   selectFieldPath,
+  type InputObject,
   type ResolvedField,
 } from './definition.js';
 import { StateStore, validatedSelection } from './state-store.js';
@@ -96,14 +97,18 @@ export interface AcquisitionSource extends AcquisitionResource {
 export interface InvalidateOptions {
   readonly refetch?: 'active' | 'none';
 }
-export interface QuerySnapshot extends StateSnapshot {
+export type QuerySnapshot<Result = InputObject> = StateSnapshot<Result> & {
   readonly error: string | undefined;
-}
-export interface QueryHandle<Target extends string = string> extends Omit<
+};
+export type QueryHandle<
+  Target extends string = string,
+  Result = InputObject,
+> = QueryHandleOf<Target, QuerySnapshot<Result>>;
+interface QueryHandleOf<Target extends string, Snapshot> extends Omit<
   StateView,
   'getSnapshot'
 > {
-  getSnapshot(): QuerySnapshot;
+  getSnapshot(): Snapshot;
   /** Settles after this handle's automatic first acquisition. */
   readonly ready: Promise<void>;
   /** Reuses fresh fields; requests only missing/stale/error fields. Also retries a failed acquisition. */

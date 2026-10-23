@@ -87,7 +87,7 @@ Completed comparison: [method, measurements and decision](COMPARISON.md). Run `p
 
 ### Follow-up findings from P5
 
-- [ ] Add a typed runtime result projection while preserving partial/missing/error states; current generic snapshots add presentation narrowing code.
+- [x] Add a typed runtime result projection while preserving partial/missing/error states; B7a carries inferred selected data through handles and Angular signals without changing the cache runtime. See [typed snapshots](TYPED-SNAPSHOTS.md).
 - [ ] Measure larger schemas, record counts, browser memory and lower-powered devices before making scaling/performance claims.
 - [ ] Evaluate reusable compiled operation plans with argument, scope and identity regression coverage.
 - [x] Complete P7's stale-time, inactive-retention and request-timeout contracts through B1–B3. The remaining alpha-exit and real-application validation gates still apply.
@@ -106,7 +106,7 @@ Each slice is a separate review/PR with meaningful tests, `pnpm check`, independ
 | B4: provider registration and ownership | A1.1/A1.4/A1.5/A1.6: tokens, instance/sync/async factory resolution and reuse; official GraphQL and application-owned custom acquisition integration, cleanup on failure, explicit owned/borrowed lifetime.                                   | Implemented; pending batched release, see [providers](PROVIDERS.md)         |
 | B5: complete client configuration       | Remaining client A1.2/A1.3/A1.6: capability assignments and global/group/resource overrides, disable behavior and conflict diagnostics using real providers; preserve simple default setup and JS usage. Server pairing A1.7 remains stage C. | Implemented; pending batched release, see [configuration](CONFIGURATION.md) |
 | B6: field polling                       | P6: shared owner interests, fastest active cadence, no overlapping retry/poll chains, disposal and fake-clock acceptance using the settled timing/configuration model.                                                                        | Implemented; pending batched release, see [polling](POLLING.md)             |
-| B7: beta readiness                      | P5 typed runtime projection, application trial, scale/memory measurements, API/migration/documentation review, and the alpha-exit checklist below. Evaluate compiled plan reuse only if measurements justify it.                              | Planned                                                                     |
+| B7: beta readiness                      | P5 typed runtime projection, application trial, scale/memory measurements, API/migration/documentation review, and the alpha-exit checklist below. Evaluate compiled plan reuse only if measurements justify it.                              | B7a implemented; B7b–B7d remain open                                        |
 
 ### B2 work items
 
@@ -137,6 +137,15 @@ Each slice is a separate review/PR with meaningful tests, `pnpm check`, independ
 - [x] B6a Define explicit owner registration, inherited interval defaults, canonical grouping, fixed delay after settlement and list semantics.
 - [x] B6b Implement portable timer/interest coordination using shared acquisition, retries, deadlines and lifecycle cleanup; expose GraphQL defaults and Angular binding delegation.
 - [x] B6c Add deterministic cadence/coverage/error/race tests, Angular/GraphQL integration, installed JavaScript and typed examples, and usage documentation. Independent review and hosted CI gate merge; publication remains batched.
+
+### B7 work items
+
+- [x] B7a Carry inferred selected snapshot data through GraphQL/Angular, with readonly partial/null/error semantics, legacy/dynamic compatibility, demo use and installed-package acceptance. Independent review and hosted CI gate merge; publication remains batched.
+- [ ] B7b Trial the installed client in a real application beyond the billing demo: long sessions, navigation, account changes, acquisition failures and cleanup. Record issues and fix correctness blockers in separately reviewed slices.
+- [ ] B7c Measure larger schemas/record counts, repeated lifecycle operations and browser memory, including a lower-powered environment. Set evidence-backed budgets; evaluate compiled plan reuse only if measurements justify it.
+- [ ] B7d Review supported APIs, extension boundaries, diagnostics, compatibility/migration docs and examples against the evidence. Decide base-client/extension readiness; review beta release-policy changes separately and publish only at a chosen, authorized milestone.
+
+These are four planned readiness slices, not a promise of four commits or a release date. Validation findings may require additional fixes. B7b–B7d remain before moving into the planned server/streaming extension phase; AX5 and stable-release publication still have their own gates.
 
 ### Alpha-exit tracking
 

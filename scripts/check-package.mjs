@@ -332,7 +332,7 @@ try {
     join(consumer, 'planner.ts'),
     `
     import { createSchema, createGraphQLClient, type FieldType, type ObjectRef, type ResultOf, type GraphQLTransportContext } from '@tandrove/graphql';
-    import { ReadTransportError, type ReadRetryPolicy, type RetryScheduler, type AcquisitionClientOptions, type AcquiredPatch, type AcquisitionSource, type AcquisitionClient } from '@tandrove/core';
+    import { ReadTransportError, type ReadRetryPolicy, type RetryScheduler, type AcquisitionClientOptions, type AcquiredPatch, type AcquisitionSource, type AcquisitionClient, type SnapshotData } from '@tandrove/core';
     declare const core: AcquisitionClient;
     declare const source: AcquisitionSource;
     declare const patch: AcquiredPatch;
@@ -355,6 +355,16 @@ try {
     definition.bind({}, { source: 'test', scope: 'test' }).prepare('missing');
     const client = createGraphQLClient({ endpoint: 'http://localhost/graphql', retry, scheduler });
     const handle = client.watch(definition.bind({}, { source: 'test', scope: 'test' }));
+    const selectedData: SnapshotData<ResultOf<typeof definition>> | undefined = handle.getSnapshot().records?.[0]?.data;
+    const selectedLabel: string | null | undefined = selectedData?.label;
+    void selectedLabel;
+    // @ts-expect-error Partial snapshots cannot promise a present scalar.
+    const requiredLabel: string | null = selectedData!.label;
+    // @ts-expect-error Only the selected alias is exposed.
+    selectedData?.name;
+    // @ts-expect-error Projected data is readonly.
+    selectedData!.label = 'changed';
+    void requiredLabel;
     void handle.invalidate('label', { refetch: 'none' });
     void handle.refresh();
     void handle.refreshList();

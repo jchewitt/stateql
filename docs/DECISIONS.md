@@ -1,5 +1,11 @@
 # Architecture decisions
 
+## D036 Typed snapshots preserve partial availability
+
+B7a carries the selected declaration result through GraphQL handles and Angular signals, while keeping the portable cache and snapshot runtime unchanged. Add a separate `SnapshotData<Result>` for recursively readonly optional data; keep `ResultOf` as the full declaration. Nested object branches admit structural null after errors, and scalar arrays retain their declared element/nullability types. Neither settled acquisition nor complete cached coverage narrows to a full schema result.
+
+Infer from the passed definition's result witness, with generic JSON fallback for dynamic/untyped sources. Append defaulted result generics so existing target-only handles and generic consumers keep working. Lower each public producer contract to its actual output type before comparing assignments, and retain a private optional declaration-only result witness to prevent untyped-to-typed narrowing, including optional-only models. No runtime marker or new snapshot allocation is introduced. Keep assertions localized to the GraphQL source boundary. See [contracts, limits and migration](TYPED-SNAPSHOTS.md). B7's application trial, performance/memory evidence and final API/release-readiness review remain separate tasks.
+
 ## D035 Polling interests reuse shared acquisition
 
 B6 adds explicit owner-bound `poll({ target?, everyMs? })` registrations, with disabled-by-default global/group/resource interval inheritance. Configuration alone does not start reads. Group identical canonical leaf selections and arguments independently of aliases; the fastest active interval wins, while different selections keep separate schedules. Restart cadence after shared work settles, without missed-tick queues. Stop/disposal releases scheduling, not another owner's current read.

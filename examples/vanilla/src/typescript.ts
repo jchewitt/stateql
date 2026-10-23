@@ -42,13 +42,21 @@ try {
   await handle.ready;
   fixture.advance();
   await handle.invalidate('accountId');
-  assert.equal(
-    handle.getSnapshot().records?.[0]?.data['accountId'],
-    'A-account-v2',
-  );
-  assert.equal(handle.getSnapshot().records?.[0]?.data['amount'], 10);
+  const data = handle.getSnapshot().records?.[0]?.data;
+  // Inferred scalar types still include missing coverage, even after ready settles.
+  const accountId: string | undefined = data?.accountId;
+  const amount: number | undefined = data?.amount;
+  assert.equal(accountId, 'A-account-v2');
+  assert.equal(amount?.toFixed(2), '10.00');
+  if (false) {
+    // @ts-expect-error Injected record identity is not an implicitly selected data field.
+    data?.id;
+    // @ts-expect-error A completed read does not prove every selected value is present.
+    const required: number = data!.amount;
+    void required;
+  }
   console.log(
-    'Vanilla TypeScript: typed definition, 2 requests, cached amount preserved.',
+    'Vanilla TypeScript: inferred partial snapshots, 2 requests, cached amount preserved.',
   );
 } finally {
   client.dispose();
