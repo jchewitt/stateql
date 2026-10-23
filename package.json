@@ -28,6 +28,7 @@
     "generate:check": "tsx scripts/generate-billing.ts --check",
     "test:browser": "playwright test",
     "compare": "pnpm --filter @tandrove/angular... --filter @tandrove/graphql... build && tsx apps/billing-demo/bench/compare.mjs",
+    "measure:readiness": "pnpm --filter @tandrove/graphql... build && node apps/billing-demo/bench/readiness.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "pack:check": "node scripts/check-package.mjs",

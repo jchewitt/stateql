@@ -6,7 +6,7 @@ It consumes portable selections from core. A validated acquisition decoder and d
 
 ## Install and first query
 
-The current release candidate is `0.1.0-alpha.5`. Once published, install matching versions:
+Installation example with matching `0.1.0-alpha.5` versions:
 
 ```sh
 npm install @tandrove/core@0.1.0-alpha.5 @tandrove/graphql@0.1.0-alpha.5 graphql@^16.14.2
@@ -24,7 +24,9 @@ const schema = createSchema(
 const invoice = schema
   .field('invoice')
   .select({ accountId: true, amount: true });
-const client = createGraphQLClient({ endpoint: '/graphql' });
+const client = createGraphQLClient({
+  endpoint: 'https://api.example.com/graphql',
+});
 const view = client.watch(
   invoice.bind(
     { invoice: { id: 'I1' } },
@@ -42,9 +44,9 @@ try {
 }
 ```
 
-Use an absolute endpoint URL in Node. The default transport requires native `fetch`/`AbortController`; Node 22.14+ and Node 24 are tested, as is Chromium through the Angular demo. The GraphQL peer range is `^16.14.2`. ESM JavaScript works without TypeScript or code generation. No Tandrove server companion, Redis or socket service is needed.
+Use an absolute HTTP(S) endpoint URL in both browsers and Node. The default transport requires native `fetch`/`AbortController`; Node 22.14+ and Node 24 are tested, as is Chromium through the Angular demo. The GraphQL peer range is `^16.14.2`. ESM JavaScript works without TypeScript or code generation. No Tandrove server companion, Redis or socket service is needed.
 
-The alpha supports singleton objects, keyed top-level resource lists and nested objects; nested object lists, unions/interfaces, pagination and global entity normalization are not implemented. Snapshot data currently exposes JSON values rather than a fully inferred result type. Extension contracts remain provisional; review alpha changelogs for migrations and keep Tandrove packages on matching versions. See [release status](https://github.com/jchewitt/tandrove/blob/main/docs/RELEASING.md) before installing a version not yet published.
+The alpha supports singleton objects, keyed top-level resource lists and nested objects; nested object lists, unions/interfaces, pagination and global entity normalization are not implemented. Published alpha.5 exposes generic JSON snapshot data; B7a on main infers partial snapshot data from typed definitions, as described below. Extension contracts remain provisional; review alpha changelogs for migrations and keep Tandrove packages on matching versions. See [release status](https://github.com/jchewitt/tandrove/blob/main/docs/RELEASING.md) before installing a version not yet published.
 
 Native JavaScript consumers can call `createSchema(sdl, options)` with runtime SDL and configured identities. Names and arguments are validated at runtime; generated TypeScript models are optional. Explicit `createSchema<Model>(sdl, options)` retains strict schema-aware editor checks. Both use the same JavaScript runtime, and neither needs a TypeScript loader. See [runnable vanilla examples and typing limits](https://github.com/jchewitt/tandrove/blob/main/docs/VANILLA.md).
 

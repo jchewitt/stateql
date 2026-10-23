@@ -7,7 +7,7 @@
     "dev": "pnpm --filter @tandrove/angular... --filter @tandrove/graphql... build && ng serve --host 127.0.0.1 --port 4200",
     "build": "ng build",
     "typecheck": "ngc -p tsconfig.app.json --noEmit && tsc -p tsconfig.test.json --noEmit",
-    "test": "tsx --test test/*.test.ts"
+    "test": "tsx --test test/*.test.ts test/*.test.mjs"
   },
   "dependencies": {
     "@angular/common": "21.2.25",
