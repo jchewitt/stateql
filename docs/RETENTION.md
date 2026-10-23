@@ -4,7 +4,7 @@ B3 adds opt-in eviction of an entire inactive resource. Alpha.4 and earlier do n
 
 ```js
 const client = createGraphQLClient({
-  endpoint: '/graphql',
+  endpoint: 'https://api.example.com/graphql',
   requestPolicy: {
     retentionMs: 300_000,
     freshness: { staleTimeMs: 30_000, revalidate: 'on-demand' },

@@ -147,6 +147,16 @@ Each slice is a separate review/PR with meaningful tests, `pnpm check`, independ
 
 These are four planned readiness slices, not a promise of four commits or a release date. Validation findings may require additional fixes. B7b–B7d remain before moving into the planned server/streaming extension phase; AX5 and stable-release publication still have their own gates.
 
+### B7 validation follow-ups
+
+- [x] B7b.1 Prepare the [existing-application protocol](APPLICATION-TRIAL.md), compatibility preflight and exact local tarball handoff. No actual application has been selected or trial executed.
+- [ ] B7b.2 Run that protocol in a selected existing Angular application; resolve and independently review correctness findings.
+- [x] B7c.1 Add repeatable schema/list/lifecycle measurements and record [desktop Node/Chromium evidence](PERFORMANCE.md), including a clearly labeled CPU-throttled profile. These results are synthetic, not physical lower-powered-device evidence.
+- [ ] B7c.2 Resolve **PERF-01**, the measured large-list refresh latency: profile client-side work, implement a focused reviewed fix with correctness regression coverage, and rerun the same dimensions. Do not introduce compiled plan reuse without supporting evidence.
+- [ ] B7c.3 Collect the remaining intended-device/application evidence and agree justified responsiveness/memory budgets. CPU throttling and a bounded post-GC heap plateau do not close this gate.
+- [x] B7d.1 Complete a [preliminary API/compatibility audit](BASE-API-AUDIT.md) and correct stale feature claims and invalid endpoint examples.
+- [ ] B7d.2 Reconcile the final candidate with trial/scale findings and record the independent base/extension-readiness decision. AX2–AX4 stay open until then.
+
 ### Alpha-exit tracking
 
 - [x] AX1 Complete and independently review B1–B6; no accepted-but-unimplemented policies or empty adapter packages. See the [B6 review record](reviews/2026-10-22-shared-field-polling.md); the other alpha-exit gates remain open.

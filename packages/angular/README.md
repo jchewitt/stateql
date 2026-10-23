@@ -8,7 +8,7 @@ The adapter observes the shared core runtime without duplicating fetching, retri
 
 ## Install and compatibility
 
-The current release candidate is `0.1.0-alpha.5`. Once published, install into an Angular 21 application:
+Installation example for `0.1.0-alpha.5` in an Angular 21 application:
 
 ```sh
 npm install @tandrove/core@0.1.0-alpha.5 @tandrove/angular@0.1.0-alpha.5

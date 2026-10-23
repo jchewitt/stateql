@@ -4,7 +4,7 @@ B2 adds opt-in age-based expiry to the standalone client. Alpha.3 and earlier do
 
 ```js
 const client = createGraphQLClient({
-  endpoint: '/graphql',
+  endpoint: 'https://api.example.com/graphql',
   requestPolicy: {
     requestTimeoutMs: 10_000,
     freshness: { staleTimeMs: 30_000, revalidate: 'on-demand' },

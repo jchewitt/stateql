@@ -47,7 +47,7 @@ Definitions are immutable. `.extend(...)` adds fields and recursively composes n
 
 `{ accountId: { as: 'ledger' } }` changes the projected response key and the refresh path to `ledger`, while `bound.address('ledger')` still addresses canonical `accountId`. Field addresses include field arguments and may include caller-supplied record identity. They are not a global entity-normalization scheme.
 
-`ResultOf<typeof definition>` describes one selected object projection, including nested nullability, arrays, aliases, and optional conditional selections. It does not describe the full HTTP/GraphQL response envelope or resource-path list wrappers. It is a compile-time contract; the [acquisition runtime](ACQUISITION.md) has a strict decoder for its documented subset and currently exposes JSON snapshots. Dynamic selections may permit targets in TypeScript that are absent in a particular instance; runtime preparation and handle operations reject absent targets.
+`ResultOf<typeof definition>` describes one selected object projection, including nested nullability, arrays, aliases, and optional conditional selections. It does not describe the full HTTP/GraphQL response envelope or resource-path list wrappers. It is a compile-time contract; the [acquisition runtime](ACQUISITION.md) has a strict decoder for its documented subset and exposes immutable JSON snapshots. B7a on main carries inferred selection types into safely partial snapshot data; see [typed snapshots](TYPED-SNAPSHOTS.md). Dynamic selections may permit targets in TypeScript that are absent in a particular instance; runtime preparation and handle operations reject absent targets.
 
 ## Supported boundary
 
@@ -55,6 +55,6 @@ Definitions are immutable. `.extend(...)` adds fields and recursively composes n
 - A query root named `Query`; paths cannot traverse through list items (use nested selections).
 - Object lists require configured non-null scalar/enum identity fields. The billing fixture uses tenant-aware identities.
 - Custom scalars, interfaces/unions, OneOf inputs, custom directives, and selection directives are unsupported. Unsupported schema features fail explicitly.
-- The planner itself does not execute operations. The [acquisition runtime](ACQUISITION.md) adds HTTP execution, strict decoding, shared caching, subscriptions, and selective refresh. The [Angular adapter](ANGULAR.md) and both billing demo modes are implemented and [compared](COMPARISON.md). Mutation planning and polling remain planned.
+- The planner itself does not execute operations. The [acquisition runtime](ACQUISITION.md) adds HTTP execution, strict decoding, shared caching, subscriptions, and selective refresh. The [Angular adapter](ANGULAR.md) and both billing demo modes are implemented and [compared](COMPARISON.md). B6 [field polling](POLLING.md) is implemented and pending a batched release. Mutation planning remains planned.
 
-The GraphQL package is part of the initial three-package alpha candidate; see [release status](RELEASING.md). Definition/address generation alone does not establish an advantage over Apollo's working cache behavior; the [comparison](COMPARISON.md) measures the implemented runtime and its limits.
+The GraphQL package is part of the published three-package alpha; see [release status](RELEASING.md). Definition/address generation alone does not establish an advantage over Apollo's working cache behavior; the [comparison](COMPARISON.md) measures the implemented runtime and its limits.
